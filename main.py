@@ -251,10 +251,13 @@ def convert(time):
 
 class MyHelp(commands.HelpCommand):
     def get_command_signature(self, command):
-        return '%s%s %s' % (self.clean_prefix, command.qualified_name,str(command.usage))
+      defcommandusage=command.usage
+      if defcommandusage==None:
+        defcommandusage="command-name"
+      return '%s%s %s' % (self.clean_prefix, command.qualified_name,defcommandusage)
     async def send_command_help(self, command):
-        embed = discord.Embed(title=self.get_command_signature(command)+" Info .")
-        embed.add_field(name="\u200b", value=command.description)
+        embed = discord.Embed(title=command.qualified_name+" command .")
+        embed.add_field(name=self.get_command_signature(command), value=command.description)
         alias = command.aliases
         if alias:
             embed.add_field(name="Aliases", value=", ".join(alias), inline=False)
@@ -264,7 +267,7 @@ class MyHelp(commands.HelpCommand):
 
 
     async def send_bot_help(self, mapping):
-        embedone = discord.Embed(title="\u200b",description=f"Use {self.clean_prefix}help commandname to gain more information about that command :smiley:",
+        embedone = discord.Embed(title="\u200b",description=f"Use {self.clean_prefix}help command-name to gain more information about that command :smiley:",
                                  color=Color.blue())
 
         for cog, commandloop in mapping.items():
