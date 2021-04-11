@@ -1778,7 +1778,7 @@ class Support(commands.Cog):
                           ,color=Color.red())
 
       await ctx.reply(embed=embedOne)
-    @commands.command(brief='This command can be used to get support-server invite.', description='This command can be used to get support-server invite.',,usage="")
+    @commands.command(brief='This command can be used to get support-server invite.', description='This command can be used to get support-server invite.',usage="")
     async def supportserver(self, ctx):
         embedOne = discord.Embed(title="Support server",
                           description=f"{client.user.name}"
