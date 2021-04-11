@@ -1387,7 +1387,7 @@ class Fun(commands.Cog):
 
     @commands.check_any(is_bot_staff(),
                           commands.has_permissions(manage_guild=True))
-    @commands.command(brief='This command can be used to set bot prefix in a guild.', description='This command can be used to set bot prefix in a guild.',usage="prefix")
+    @commands.command(brief='This command can be used to set bot prefix in a guild by members having manage guild permission.', description='This command can be used to set bot prefix in a guild by members having manage guild permission.',usage="prefix")
     async def setprefix(self,ctx, *, prefix):
       global prefixlist
       if not ctx.guild == None:
