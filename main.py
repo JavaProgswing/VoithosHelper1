@@ -275,7 +275,7 @@ class MyHelp(commands.HelpCommand):
             command_signatures = [
                 self.get_command_signature(c) for c in filtered
             ]
-            print(command_signatures)
+
             if command_signatures:
                 cog_name = getattr(cog, "qualified_name", ":white_small_square:No Category")
                 commandname=cog_name
