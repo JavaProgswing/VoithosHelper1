@@ -10,8 +10,7 @@ import contextlib
 import io
 import pytz
 import requests
-from discord import Color,Webhook, AsyncWebhookAdapter
-import aiohttp
+from discord import Color
 from discord.ext import commands,tasks
 from discord.ext.commands import bot
 from discord.ext.commands import Greedy
@@ -127,7 +126,7 @@ userprivilleged=[]
 botowners = ["488643992628494347", "625265223250608138"]
 bot.cooldownvar = commands.CooldownMapping.from_cooldown(
     2.0, 1.0, commands.BucketType.user)
-  
+
 @client.event
 async def on_command_error(ctx, error):
     
@@ -249,17 +248,7 @@ def convert(time):
         return -2
 
     return val * time_dict[unit]
-_cd = commands.CooldownMapping.from_cooldown(1.0, 10.0, commands.BucketType.member) # from ?tag cooldown mapping
 
-# Then apply a bot check that will run before every command
-# Very similar to ?tag cooldown mapping but in Bot scope instead of Cog scope
-@client.check
-async def cooldown_check(ctx):
-    bucket = _cd.get_bucket(ctx.message)
-    retry_after = bucket.update_rate_limit()
-    if retry_after:
-        raise commands.CommandOnCooldown(bucket, retry_after)
-    return True
 class MyHelp(commands.HelpCommand):
     def get_command_signature(self, command):
       defcommandusage=command.usage
@@ -1697,12 +1686,8 @@ class Giveaways(commands.Cog):
 
 client.add_cog(Giveaways(client))
 
-async def foo(myusername,message):
-    async with aiohttp.ClientSession() as session:
-      webhook = Webhook.from_url('https://discord.com/api/webhooks/831191358864621659/OJvc61mESgPB59fUFZDprkriZqtCCJ401ird9TqgMm3_DiHp9jE2C6i1YwO5ruBG-X4I', adapter=AsyncWebhookAdapter(session))
-      await webhook.send(message, username=myusername)
-class Support(commands.Cog):
 
+class Support(commands.Cog):
     @commands.command(brief='This command can be used to delete a embed and message.', description='This command can be used to delete a embed and message.',usage="messageid")
     @commands.check_any(is_bot_staff())
     async def deletemessage(self,ctx,msgid:int):
@@ -1750,7 +1735,6 @@ class Support(commands.Cog):
             except:
                 await ctx.send(f" I cannot send messages in {channel.name}({guildsent}) .")
             break
-
     @commands.command(aliases=['maintenance'],brief='This command can be used for maintainence mode.', description='This command can be used for maintainence mode.',usage="")
     @commands.check_any(is_bot_staff())
     async def maintenancemode(self,ctx):
