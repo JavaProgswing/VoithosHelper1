@@ -311,6 +311,7 @@ Please visit https://top.gg/bot/805030662183845919 to submit ideas or bugs.""")
 
 
 client.help_command = MyHelp()
+
 @slash.slash(name="reply",
              description="This is a reply command to a message .")
 @commands.check_any(is_bot_staff(), commands.has_permissions(administrator=True))
