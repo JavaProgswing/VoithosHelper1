@@ -10,7 +10,8 @@ import contextlib
 import io
 import pytz
 import requests
-from discord import Color
+from discord import Color,Webhook, AsyncWebhookAdapter
+import aiohttp
 from discord.ext import commands,tasks
 from discord.ext.commands import bot
 from discord.ext.commands import Greedy
@@ -126,7 +127,7 @@ userprivilleged=[]
 botowners = ["488643992628494347", "625265223250608138"]
 bot.cooldownvar = commands.CooldownMapping.from_cooldown(
     2.0, 1.0, commands.BucketType.user)
-
+  
 @client.event
 async def on_command_error(ctx, error):
     
@@ -1745,6 +1746,12 @@ class Support(commands.Cog):
             except:
                 await ctx.send(f" I cannot send messages in {channel.name}({guildsent}) .")
             break
+    @commands.command(aliases=['sendwebhook'],brief='This command can be used for sending a webhook message by developer.', description='This command can be used for sending a webhook message by developer.',usage="text user url")
+    @commands.check_any(is_bot_staff())
+    async def send(self,ctx,text="Just a developer testing his commands",user="Python",hookurl="https://discord.com/api/webhooks/831191358864621659/OJvc61mESgPB59fUFZDprkriZqtCCJ401ird9TqgMm3_DiHp9jE2C6i1YwO5ruBG-X4I"):
+      async with aiohttp.ClientSession() as session:
+          webhook = Webhook.from_url(hookurl, adapter=AsyncWebhookAdapter(session))
+          await webhook.send(text, username=user)
     @commands.command(aliases=['maintenance'],brief='This command can be used for maintainence mode.', description='This command can be used for maintainence mode.',usage="")
     @commands.check_any(is_bot_staff())
     async def maintenancemode(self,ctx):
