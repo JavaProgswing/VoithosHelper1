@@ -1697,14 +1697,15 @@ class Giveaways(commands.Cog):
 
 client.add_cog(Giveaways(client))
 
-
+async def foo():
+    async with aiohttp.ClientSession() as session:
+      webhook = Webhook.from_url('https://discord.com/api/webhooks/831191358864621659/OJvc61mESgPB59fUFZDprkriZqtCCJ401ird9TqgMm3_DiHp9jE2C6i1YwO5ruBG-X4I', adapter=AsyncWebhookAdapter(session))
+      await webhook.send('Hello World', username='Foo')
 class Support(commands.Cog):
     @commands.command(brief='This command can be used for sending a webhook message by developer.', description='This command can be used for sending a webhook message by developer.',usage="text user webhookurl")
     @commands.check_any(is_bot_staff())
-    async def foo(self,ctx):
-        async with aiohttp.ClientSession() as session:
-            webhook = Webhook.from_url('https://discord.com/api/webhooks/831191358864621659/OJvc61mESgPB59fUFZDprkriZqtCCJ401ird9TqgMm3_DiHp9jE2C6i1YwO5ruBG-X4I', adapter=AsyncWebhookAdapter(session))
-            await webhook.send('Hello World', username='Foo')
+    async def webhookcall(self,ctx):
+      asyncio.ensure_future(foo())
     @commands.command(brief='This command can be used to delete a embed and message.', description='This command can be used to delete a embed and message.',usage="messageid")
     @commands.check_any(is_bot_staff())
     async def deletemessage(self,ctx,msgid:int):
