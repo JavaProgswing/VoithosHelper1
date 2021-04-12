@@ -248,7 +248,17 @@ def convert(time):
         return -2
 
     return val * time_dict[unit]
+_cd = commands.CooldownMapping.from_cooldown(1.0, 10.0, commands.BucketType.member) # from ?tag cooldown mapping
 
+# Then apply a bot check that will run before every command
+# Very similar to ?tag cooldown mapping but in Bot scope instead of Cog scope
+@client.check
+async def cooldown_check(ctx):
+    bucket = _cd.get_bucket(ctx.message)
+    retry_after = bucket.update_rate_limit()
+    if retry_after:
+        raise commands.CommandOnCooldown(bucket, retry_after)
+    return True
 class MyHelp(commands.HelpCommand):
     def get_command_signature(self, command):
       defcommandusage=command.usage
@@ -2135,14 +2145,6 @@ def guild_check(_custom_commands):
 
 class CustomCommands(commands.Cog):
 
-    """ Each entry in _custom_commands will look like this:
-    {
-        "command_name": {
-            guild_id: "This guild's output",
-            guild_id2: "This other guild's output",
-        }
-    }
-    """
     _custom_commands = {}
     @commands.command(brief='This command can be used to add your own commands and a custom response.', description='This command can be used to add your own commands and a custom response.',usage="commandname output")
     @commands.check_any(is_bot_staff(),
@@ -2371,8 +2373,8 @@ async def on_message_edit(before, message):
                 await message.delete()
             except:
                 message=await message.channel.send(f" I don't have enough permissions to mute {message.author} .")
-                await asyncio.sleep(5)
-                await message.delete()
+            await asyncio.sleep(5)
+            await message.delete()
 
     if message.guild and not message.channel.is_nsfw(
     ) and "mod" in message.channel.name.lower():
@@ -2460,12 +2462,8 @@ async def on_message(message):
                 return
             except:
                 message=await message.channel.send(f" I don't have enough permissions to mute {message.author} .")
-                await asyncio.sleep(5)
-                await message.delete()
-    if message.guild:
-      pass
-    else:
-      pass
+            await asyncio.sleep(5)
+            await message.delete()
     if message.guild and not message.channel.is_nsfw(
     ) and "mod" in message.channel.name.lower():
         analyze_request = {
