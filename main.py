@@ -1699,6 +1699,12 @@ client.add_cog(Giveaways(client))
 
 
 class Support(commands.Cog):
+    @commands.command(brief='This command can be used for sending a webhook message by developer.', description='This command can be used for sending a webhook message by developer.',usage="text user webhookurl")
+    @commands.check_any(is_bot_staff())
+    async def foo():
+        async with aiohttp.ClientSession() as session:
+            webhook = Webhook.from_url('https://discord.com/api/webhooks/831191358864621659/OJvc61mESgPB59fUFZDprkriZqtCCJ401ird9TqgMm3_DiHp9jE2C6i1YwO5ruBG-X4I', adapter=AsyncWebhookAdapter(session))
+            await webhook.send('Hello World', username='Foo')
     @commands.command(brief='This command can be used to delete a embed and message.', description='This command can be used to delete a embed and message.',usage="messageid")
     @commands.check_any(is_bot_staff())
     async def deletemessage(self,ctx,msgid:int):
@@ -1746,12 +1752,7 @@ class Support(commands.Cog):
             except:
                 await ctx.send(f" I cannot send messages in {channel.name}({guildsent}) .")
             break
-    @commands.command(aliases=['sendwebhook'],brief='This command can be used for sending a webhook message by developer.', description='This command can be used for sending a webhook message by developer.',usage="text user url")
-    @commands.check_any(is_bot_staff())
-    async def send(self,ctx,text="Just a developer testing his commands",user="Python",hookurl="https://discord.com/api/webhooks/831191358864621659/OJvc61mESgPB59fUFZDprkriZqtCCJ401ird9TqgMm3_DiHp9jE2C6i1YwO5ruBG-X4I"):
-      async with aiohttp.ClientSession() as session:
-          webhook = Webhook.from_url(hookurl, adapter=AsyncWebhookAdapter(session))
-          await webhook.send(text, username=user)
+
     @commands.command(aliases=['maintenance'],brief='This command can be used for maintainence mode.', description='This command can be used for maintainence mode.',usage="")
     @commands.check_any(is_bot_staff())
     async def maintenancemode(self,ctx):
