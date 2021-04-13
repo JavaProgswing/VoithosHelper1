@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 from keep_alive import keep_alive
 import asyncio
 from googleapiclient import discovery
+import dbl
 import random
 import os
 import discord
@@ -154,6 +155,19 @@ async def on_command_error(ctx, error):
     except:
         await ctx.channel.send(" I don't have Embed Link permission in this channel to send embed responses .")
         await ctx.channel.send(error)
+class TopGG(commands.Cog):
+    """Handles interactions with the top.gg API"""
+
+    def __init__(self, bot):
+        self.bot = bot
+        self.token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjgwNTAzMDY2MjE4Mzg0NTkxOSIsImJvdCI6dHJ1ZSwiaWF0IjoxNjE2NTEzMzI4fQ.2Ds8_hdV3b5wA8nTPIkNRDaCrH4T2pjupIZPvIMSNL0' # set this to your DBL token
+        self.dblpy = dbl.DBLClient(self.bot, self.token, autopost=True) # Autopost will post your guild count every 30 minutes
+
+    async def on_guild_post():
+        print("Server count posted successfully")
+
+
+client.add_cog(TopGG(client))
 async def call_background_task(ctx,message:str):
     messagecontrol=await ctx.send(f" This is a message to inform that live status for ip {message} was added in this channel , delete this message to stop live server status (every 30 minutes) .")
     controlid=messagecontrol.id
@@ -1439,9 +1453,11 @@ class Fun(commands.Cog):
       list_of_bots = []
       botcount=0
       for botloop in ctx.guild.members:
+        print(botloop.name)
+        print(botloop.bot)
         if botloop.bot:
           list_of_bots.append(botloop)
-          botcount=botcount+1
+          botcount+=1
 
       embed.add_field(name='Bot Count', value=str(botcount),inline=True)
       embed.add_field(name='Member Count', value=(memberCount),inline=True)
@@ -1928,10 +1944,10 @@ class Support(commands.Cog):
             #print(f"{count} has been incremented .")
             return message.author == ctx.author and message.channel == ctx.channel
 
-        await ctx.send('Please describe a title .')
+        await ctx.send('What is the title ?')
         title = await client.wait_for('message', check=check)
 
-        await ctx.send('Please describe a description .')
+        await ctx.send('What is the description ?')
         desc = await client.wait_for('message', check=check)
         print(f"Total count : {count}")
         try:

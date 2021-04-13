@@ -16,6 +16,7 @@ pytz = "^2021.1"
 youtube-dl = "^2021.3.3"
 mcstatus = "^5.1.1"
 flask = "^1.1.2"
+dblpy = "^0.4.0"
 
 
 [tool.poetry.dev-dependencies]
