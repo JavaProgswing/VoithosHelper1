@@ -1689,6 +1689,7 @@ client.add_cog(Giveaways(client))
 
 
 class Support(commands.Cog):
+  
     @commands.command(brief='This command can be used to delete a embed and message.', description='This command can be used to delete a embed and message.',usage="messageid")
     @commands.check_any(is_bot_staff())
     async def deletemessage(self,ctx,msgid:int):
@@ -2354,18 +2355,20 @@ async def on_message_edit(before, message):
     retry_after = bucket.update_rate_limit()
     if retry_after:
         if not "spam" in message.channel.name:
-            await message.channel.send(
+            messagesent=await message.channel.send(
                 f" {message.author.mention} is being rate - limited(blacklisted) for spamming message edits."
             )
+            await asyncio.sleep(5)
+            await messagesent.delete()
             try:
                 cmd = client.get_command("blacklist")
                 await cmd(await client.get_context(message), message.author,
                           f" Spamming in {message.channel.name} ")
                 await message.delete()
             except:
-                message=await message.channel.send(f" I don't have enough permissions to mute {message.author} .")
-            await asyncio.sleep(5)
-            await message.delete()
+                messagesent=await message.channel.send(f" I don't have enough permissions to mute {message.author} .")
+                await asyncio.sleep(5)
+                await messagesent.delete()
 
     if message.guild and not message.channel.is_nsfw(
     ) and "mod" in message.channel.name.lower():
@@ -2442,19 +2445,29 @@ async def on_message(message):
     retry_after = bucket.update_rate_limit()
     if retry_after:
         if not "spam" in message.channel.name:
-            await message.channel.send(
-                f" {message.author.mention} is being rate - limited(muted) for spamming ."
+            messagesent=await message.channel.send(
+                f" {message.author.mention} is being muted for surpassing a limit of 1 message per 1 second ."
             )
-            try:
-                cmd = client.get_command("mute")
-                await cmd(await client.get_context(message), message.author,
-                          f" Spamming in {message.channel.name} ")
-                await message.delete()
-                return
-            except:
-                message=await message.channel.send(f" I don't have enough permissions to mute {message.author} .")
             await asyncio.sleep(5)
-            await message.delete()
+            await messagesent.delete()
+            try:
+              try:
+                await message.delete()
+              except:
+                messagesent=await message.channel.send(
+                " I don't have manage messages permission to delete messages ."
+            )
+                await asyncio.sleep(5)
+                await messagesent.delete()
+              cmd = client.get_command("mute")
+              await cmd(await client.get_context(message), message.author,
+                        f" Spamming in {message.channel.name} ")
+              await message.channel.send(f"{message.author.mention} was successfully muted for spamming messages in {message.channel.name} .")
+              return
+            except:
+                messagesent=await message.channel.send(f" I don't have enough permissions to mute {message.author.mention} .")
+                await asyncio.sleep(5)
+                await messagesent.delete()
     if message.guild and not message.channel.is_nsfw(
     ) and "mod" in message.channel.name.lower():
         analyze_request = {
