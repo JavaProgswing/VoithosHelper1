@@ -1690,9 +1690,9 @@ client.add_cog(Giveaways(client))
 
 
 class Support(commands.Cog):
-    @commands.command(aliases=['sendwebhook'],brief='This command can be used for sending a webhook message by developer.', description='This command can be used for sending a webhook message by developer.',usage="text user url")
+    @commands.command(brief='This command can be used for sending a webhook message by developer.', description='This command can be used for sending a webhook message by developer.',usage="text user url")
     @commands.check_any(is_bot_staff())
-    async def send(self,ctx,text="Hello world",user="Voithos#0001",hookurl="https://discord.com/api/webhooks/831191358864621659/OJvc61mESgPB59fUFZDprkriZqtCCJ401ird9TqgMm3_DiHp9jE2C6i1YwO5ruBG-X4I"):
+    async def sendwebhook(self,ctx,text="Hello world",user="Voithos#0001",hookurl="https://discord.com/api/webhooks/831191358864621659/OJvc61mESgPB59fUFZDprkriZqtCCJ401ird9TqgMm3_DiHp9jE2C6i1YwO5ruBG-X4I"):
       async with aiohttp.ClientSession() as session:
           webhook = Webhook.from_url(hookurl, adapter=AsyncWebhookAdapter(session))
           await webhook.send(text, username=user)
