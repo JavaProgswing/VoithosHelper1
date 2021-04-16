@@ -269,6 +269,7 @@ class MyHelp(commands.HelpCommand):
       defcommandusage=command.usage
       if defcommandusage==None:
         defcommandusage="command-name"
+      print(str(command.description))
       return '%s%s %s' % (self.clean_prefix, command.qualified_name,defcommandusage)
     async def send_command_help(self, command):
         embed = discord.Embed(title=command.qualified_name+" command .")
@@ -293,6 +294,7 @@ class MyHelp(commands.HelpCommand):
 
             if command_signatures:
                 cog_name = getattr(cog, "qualified_name", ":white_small_square:No Category")
+
                 commandname=cog_name
                 if commandname=="Moderation":
                   commandname=":hammer:"+commandname
