@@ -2018,7 +2018,7 @@ class Music(commands.Cog):
         embedVar = discord.Embed(title=f" {vidtitle}",
                                   description=viddes,
                                   color=0x00ff00)
-        embedVar.add_field(name=url,value=str(vidviews)+" , published "+str(vidpublished))
+        embedVar.add_field(name=url,value=str(vidviews)+" | published "+str(vidpublished))
         embedVar.set_footer(text=ctx.author.name, icon_url=ctx.author.avatar_url)
         embedVar.set_author(name="Youtube", icon_url="https://cdn.discordapp.com/avatars/812967359312297994/2c234518e4889657d01fe7001cd52422.webp?size=128")
         await ctx.send(embed=embedVar)
@@ -2046,7 +2046,7 @@ class Music(commands.Cog):
           embedVar = discord.Embed(title=f" {vidtitle}",
                                   description=viddes,
                                   color=0x00ff00)
-          embedVar.add_field(name=url,value=str(vidviews)+" , published "+str(vidpublished))
+          embedVar.add_field(name=url,value=str(vidviews)+" | published "+str(vidpublished))
           embedVar.set_footer(text=ctx.author.name, icon_url=ctx.author.avatar_url)
           embedVar.set_author(name="Youtube", icon_url="https://cdn.discordapp.com/avatars/812967359312297994/2c234518e4889657d01fe7001cd52422.webp?size=128")
           await ctx.send(embed=embedVar)
@@ -2092,7 +2092,7 @@ class Music(commands.Cog):
           embedVar = discord.Embed(title=f" {vidtitle}",
                                   description=viddes,
                                   color=0x00ff00)
-          embedVar.add_field(name=url,value=str(vidviews)+" , published "+str(vidpublished))
+          embedVar.add_field(name=url,value=str(vidviews)+" | published "+str(vidpublished))
         else:
           embedVar = discord.Embed(title=f" {vidtitle}",description="No Information found",color=0x00ff00)
         embedVar.set_footer(text=ctx.author.name, icon_url=ctx.author.avatar_url)
