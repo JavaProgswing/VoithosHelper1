@@ -1990,7 +1990,7 @@ class Music(commands.Cog):
 
         await channel.connect()
         await ctx.reply(f"I have successfully connected to {channel}")
-    @commands.cooldown(1,30,BucketType.guild)
+    @commands.cooldown(1,45,BucketType.guild)
     @commands.command(brief='This command can be used to play a song from url.', description='This command can be used to play a song from url in a voice channel.',usage="youtubeurl")
     #@commands.check_any(is_bot_staff())
     async def playurl(self, ctx, *, url):
@@ -2022,7 +2022,7 @@ class Music(commands.Cog):
         embedVar.set_footer(text=ctx.author.name, icon_url=ctx.author.avatar_url)
         embedVar.set_author(name="Youtube", icon_url="https://cdn.discordapp.com/avatars/812967359312297994/2c234518e4889657d01fe7001cd52422.webp?size=128")
         await ctx.send(embed=embedVar)
-    @commands.cooldown(1,30,BucketType.guild)
+    @commands.cooldown(1,90,BucketType.guild)
     @commands.command(brief='This command can be used to loop a song.', description='This command can be used to loop a song in a voice channel.',usage="songname")
     async def loop(self, ctx, *, songname:str):
         voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
@@ -2058,7 +2058,7 @@ class Music(commands.Cog):
           if ctx.voice_client==None:
                 break
                 
-    @commands.cooldown(1,30,BucketType.guild)
+    @commands.cooldown(1,45,BucketType.guild)
     @commands.command(brief='This command can be used to play a song.', description='This command can be used to play a song in a voice channel.',usage="songname")
     async def play(self, ctx, *, songname:str):
         """Streams from a url (same as yt, but doesn't predownload)"""
@@ -2098,7 +2098,7 @@ class Music(commands.Cog):
         embedVar.set_footer(text=ctx.author.name, icon_url=ctx.author.avatar_url)
         embedVar.set_author(name="Youtube", icon_url="https://cdn.discordapp.com/avatars/812967359312297994/2c234518e4889657d01fe7001cd52422.webp?size=128")
         await ctx.send(embed=embedVar)
-    @commands.command(brief='This command can be used to change volume of song playing.', description='This command can be used to  change volume of song playing in a voice channel.',usage="volume")
+    @commands.command(brief='This command can be used to change volume of song playing.', description='This command can be used to  change volume of song playing in a voice channel.',usage="percentage")
     async def volume(self, ctx, volume: int):
         """Changes the player's volume"""
         if not uservoted(ctx.author) and not checkstaff(ctx.author) and not checkprivilleged(ctx.author):
