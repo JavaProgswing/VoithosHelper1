@@ -129,7 +129,32 @@ botowners = ["488643992628494347", "625265223250608138"]
 bot.cooldownvar = commands.CooldownMapping.from_cooldown(
     2.0, 1.0, commands.BucketType.user)
 
+@client.event
+async def on_command_error(ctx, error):
+    
+    embederror = discord.Embed(title=f"Error: {error}",color=Color.dark_red())
+    if ctx.guild:
+        embederror.add_field(name=(f" Guild: {ctx.guild}"),value="\u200b",inline=False)
+        embederror.add_field(name=(f" Channel: {ctx.channel.name}"),value="\u200b",inline=False)
+        embederror.add_field(name=(f" Member: {ctx.author}"),value="\u200b",inline=False)
+        embederror.add_field(name=(f" Message: {ctx.message.content}"),value="\u200b",inline=False)
+    else:
 
+        embederror.add_field(name=(" DM Channel "),value="\u200b",inline=False)
+        embederror.add_field(name=(f" Member: {ctx.author}"),value="\u200b",inline=False)
+        embederror.add_field(name=(f" Message: {ctx.message.content}"),value="\u200b",inline=False)
+
+    
+    try:
+        embedone = discord.Embed(title="",color=Color.dark_red())
+        embedone.add_field(name=" Command error ",value=error,inline=False)
+        if not "is not found" in str(error):
+          channelone = client.get_channel(811947788647923753)
+          await channelone.send(embed=embederror)
+          await ctx.channel.send(embed=embedone)
+    except:
+        await ctx.channel.send(" I don't have Embed Link permission in this channel to send embed responses .")
+        await ctx.channel.send(error)
 class TopGG(commands.Cog):
     """Handles interactions with the top.gg API"""
 
@@ -1979,7 +2004,10 @@ class Music(commands.Cog):
         #print(videosSearch.result())
         data=videosSearch.result()
         vidtitle=data['result'][0]['title']
-        viddes=data['result'][0]['descriptionSnippet'][0]['text']
+        try:
+          viddes=data['result'][0]['descriptionSnippet'][0]['text']
+        except:
+          viddes=" No description"
         vidviews=data['result'][0]['viewCount']['text']
         vidpublished=data['result'][0]['publishedTime']
         async with ctx.typing():
@@ -2004,7 +2032,10 @@ class Music(commands.Cog):
           #print(videosSearch.result())
           data=videosSearch.result()
           vidtitle=data['result'][0]['title']
-          viddes=data['result'][0]['descriptionSnippet'][0]['text']
+          try:
+            viddes=data['result'][0]['descriptionSnippet'][0]['text']
+          except:
+            viddes=" No description"
           vidviews=data['result'][0]['viewCount']['text']
           vidpublished=data['result'][0]['publishedTime']
           url=data['result'][0]['link']
@@ -2038,7 +2069,10 @@ class Music(commands.Cog):
         boolvideoexist=not len(videoexist)==0
         if boolvideoexist:
           vidtitle=data['result'][0]['title']
-          viddes=data['result'][0]['descriptionSnippet'][0]['text']
+          try:
+            viddes=data['result'][0]['descriptionSnippet'][0]['text']
+          except:
+            viddes=" No description"
           vidviews=data['result'][0]['viewCount']['text']
           vidpublished=data['result'][0]['publishedTime']
           url=data['result'][0]['link']
