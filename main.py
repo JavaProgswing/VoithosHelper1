@@ -136,12 +136,12 @@ async def on_command_error(ctx, error):
     if ctx.guild:
         embederror.add_field(name=(f" Guild: {ctx.guild}"),value="\u200b",inline=False)
         embederror.add_field(name=(f" Channel: {ctx.channel.name}"),value="\u200b",inline=False)
-        embederror.add_field(name=(f" Member: {ctx.author}"),value="\u200b",inline=False)
+        embederror.add_field(name=(f" Member: {ctx.author.mention}"),value="\u200b",inline=False)
         embederror.add_field(name=(f" Message: {ctx.message.content}"),value="\u200b",inline=False)
     else:
 
         embederror.add_field(name=(" DM Channel "),value="\u200b",inline=False)
-        embederror.add_field(name=(f" Member: {ctx.author}"),value="\u200b",inline=False)
+        embederror.add_field(name=(f" Member: {ctx.author.mention}"),value="\u200b",inline=False)
         embederror.add_field(name=(f" Message: {ctx.message.content}"),value="\u200b",inline=False)
 
     
@@ -391,7 +391,7 @@ class Moderation(commands.Cog):
                 await ctx.channel.send(f" Successfully deleted {channel.name}")
             except:
                 await ctx.send(
-                    f" Please delete {channel.name} on your own , unable to delete . "
+                    f" Please delete {channel.name} on your own , unable to delete channel . "
                 )
 
         copycategory = await ctx.guild.create_category("General")
@@ -410,13 +410,12 @@ class Moderation(commands.Cog):
                         commands.has_permissions(manage_messages=True))
     async def purge(self, ctx, numberstr,*, reason=None):
         if reason == None:
-            reason = "no reason provided"
+            reason = "no reason provided ."
         if numberstr =="all" or numberstr=="everything":
             textchannelcloned=await ctx.channel.clone(reason=reason)
             await ctx.channel.delete(reason=reason)
-            await textchannelcloned.send(
-            str(ctx.message.author) + " has purged " + numberstr +
-            " messages for " + str(reason))
+            await textchannelcloned.send(f"""{ctx.author.mention} has purged number
+             messages for {reason}""")
             return
         try:
             number=int(numberstr)
@@ -428,15 +427,14 @@ class Moderation(commands.Cog):
         except:
             raise commands.CommandError("I do not have `manage messages` permissions to delete messages .")
             return
-        await ctx.channel.send(
-            str(ctx.message.author) + " has purged " + str(number) +
-            " messages for " + str(reason))
+        await ctx.channel.send(f"""{ctx.author.mention} has purged number
+             messages for {reason}""")
 
     @commands.command(brief='This command prevents users from viewing any channels on the server.', description='This command prevents users from viewing any channels on the server and can be used by members having manage roles permission.',usage="@member reason")
     @commands.check_any(is_bot_staff(), commands.has_permissions(manage_roles=True))
     async def blacklist(self, ctx, member: discord.Member,*, reason=None):
         if reason == None:
-            reason = "no reason provided"
+            reason = "no reason provided ."
         if not ctx.guild.me.guild_permissions.administrator and not ctx.guild.me.guild_permissions.manage_roles:
             raise commands.CommandError(
                 " I do not have `administrator` permissions , grant me `administrator` or `manage roles` permission to mute users ."
@@ -491,8 +489,13 @@ class Moderation(commands.Cog):
                                                   name='blacklisted')
 
         await member.add_roles(blacklistrole)
+        try:
+            await member.send(f""" You were blacklisted by {ctx.author.mention} in {ctx.guild.name} for {reason} """)
+            ##print(f"Successfully dmed users!")
+        except:
+          pass
         await ctx.channel.send(
-            f" {member} was successfully blacklisted by {ctx.message.author} for {reason} "
+            f" {member.mention} was successfully blacklisted by {ctx.author.mention} for {reason} "
         )
 
     @commands.command(brief='This command allows users to view any channel on the server.', description='This command allows users to view any channel on the server and can be used by members having manage roles permission.',usage="@member reason")
@@ -526,7 +529,7 @@ class Moderation(commands.Cog):
                 f" Use !blacklist {blacklistedmember} to blacklist user .")
             return
         if reason == None:
-            reason = "no reason provided"
+            reason = "no reason provided ."
         blacklistrole = discord.utils.get(ctx.guild.roles, name='blacklisted')
         await blacklistedmember.remove_roles(blacklistrole)
         blacklistdusers = open("blacklisted.txt", "r")
@@ -546,18 +549,35 @@ class Moderation(commands.Cog):
                 filestring += f"{userdetails[0]},{userdetails[1]},{userdetails[2]}."
         remainingblacklistdusers = open("blacklisted.txt", "w")
         remainingblacklistdusers.write(filestring)
-
+        try:
+            await blacklistedmember.send(f""" You were unblacklisted by {ctx.author.mention} in {ctx.guild.name} for {reason} """)
+            ##print(f"Successfully dmed users!")
+        except:
+          pass
         await ctx.channel.send(
-            f""" {blacklistedmember} was successfully unblacklisted by {ctx.message.author} for {reason} """
+            f""" {blacklistedmember.mention} was successfully unblacklisted by {ctx.author.mention} for {reason} """
         )
     @commands.command(brief='This command warns users for a given reason provided.', description='This command warns users for a given reason provided and can be used by users having administrator permission.',usage="@member reason")
     @commands.check_any(is_bot_staff(),
                         commands.has_permissions(administrator=True))
     async def warn(self, ctx, member: discord.Member,*, reason=None):
       if reason == None:
-        reason="no reason provided"
-      await ctx.channel.send(f" {member.mention} was warned by {ctx.author} for {reason} .")
-
+        reason="no reason provided ."
+      await ctx.send(f" {member.mention} was warned by {ctx.author.mention} for {reason} .")
+      warneduser = open(f"{ctx.guild.id}_{member.id}.txt", "w")  
+      warneduser.close()
+      warneduserreason = open(f"{ctx.guild.id}_{member.id}.txt", "a")  
+      warneduserreason.write(reason)
+      warneduserreason.close()
+    @commands.command(brief='This command shows user warnings in the guild .', description='This command shows user warnings in the guild and can be used by users having administrator permission.',usage="@member")
+    @commands.check_any(is_bot_staff(),
+                        commands.has_permissions(administrator=True))
+    async def warnings(self, ctx, member: discord.Member):
+      filename=f"{ctx.guild.id}_{member.id}.txt"
+      await ctx.send(f" {member.mention} warnings in {ctx.guild.name} are : ")
+      with open(filename, "r+") as file1:
+        await ctx.send(str(file1.read()))
+  
     @commands.command(brief='This command (mutes)prevents user from sending messages in any channel .', description='This command (mutes)prevents user from sending messages in any channel and can be used by users having manage roles permission.',usage="@member reason")
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_roles=True))
@@ -568,7 +588,7 @@ class Moderation(commands.Cog):
             )
             return
         if reason == None:
-            reason = "no reason provided"
+            reason = "no reason provided ."
         if member == client.user:
             raise commands.CommandError("I could not mute myself .")
             return
@@ -609,8 +629,13 @@ class Moderation(commands.Cog):
 
 
         await member.add_roles(muterole)
+        try:
+            await member.send(f""" You were muted by {ctx.author.mention} in {ctx.guild.name} for {reason} """)
+            ##print(f"Successfully dmed users!")
+        except:
+          pass
         await ctx.channel.send(
-            f" {member} was successfully muted by {ctx.message.author} for {reason} "
+            f" {member.mention} was successfully muted by {ctx.author.mention} for {reason} "
         )
 
     @commands.command(brief='This command (unmutes)allows user to send messages in any channel .', description='This command (unmutes)allows user to send messages in any channel and can be used by users having manage roles permission.',usage="@member reason")
@@ -638,7 +663,7 @@ class Moderation(commands.Cog):
             await ctx.channel.send(f" Use !mute {mutedmember} to mute user .")
             return
         if reason == None:
-            reason = "no reason provided"
+            reason = "no reason provided ."
         muterole = discord.utils.get(ctx.guild.roles, name='muted')
         await mutedmember.remove_roles(muterole)
         mutedusers = open("muted.txt", "r")
@@ -657,21 +682,25 @@ class Moderation(commands.Cog):
                 filestring += f"{userdetails[0]},{userdetails[1]},{userdetails[2]}."
         remainingmutedusers = open("muted.txt", "w")
         remainingmutedusers.write(filestring)
-
+        try:
+            await mutedmember.send(f""" You were unmuted by {ctx.author.mention} in {ctx.guild.name} for {reason} """)
+            ##print(f"Successfully dmed users!")
+        except:
+          pass
         await ctx.channel.send(
-            f""" {mutedmember} was successfully unmuted by {ctx.message.author} for {reason} """
+            f""" {mutedmember.mention} was successfully unmuted by {ctx.author.mention} for {reason} """
         )
 
     @commands.command(brief='This command unbans user from the guild .', description='This command unbans user from the guild and can be used by users having ban members permission.',usage="@member reason")
     @commands.check_any(is_bot_staff(),
                         commands.has_permissions(ban_members=True))
     async def unban(self, ctx, member: discord.User,*, reason=None):
-        if member == None or member == ctx.message.author:
+        if member == None or member == ctx.author:
             raise commands.CommandError(
-                " You cannot unban yourself (You are not banned) .")
+                " You cannot apply ban/unban actions to your own account .")
             return
         if reason == None:
-            reason = "being forgiven"
+            reason = "being forgiven ."
         message = f"You have been unbanned from {ctx.guild.name} for {reason}"
         ##print(f"Unsuccessfully DMed users, try again later.")
         try:
@@ -684,9 +713,9 @@ class Moderation(commands.Cog):
             ##print(f"Successfully dmed users!")
         except:
             await ctx.send(
-                f"{member} couldn't be direct messaged about the server unban ")
+                f"{member.mention} couldn't be direct messaged about the server unban ")
         await ctx.channel.send(
-            f"{member} was unbanned from {ctx.guild.name} for {reason} by {ctx.message.author}"
+            f"{member.mention} was unbanned from {ctx.guild.name} by {ctx.author.mention} for {reason}"
         )
 
     @commands.command(brief='This command bans user from the guild .', description='This command bans user from the guild and can be used by users having ban members permission.',usage="@member reason")
@@ -694,7 +723,7 @@ class Moderation(commands.Cog):
                         commands.has_permissions(ban_members=True))
     async def ban(self, ctx, member: discord.User,*, reason=None):
         if member == None or member == ctx.message.author:
-            raise commands.CommandError(" You cannot ban yourself .")
+            raise commands.CommandError(" You cannot apply ban/unban actions to your own account .")
             return
         if reason == None:
             reason = "being a jerk!"
@@ -711,9 +740,9 @@ class Moderation(commands.Cog):
             ##print(f"Successfully dmed users!")
         except:
             await ctx.send(
-                f"{member} couldn't be direct messaged about the server ban ")
+                f"{member.mention} couldn't be direct messaged about the server ban ")
         await ctx.channel.send(
-            f"{member} was banned from {ctx.guild.name} for {reason} by {ctx.message.author}"
+            f"{member.mention} was banned from {ctx.guild.name} by {ctx.author.mention} for {reason}"
         )
 
     @commands.command(brief='This command kicks user from the guild .', description='This command kicks user from the guild and can be used by users having kick members permission.',usage="@member reason")
@@ -721,7 +750,7 @@ class Moderation(commands.Cog):
                         commands.has_permissions(kick_members=True))
     async def kick(self, ctx, member: discord.User,*, reason=None):
         if member == None or member == ctx.message.author:
-            raise commands.CommandError(" You cannot kick yourself .")
+            raise commands.CommandError(" You cannot kick your own account from this guild.")
             return
 
         if reason == None:
@@ -738,9 +767,9 @@ class Moderation(commands.Cog):
             ##print(f"Successfully dmed users!")
         except:
             await ctx.send(
-                f"{member} couldn't be direct messaged about the server kick ")
+                f"{member.mention} couldn't be direct messaged about the server kick ")
         await ctx.channel.send(
-            f"{member} was kicked from {ctx.guild.name} for {reason} by {ctx.message.author}"
+            f"{member.mention} was kicked from {ctx.guild.name} by {ctx.author.mention} for {reason}"
         )
 
 
@@ -873,7 +902,7 @@ class MinecraftFun(commands.Cog):
       membertwo=member
       messagereact=await ctx.channel.send(f'React with that 👍 reaction in 60 seconds, {member.mention} to start the pvp match !')
       await messagereact.add_reaction("👍")
-      escapelist=["ran away like a coward .","was scared of a terrible defeat .","didn't know how to fight ."," escaped in the midst of a battle .",f"was too weak for battling {ctx.author} .",f"was scared of fighting {ctx.author.mention} ."]
+      escapelist=["ran away like a coward .","was scared of a terrible defeat .","didn't know how to fight ."," escaped in the midst of a battle .",f"was too weak for battling {ctx.author.mention} .",f"was scared of fighting {ctx.author.mention} ."]
       def check(reaction, user):
         return user == member and str(reaction.emoji) == '👍'
 
@@ -896,7 +925,7 @@ class MinecraftFun(commands.Cog):
       membertwo_sword=random.choice(swordchoice)
       membertwo_sword_attack=swordattack[swordchoice.index(membertwo_sword)]
       await ctx.channel.send(f" {ctx.author.mention}({memberone_healthpoint} Hitpoints) prepared a {memberone_armor} armor and a {memberone_sword} sword to obliterate {member} .")
-      await ctx.channel.send(f" {member.mention}({membertwo_healthpoint} Hitpoints) prepared a {membertwo_armor} armor and a {membertwo_sword} sword to obliterate {ctx.author} .")
+      await ctx.channel.send(f" {member.mention}({membertwo_healthpoint} Hitpoints) prepared a {membertwo_armor} armor and a {membertwo_sword} sword to obliterate {ctx.author.mention} .")
       await ctx.channel.send(f'(No spamming)👍 Let the battle commence between {member.mention} and {ctx.author.mention} .') 
       await ctx.channel.send(' Type `f` to fight with sword and `d` to defend . `(NOTE: This is instantaneous and the member to obliterate other wins !)`' )
       memberone_resistance=False
@@ -1011,7 +1040,7 @@ class MinecraftFun(commands.Cog):
       membertwo=member
       messagereact=await ctx.send(f'React with that 👍 reaction in 60 seconds, {member.mention} to start the pvp match !')
       await messagereact.add_reaction("👍")
-      escapelist=["ran away like a coward .","was scared of a terrible defeat .","didn't know how to fight ."," escaped in the midst of a battle .",f"was too weak for battling {ctx.author} .",f"was scared of fighting {ctx.author.mention} ."]
+      escapelist=["ran away like a coward .","was scared of a terrible defeat .","didn't know how to fight ."," escaped in the midst of a battle .",f"was too weak for battling {ctx.author.mention} .",f"was scared of fighting {ctx.author.mention} ."]
       def check(reaction, user):
         return user == member and str(reaction.emoji) == '👍'
 
@@ -1034,7 +1063,7 @@ class MinecraftFun(commands.Cog):
       membertwo_sword=random.choice(swordchoice)
       membertwo_sword_attack=swordattack[swordchoice.index(membertwo_sword)]
       await ctx.channel.send(f" {ctx.author.mention}({memberone_healthpoint} Hitpoints) prepared a {memberone_armor} armor and a {memberone_sword} sword to obliterate {member} .")
-      await ctx.channel.send(f" {member.mention}({membertwo_healthpoint} Hitpoints) prepared a {membertwo_armor} armor and a {membertwo_sword} sword to obliterate {ctx.author} .")
+      await ctx.channel.send(f" {member.mention}({membertwo_healthpoint} Hitpoints) prepared a {membertwo_armor} armor and a {membertwo_sword} sword to obliterate {ctx.author.mention} .")
       await ctx.channel.send(f'(No spamming)👍 Let the battle commence between {member.mention} and {ctx.author.mention} .') 
       await ctx.channel.send(' Type `f` to fight with sword and `d` to defend . `(NOTE: This is instantaneous and the member to obliterate other wins !)`' )
       voicechannel=ctx.voice_client
@@ -2014,7 +2043,7 @@ class Music(commands.Cog):
             player = await YTDLSource.from_url(url, loop=self.bot.loop, stream=True)
             ctx.voice_client.play(player, after=lambda e: print('Player error: %s' % e) if e else None)
         #824193916818554960
-        await ctx.reply(f' Now playing: {player.title} requested by {ctx.author} .')
+        await ctx.reply(f' Now playing: {player.title} requested by {ctx.author.mention} .')
         embedVar = discord.Embed(title=f" {vidtitle}",
                                   description=viddes,
                                   color=0x00ff00)
@@ -2042,7 +2071,7 @@ class Music(commands.Cog):
           async with ctx.typing():
               player = await YTDLSource.from_url(url, loop=self.bot.loop, stream=True)
               ctx.voice_client.play(player, after=lambda e: print('Player error: %s' % e) if e else None)
-          await ctx.reply(f' Now playing: {player.title} requested by {ctx.author} .')
+          await ctx.reply(f' Now playing: {player.title} requested by {ctx.author.mention} .')
           embedVar = discord.Embed(title=f" {vidtitle}",
                                   description=viddes,
                                   color=0x00ff00)
@@ -2087,7 +2116,7 @@ class Music(commands.Cog):
             player = await YTDLSource.from_url(url, loop=self.bot.loop, stream=True)
             ctx.voice_client.play(player, after=lambda e: print('Player error: %s' % e) if e else None)
         vidtitle=player.title
-        await ctx.reply(f' Now playing: {player.title} requested by {ctx.author} .')
+        await ctx.reply(f' Now playing: {player.title} requested by {ctx.author.mention} .')
         if boolvideoexist:
           embedVar = discord.Embed(title=f" {vidtitle}",
                                   description=viddes,
@@ -2111,14 +2140,14 @@ class Music(commands.Cog):
             return 
 
         ctx.voice_client.source.volume = volume / 100
-        await ctx.reply(f"{ctx.author} has changed 🔉 to {volume} .")
+        await ctx.reply(f"{ctx.author.mention} has changed 🔉 to {volume} .")
 
     @commands.command(brief='This command can be used to stop the playing song.', description='This command can be used to stop the playing song in a voice channel.',usage="")
     async def stop(self, ctx):
         """Stops and disconnects the bot from voice"""
         try:
           await ctx.voice_client.disconnect()
-          await ctx.reply(f"The audio has been stopped by {ctx.author}")
+          await ctx.reply(f"The audio has been stopped by {ctx.author.mention}")
         except:
           raise commands.CommandError("I am not connected to any voice channels .")
     @loop.before_invoke
@@ -2151,7 +2180,7 @@ class Music(commands.Cog):
         try:
           if voice.is_playing():
               voice.pause()
-              await ctx.reply(f"The audio has been paused by {ctx.author}")
+              await ctx.reply(f"The audio has been paused by {ctx.author.mention}")
           else:
               raise commands.CommandError("Currently no audio is playing.")
         except:
@@ -2163,7 +2192,7 @@ class Music(commands.Cog):
         try:
           if voice.is_paused():
               voice.resume()
-              await ctx.reply(f"The audio has been resumed by {ctx.author}")
+              await ctx.reply(f"The audio has been resumed by {ctx.author.mention}")
           else:
               raise commands.CommandError("The audio is not paused.")
         except:
