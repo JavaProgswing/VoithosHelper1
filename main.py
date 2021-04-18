@@ -564,8 +564,6 @@ class Moderation(commands.Cog):
       if reason == None:
         reason="no reason provided ."
       await ctx.send(f" {member.mention} was warned by {ctx.author.mention} for {reason} .")
-      warneduser = open(f"{ctx.guild.id}_{member.id}.txt", "w")  
-      warneduser.close()
       warneduserreason = open(f"{ctx.guild.id}_{member.id}.txt", "a")  
       warneduserreason.write(reason)
       warneduserreason.close()
