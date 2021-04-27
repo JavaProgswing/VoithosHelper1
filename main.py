@@ -5,6 +5,7 @@ from googleapiclient import discovery
 import dbl
 import random
 import os
+import psutil
 import discord
 import datetime
 import contextlib
@@ -78,11 +79,19 @@ class YTDLSource(discord.PCMVolumeTransformer):
                    data=data)
 
 
-logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger('discord')
+logger.setLevel(logging.DEBUG)
+handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
+handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
+logger.addHandler(handler)
 prefixlist=[]
 async def get_prefix(client, message):
   if message.guild:
-    return prefixlist[prefixlist.index(message.guild.id)+1]
+    try:
+      return prefixlist[prefixlist.index(message.guild.id)+1]
+    except:
+      prefixlist.append(message.guild.id)
+      prefixlist.append("!")
   else:
     return "!"
 
@@ -186,7 +195,7 @@ async def call_background_task(ctx,textchannel,message:str):
           await textchannel.send(" I don't have `manage messages` permission to delete messages .")
           return
         
-@tasks.loop(seconds=1)
+@tasks.loop(seconds=60)
 async def saveprefix():
   global prefixlist
   with open("prefixes.txt", "w") as f:
@@ -269,7 +278,7 @@ class MyHelp(commands.HelpCommand):
       defcommandusage=command.usage
       if defcommandusage==None:
         defcommandusage="command-name"
-      print(str(command.description))
+      #print(str(command.description))
       return '%s%s %s' % (self.clean_prefix, command.qualified_name,defcommandusage)
     async def send_command_help(self, command):
         embed = discord.Embed(title=command.qualified_name+" command .")
@@ -317,7 +326,7 @@ class MyHelp(commands.HelpCommand):
                  
 
         channel = self.get_destination()
-        embedone.add_field(name=":link:About",value="""This bot is developed by JavaCoder12#6646, based on discord.py\n
+        embedone.add_field(name=":link:About",value="""This bot is developed by <@488643992628494347>, based on discord.py\n
 Please visit https://top.gg/bot/805030662183845919 to submit ideas or bugs.""")
         embedone.set_author(name="Commands help",icon_url="https://cdn.discordapp.com/avatars/805030662183845919/70fee8581891e9a810da60944dc486ba.webp?size=128")
         embedone.set_footer(text="Version 1.10 by JavaCoder12",icon_url="https://cdn.discordapp.com/avatars/488643992628494347/e50ae57d9e8880e6acfbc2b444000fa1.webp?size=128")
@@ -371,11 +380,13 @@ class VoithosInfo(commands.Cog):
       embedVar = discord.Embed(title=f"{client.user}",
                                   description=" ",
                                   color=0x00ff00)
-      embedVar.add_field(name="Author",value=" This bot is made by ¿ɿɘboƆɒvɒႱ¿#5867 and JavaCoder12#6646 .",inline=False)
-      embedVar.add_field(name="Info",value="""An all-in-one moderation bot coded in python with a punishments system, entertainment facts and profane message filter.""",inline=False)
-      embedVar.add_field(name="Bot websites",value="https://top.gg/bot/805030662183845919",inline=False)
+      embedVar.add_field(name='CPU usage ', value=f"{psutil.cpu_percent(1)}%",inline=False)
+      embedVar.add_field(name='RAM usage ', value=f"{psutil.virtual_memory()[2]}%",inline=False)
+      embedVar.add_field(name="Author",value=" This bot is made by <@625265223250608138> and <@488643992628494347> .",inline=False)
+      embedVar.add_field(name="Information",value="""An all-in-one moderation bot coded in python with a punishments system, entertainment facts and profane message filter.""",inline=False)
+      embedVar.add_field(name="Websites",value="https://top.gg/bot/805030662183845919",inline=False)
       embedVar.set_thumbnail(url="https://cdn.discordapp.com/avatars/805030662183845919/70fee8581891e9a810da60944dc486ba.webp?size=128")
-      embedVar.set_author(name="JavaCoder12#6646", icon_url="https://cdn.discordapp.com/avatars/488643992628494347/e50ae57d9e8880e6acfbc2b444000fa1.webp?size=128")
+      embedVar.set_author(name="JavaCoder", icon_url="https://cdn.discordapp.com/avatars/488643992628494347/e50ae57d9e8880e6acfbc2b444000fa1.webp?size=128")
       await ctx.reply(embed=embedVar)
 
 client.add_cog(VoithosInfo(client))
@@ -571,10 +582,21 @@ class Moderation(commands.Cog):
                         commands.has_permissions(administrator=True))
     async def warnings(self, ctx, member: discord.Member):
       filename=f"{ctx.guild.id}_{member.id}.txt"
+      file_exists = os.path.isfile(filename) 
+      if not file_exists:
+        filecreate= open(filename, "w")
+        filecreate.close()
       await ctx.send(f" {member.mention} warnings in {ctx.guild.name} are : ")
+      count=1
       with open(filename, "r+") as file1:
-        await ctx.send(str(file1.read()))
-  
+        try:
+          allwarnings=(file1.read())
+          singlewarning=allwarnings.splitlines()
+          for i in singlewarning:
+            await ctx.send(f"{count}) {i}")
+            count=count+1
+        except:
+          pass
     @commands.command(brief='This command (mutes)prevents user from sending messages in any channel .', description='This command (mutes)prevents user from sending messages in any channel and can be used by users having manage roles permission.',usage="@member reason")
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_roles=True))
