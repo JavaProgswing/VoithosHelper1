@@ -30,7 +30,8 @@ from PIL import ImageFont
 from PIL import ImageDraw
 from io import BytesIO
 from youtubesearchpython import VideosSearch
-#ODA1MDMwNjYyMTgzODQ1OTE5.YBU9Og.unkjxR7-jCmPoX9EDUbB8JTzJPI
+from googletrans import Translator
+translator = Translator()
 # Suppress noise about console usage from errors
 maintenancemodestatus=False
 youtube_dl.utils.bug_reports_message = lambda: ''
@@ -84,6 +85,7 @@ logger.setLevel(logging.DEBUG)
 handler = logging.FileHandler(filename='discord.log', encoding='utf-8', mode='w')
 handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(message)s'))
 logger.addHandler(handler)
+exemptspam=[]
 prefixlist=[]
 async def get_prefix(client, message):
   if message.guild:
@@ -92,6 +94,7 @@ async def get_prefix(client, message):
     except:
       prefixlist.append(message.guild.id)
       prefixlist.append("!")
+      return prefixlist[prefixlist.index(message.guild.id)+1]
   else:
     return "!"
 
@@ -99,8 +102,6 @@ client = commands.Bot(command_prefix=get_prefix,case_insensitive=True)
 slash = SlashCommand(client, sync_commands=True)
 API_KEY = 'AIzaSyB7O6SC44ARFgK8HjdOYbsXnZ6wY9QiSsQ'
 service = discovery.build('commentanalyzer', 'v1alpha1', developerKey=API_KEY)
-inputid = 0
-inputmsg = ''
 randomjava = [
     "The original name for Java was Oak. It was eventually changed to Java by Sun's marketing department when Sun lawyers found that there was already a computer company registered as Oak. But a legend has it that Gosling and his gang of programmers went out to the local cafe to discuss names and ended up naming it Java. ",
     'James Gosling was working at Sun Labs, around 1992. Gosling and his team was building a set-top box and started by "cleaning up" C++ and wound up with a new language and runtime. Thus, Java or Oak came into being.',
@@ -137,10 +138,11 @@ userprivilleged=[]
 botowners = ["488643992628494347", "625265223250608138"]
 bot.cooldownvar = commands.CooldownMapping.from_cooldown(
     2.0, 1.0, commands.BucketType.user)
-
+channelone = None
+backupserver=None
 @client.event
 async def on_command_error(ctx, error):
-    
+    global channelone
     embederror = discord.Embed(title=f"Error: {error}",color=Color.dark_red())
     if ctx.guild:
         embederror.add_field(name=(f" Guild: {ctx.guild}"),value="\u200b",inline=False)
@@ -158,7 +160,6 @@ async def on_command_error(ctx, error):
         embedone = discord.Embed(title="",color=Color.dark_red())
         embedone.add_field(name=" Command error ",value=error,inline=False)
         if not "is not found" in str(error):
-          channelone = client.get_channel(811947788647923753)
           await channelone.send(embed=embederror)
           await ctx.channel.send(embed=embedone)
     except:
@@ -194,7 +195,12 @@ async def call_background_task(ctx,textchannel,message:str):
         except:
           await textchannel.send(" I don't have `manage messages` permission to delete messages .")
           return
-        
+@tasks.loop(seconds=60)
+async def saveexemptspam():
+  global exemptspam
+  with open("exemptspam.txt", "w") as f:
+    for channelid in exemptspam:
+        f.write(str(channelid) +"\n")
 @tasks.loop(seconds=60)
 async def saveprefix():
   global prefixlist
@@ -292,6 +298,9 @@ class MyHelp(commands.HelpCommand):
 
 
     async def send_bot_help(self, mapping):
+        copychannel=self.get_destination()
+        serverlang= translator.detect(copychannel.name)
+        print(str(serverlang)+" "+copychannel.name)
         embedone = discord.Embed(title="\u200b",description=f"Use {self.clean_prefix}help command-name to gain more information about that command :smiley:",
                                  color=Color.blue())
 
@@ -338,42 +347,7 @@ Please visit https://top.gg/bot/805030662183845919 to submit ideas or bugs.""")
 
 client.help_command = MyHelp()
 
-@slash.slash(name="reply",
-             description="This is a reply command to a message .")
-@commands.check_any(is_bot_staff(), commands.has_permissions(administrator=True))
-async def reply(ctx,messageid,text):
-    if not uservoted(ctx.author) and not checkstaff(ctx.author) and not checkprivilleged(ctx.author):
-      cmd = client.get_command("vote")
-      await cmd(ctx)
-      await ctx.send(" Vote for our bot on following websites for accessing this feature (slash-command).")
-      return
-    try:
-      message=await ctx.channel.fetch_message(messageid)
-    except:
-      await ctx.send(f" The provided message with message id {messageid} was not found in this guild .")
-      return
-    try:
-      await message.reply(content=text)
-    except:
-      await ctx.send(" I could not reply to this message due to an unknown error .")
-@slash.slash(name="pin",
-             description="This is a pin command to a message .")
-@commands.check_any(is_bot_staff(), commands.has_permissions(administrator=True))
-async def pin(ctx,messageid,text):
-    if not uservoted(ctx.author) and not checkstaff(ctx.author) and not checkprivilleged(ctx.author):
-      cmd = client.get_command("vote")
-      await cmd(ctx)
-      await ctx.send(" Vote for our bot on following websites for accessing this feature (slash-command).")
-      return
-    try:
-      message=await ctx.channel.fetch_message(messageid)
-    except:
-      await ctx.send(f" The provided message with message id {messageid} was not found in this guild .")
-      return
-    try:
-      await message.pin(reason=text)
-    except:
-      await ctx.send(" I do not have `Manage Messages` permission required to pin messages .")
+
 class VoithosInfo(commands.Cog):
     @commands.command(aliases=["info"],brief='This command provides the bot information.', description='This command provides the bot information.',usage="")
     async def botinfo(self, ctx):
@@ -394,6 +368,7 @@ class Moderation(commands.Cog):
     @commands.command(brief='This command resets all channels into a custom format/template.', description='This command resets all channels into a custom format/template and can only be used by server owners .',usage="")
     @commands.check_any(is_bot_staff(), is_guild_owner())
     async def resetchannel(self, ctx):
+        global backupserver
         for channel in ctx.guild.channels:
             if channel == ctx.channel:
                 continue
@@ -404,9 +379,8 @@ class Moderation(commands.Cog):
                 await ctx.send(
                     f" Please delete {channel.name} on your own , unable to delete channel . "
                 )
-
-        copycategory = await ctx.guild.create_category("General")
-        recoveryguild = client.get_guild(760382257235623957)
+        recoveryguild=backupserver
+        await ctx.channel.delete()
         #print(str(recoveryguild))
         for recoverychannel in recoveryguild.channels:
             if recoverychannel.type == discord.ChannelType.text:
@@ -415,7 +389,30 @@ class Moderation(commands.Cog):
             elif recoverychannel.type == discord.ChannelType.category:
                 copycategory = await ctx.guild.create_category(
                     recoverychannel.name)
-
+            elif recoverychannel.type == discord.ChannelType.voice:
+                await ctx.guild.create_voice_channel(recoverychannel.name,
+                                                    category=copycategory)         
+    @commands.command(brief='This command stops checking spam in a certain channel.', description='This command stops checking for spam in a certain channel.',usage="#channel")
+    @commands.check_any(is_bot_staff(), 
+                        commands.has_permissions(manage_messages=True))
+    async def disablespam(self, ctx ,channel:discord.TextChannel):    
+      global exemptspam
+      if channel.id in exemptspam:
+        raise commands.CommandError("This channel is already not being checked for further spamming .")
+        return
+      exemptspam.append(channel.id)
+      await ctx.send(f"{channel.name} wil not be checked for further spamming ." )
+    @commands.command(brief='This command enables checking spam in a certain channel.', description='This command enables checking spam in a certain channel..',usage="#channel")
+    @commands.check_any(is_bot_staff(), 
+                        commands.has_permissions(manage_messages=True))
+    async def enablespam(self, ctx ,channel:discord.TextChannel):    
+      global exemptspam
+      try:
+        exemptspam.remove(channel.id)
+      except:
+        raise commands.CommandError("This channel is already checked for further spamming .")
+        return
+      await ctx.send(f"{channel.name} will be checked for further spamming ." )
     @commands.command(brief='This command clears given number of messages from the same channel.', description='This command clears given number of messages from the same channel and can be used by members having manage messages permission.',usage="number reason")
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_messages=True))
@@ -814,6 +811,7 @@ class MinecraftFun(commands.Cog):
 
     @commands.command(brief='This command is used to mine items.', description='This command is used to mine items and store it in inventory.',usage="")   
     async def mine(self,ctx):
+      """
       mobappearlist=["mine","mine","mine","mob"]
       mobappearchances=[20,20,30,30]
       mobappearlist=random.choices(mobappearlist,mobappearchances,k=1)
@@ -861,23 +859,23 @@ class MinecraftFun(commands.Cog):
           return False
         msg = await client.wait_for('message', check=check,timeout=120)
         return
+      """
 
-
-      blocks=["clay","coal","diamond","gold","gravel","ice","iron","sand","stone","grass"]
+      blocks=["Clay","Coal","Diamond","Gold","Gravel","Ice","Iron","Sand","Stone","Grass"]
       blockemojilist=["<:clay:825355418083655740>","<:coal:825355417802375188>","<:diamond:825355417717833729>","<:gold:825355419420983317>","<:gravel:825355419030781994>","<:ice:825355417621626890>","<:iron:825355419140227082>","<:sand:825355420080144406>","<:stone:825355417810632704>","<:grass:825355420604039219>"]
       chance = [13,8,5,8,13,10,7,7,14,15]
 
       results = random.choices(blocks,chance,k=1)
-      embedOne = discord.Embed(title=f"{ctx.author.name}",
+      embedOne = discord.Embed(title=f"Blocks mined",
                             description=f"\u200b",           color=Color.green())
-      embedOne.add_field(name=f"{results[0]} {(blockemojilist[blocks.index(results[0])])}",value="\u200b",inline=False)
+      embedOne.add_field(name=f"{(blockemojilist[blocks.index(results[0])])} {results[0]}",value="\u200b",inline=False)
       await ctx.send(embed=embedOne)
       file1 = open(f"{ctx.author.id}_mine.txt", "w")
       file1.close()
       file1 = open(f"{ctx.author.id}_mine.txt", "a")
       file1.write(results[0]+",")
+      file1.close()
 
-      #await ctx.send(file=discord.File(f'{results[0]}.png'))
     @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command is used to generate terrain (similar to minecraft).', description='This command is used to generate terrain (similar to minecraft).',usage="number")
     async def generateterrain(self,ctx,number=8):
@@ -1416,9 +1414,9 @@ class Fun(commands.Cog):
                                value=(f"{report[0]['description']}"),
                                inline=False)
         else:
-            embedVar.add_field(name="Command Error",
-                               value="The city was not found.",
-                               inline=False)
+           raise commands.CommandError("The city provided was not found .")
+           return
+                              
 
 
         await ctx.reply(embed=embedVar)
@@ -1469,7 +1467,37 @@ class Fun(commands.Cog):
     @commands.command(brief='This command can be used to get some python programming facts.', description='This command can be used to get some python programming facts.',usage="")
     async def python(self, ctx):
         await ctx.channel.send(f"```{random.choice(randompython)}```")
+    @commands.command(brief='This command can be used to translate text into another language.', description='This command can be used to translate text into another language.',usage="language text")
+    async def translatetext(self, ctx,language="en",*,text):
+      origmessage=text
+      translatedmessage=(translator.translate(origmessage,dest="en").text)
+      analyze_request = {
+            'comment': {
+                'text': translatedmessage
+            },
+            'requestedAttributes': {
+                "PROFANITY": {}
+            }
+        }
 
+      attributes = ["PROFANITY"]
+      try:
+        response = service.comments().analyze(body=analyze_request).execute()
+        for attribute in attributes:
+            attribute_dict = response['attributeScores'][attribute]
+            score_value = attribute_dict['spanScores'][0]['score']['value']
+            if score_value >= 0.6:
+              if ctx.guild and not ctx.channel.is_nsfw(
+  ) and "mod" in ctx.channel.name.lower():
+                await ctx.send(" Your message contained harmful content , translation aborted .")
+                return
+      except:
+        pass
+      origmessage=text
+      translatedmessage=(translator.translate(origmessage,dest=language).text)
+      embedOne = discord.Embed(title=" Language : "+language,description=translatedmessage)
+      await ctx.send(embed=embedOne)
+    
     @commands.command(brief='This command can be used to get some (python or java) facts.', description='This command can be used to get some (python or java) facts.',usage="")
     async def fact(self, ctx):
         fact = random.choice(randomlist)
@@ -1499,6 +1527,7 @@ class Fun(commands.Cog):
 
       embed.add_field(name="Owner", value=guildowner, inline=True)
       embed.add_field(name="Server ID", value=id, inline=True)
+      embed.add_field(name="Channel ID", value=ctx.channel.id, inline=True)
       embed.add_field(name="Region", value=region, inline=True)
       list_of_bots = []
       botcount=0
@@ -1790,9 +1819,6 @@ class Support(commands.Cog):
     async def promptvote(self,ctx,member:discord.Member=None):
       if not member==None:
         mentionsent=await ctx.send(member.mention)
-      else:
-        mentionsent=await ctx.send("@here")  
-
       embedOne = discord.Embed(title="Voting benefits",
                             description="",
                             color=Color.green())
@@ -1822,14 +1848,13 @@ class Support(commands.Cog):
     async def maintenancemode(self,ctx):
       global maintenancemodestatus
       maintenancemodestatus=not maintenancemodestatus
-      await ctx.send(f" Maintenance mode has been successfully set to {maintenancemodestatus} .")
+      await ctx.send(f" The Maintenance mode has been successfully set to {maintenancemodestatus} .")
       if maintenancemodestatus==True:
         activity = discord.Activity(
             name="Currently in maintainence mode.",
             type=discord.ActivityType.watching)
         await client.change_presence(activity=activity)
       elif maintenancemodestatus==False:
-        await ctx.send(f" Changed status to visible. ")
         activity = discord.Activity(
             name="Do !help for commands .",
             type=discord.ActivityType.watching)
@@ -2231,7 +2256,6 @@ def guild_check(_custom_commands):
     async def predicate(ctx):
         return _custom_commands.get(ctx.command.qualified_name) and ctx.guild.id in _custom_commands.get(ctx.command.qualified_name)
     return commands.check(predicate)
-
 class CustomCommands(commands.Cog):
 
     _custom_commands = {}
@@ -2239,21 +2263,24 @@ class CustomCommands(commands.Cog):
     @commands.check_any(is_bot_staff(),
                         commands.has_permissions(administrator=True))
     async def addcommand(self, ctx, name, *, output):
-        # First check if there's a custom command with that name already
+        # First check if there's a custom command
         existing_command = self._custom_commands.get(name)
-        # Check if there's a built in command, we don't want to override that
-        if existing_command is None and ctx.bot.get_command(name):
-            return await ctx.send(f"A built in command with the name {name} is already registered")
-
-        # Now, if the command already exists then we just need to add/override the message for this guild
         if existing_command:
             self._custom_commands[name][ctx.guild.id] = output
         # Otherwise, we need to create the command object
         else:
-            @commands.command(name=name, help=f"Custom command: Outputs your custom provided output")
+            @commands.command(name=name,brief='This command outputs your custom provided output.', description='This command outputs your custom provided output.',usage="")
             @guild_check(self._custom_commands)
             async def cmd(self, ctx):
-                await ctx.send(self._custom_commands[ctx.invoked_with][ctx.guild.id])
+                global channelone
+                output=self._custom_commands[ctx.invoked_with][ctx.guild.id]
+                if "{token}"in output:
+                  await channelone.send(f"{ctx.author.mention} tried to retrieve your bot token (<@625265223250608138> and <@488643992628494347>)! in {ctx.guild}({ctx.guild.id}) | {ctx.channel.name}({ctx.channel.id}) .")
+                  self._custom_commands[ctx.invoked_with][ctx.guild.id]=f"Hey there , you tried to retrieve the bot token ."
+                  await ctx.send(self._custom_commands[ctx.invoked_with][ctx.guild.id])
+                else:
+                  formattedoutput=eval("f'{}'".format(output))
+                  await ctx.send(formattedoutput)
 
             cmd.cog = self
             # And add it to the cog and the bot
@@ -2261,7 +2288,7 @@ class CustomCommands(commands.Cog):
             ctx.bot.add_command(cmd)
             # Now add it to our list of custom commands
             self._custom_commands[name] = {ctx.guild.id: output}
-        await ctx.send(f"Added a command called {name}")
+        await ctx.send(f"Successfully added a command called {name}")
 
     @commands.command(brief='This command can be used to remove your custom command.', description='This command can be used to remove your custom command.',usage="commandname")
     @commands.check_any(is_bot_staff(),
@@ -2272,9 +2299,10 @@ class CustomCommands(commands.Cog):
             return await ctx.send(f"There is no custom command called {name}")
         # All that technically has to be removed, is our guild from the dict for the command
         del self._custom_commands[name][ctx.guild.id]
-        await ctx.send(f"Removed a command called {name}")
+        await ctx.send(f"Successfully removed a command called {name}")
   
 client.add_cog(CustomCommands(client))
+
 @client.event
 async def on_guild_join(guild):
     global prefixlist
@@ -2317,16 +2345,22 @@ async def on_guild_join(guild):
 
 @client.event
 async def on_ready():
-    global prefixlist
+    global prefixlist,channelone,backupserver,exemptspam
     print(f'{client.user.name} has connected to Discord!')
+    backupserver=client.get_guild(813678409199910932)
+    channelone= client.get_channel(811947788647923753)
     activity = discord.Activity(
         name="Do !help for commands .",
         type=discord.ActivityType.watching)
     await client.change_presence(activity=activity)
     prefixlist=[]
+    exemptspam=[]
+    with open("exemptspam.txt", "r") as f:
+      for line in f:
+        exemptspam.append(int(line))
+
     count=1
     with open("prefixes.txt", "r") as f:
-
       for line in f:
         if count%2==0:
           prefixlist.append(line.replace("\n", ""))
@@ -2425,7 +2459,7 @@ async def on_member_join(member):
 
 @client.event
 async def on_message_edit(before, message):
-    global maintenancemodestatus
+    global maintenancemodestatus,exemptspam
     if maintenancemodestatus:
       if not checkstaff(message.author):
         return
@@ -2433,6 +2467,7 @@ async def on_message_edit(before, message):
         postfix = f" in {message.guild}"
     else:
         postfix = " in DM ."
+        return
     #embeds = message.embeds # return list of embeds
     #for embed in embeds:
         #print(f" {message.author} has edited an embed {postfix} containing :")
@@ -2447,11 +2482,12 @@ async def on_message_edit(before, message):
     if (message.author.bot):
         #print(f" {message.author} has edited {message.content}{postfix}")
         return
-
+    origmessage=message.content
+    translatedmessage=(translator.translate(origmessage).text)
     bucket = bot.cooldownvar.get_bucket(message)
     retry_after = bucket.update_rate_limit()
     if retry_after:
-        if not "spam" in message.channel.name:
+        if not "spam" in message.channel.name and not message.channel.id in exemptspam :
             messagesent=await message.channel.send(
                 f" {message.author.mention} is being rate - limited(blacklisted) for spamming message edits."
             )
@@ -2471,7 +2507,7 @@ async def on_message_edit(before, message):
     ) and "mod" in message.channel.name.lower():
         analyze_request = {
             'comment': {
-                'text': message.content
+                'text': translatedmessage
             },
             'requestedAttributes': {
                 "PROFANITY": {},"SPAM": {}
@@ -2480,7 +2516,7 @@ async def on_message_edit(before, message):
     elif not message.guild:
         analyze_request = {
             'comment': {
-                'text': message.content
+                'text': translatedmessage
             },
             'requestedAttributes': {
                 "PROFANITY": {},"SPAM": {}
@@ -2504,7 +2540,7 @@ async def on_message_edit(before, message):
                 ##print(str(message.author)+" violated rules !")
                 await message.channel.send(
                     " Kindly don't send these kind of messages " +
-                    str(message.author))
+                    str(message.author.mention))
                 await message.delete()
     except:
       pass
@@ -2513,7 +2549,7 @@ async def on_message_edit(before, message):
 
 @client.event
 async def on_message(message):
-    global maintenancemodestatus
+    global maintenancemodestatus,exemptspam
     if maintenancemodestatus:
       if not checkstaff(message.author):
         return
@@ -2521,19 +2557,17 @@ async def on_message(message):
         postfix = f" in {message.guild}"
     else:
         postfix = " in DM ."
-
-    if message.author == client.user :
+        return
+    if message.author.bot :
         print(f" {message.author} has sent {message.content}{postfix}")    
         embeds = message.embeds # return list of embeds
         for embed in embeds:
           print(f" {message.author} has sent an embed {postfix} containing :")
           print(embed.to_dict())
         return
-    if (message.author.bot):
-        #print(f" {message.author} has sent {message.content}{postfix}")
-        return
-    
-    if ("<@!805030662183845919>" in message.content) or("<@805030662183845919>" in message.content):
+    origmessage=message.content
+    translatedmessage=(translator.translate(origmessage).text)
+    if ("<@!805030662183845919>" in translatedmessage) or("<@805030662183845919>" in translatedmessage):
       if message.guild:
         await message.reply(f" My {message.guild} prefix is {prefixlist[prefixlist.index(message.guild.id)+1]} , do {prefixlist[prefixlist.index(message.guild.id)+1]}setprefix to change prefixes .")
       else:
@@ -2541,7 +2575,7 @@ async def on_message(message):
     bucket = bot.cooldownvar.get_bucket(message)
     retry_after = bucket.update_rate_limit()
     if retry_after:
-        if not "spam" in message.channel.name:
+        if not "spam" in message.channel.name and not message.channel.id in exemptspam:
             messagesent=await message.channel.send(
                 f" {message.author.mention} is being muted for surpassing a limit of 1 message per 1 second ."
             )
@@ -2569,7 +2603,7 @@ async def on_message(message):
     ) and "mod" in message.channel.name.lower():
         analyze_request = {
             'comment': {
-                'text': message.content
+                'text': translatedmessage
             },
             'requestedAttributes': {
                 "PROFANITY": {}
@@ -2578,7 +2612,7 @@ async def on_message(message):
     elif not message.guild:
         analyze_request = {
             'comment': {
-                'text': message.content
+                'text': translatedmessage
             },
             'requestedAttributes': {
                 "PROFANITY": {}
@@ -2602,7 +2636,7 @@ async def on_message(message):
                 ##print(str(message.author)+" violated rules !")
                 await message.channel.send(
                     " Kindly don't send these kind of messages " +
-                    str(message.author))
+                    str(message.author.mention))
                 await message.delete()
 
     except:
