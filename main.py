@@ -605,7 +605,7 @@ class Moderation(commands.Cog):
         reason="no reason provided ."
       await ctx.send(f" {member.mention} was warned by {ctx.author.mention} for {reason} .")
       warneduserreason = open(f"{ctx.guild.id}_{member.id}.txt", "a")  
-      warneduserreason.write(reason+"\n")
+      warneduserreason.write(reason+f" by {ctx.message.author.mention}\n")
       warneduserreason.close()
     @commands.command(aliases=['punishments'],brief='This command shows user warnings in the guild .', description='This command shows user warnings in the guild and can be used by users having administrator permission.',usage="@member")
     @commands.check_any(is_bot_staff(),
