@@ -597,7 +597,7 @@ class Moderation(commands.Cog):
       warneduserreason = open(f"{ctx.guild.id}_{member.id}.txt", "a")  
       warneduserreason.write(reason+"\n")
       warneduserreason.close()
-    @commands.command(aliases=['punishments'],brief='This command warns users for a given reason provided.', description='This command warns users for a given reason provided and can be used by users having administrator permission.',usage="@member reason")
+    @commands.command(brief='This command warns users for a given reason provided.', description='This command warns users for a given reason provided and can be used by users having administrator permission.',usage="@member reason")
     @commands.check_any(is_bot_staff(),
                         commands.has_permissions(administrator=True))
     async def warn(self, ctx, member: discord.Member,*, reason=None):
@@ -607,7 +607,7 @@ class Moderation(commands.Cog):
       warneduserreason = open(f"{ctx.guild.id}_{member.id}.txt", "a")  
       warneduserreason.write(reason+"\n")
       warneduserreason.close()
-    @commands.command(brief='This command shows user warnings in the guild .', description='This command shows user warnings in the guild and can be used by users having administrator permission.',usage="@member")
+    @commands.command(aliases=['punishments'],brief='This command shows user warnings in the guild .', description='This command shows user warnings in the guild and can be used by users having administrator permission.',usage="@member")
     @commands.check_any(is_bot_staff(),
                         commands.has_permissions(administrator=True))
     async def warnings(self, ctx, member: discord.Member):
