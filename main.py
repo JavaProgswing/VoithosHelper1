@@ -514,6 +514,13 @@ class Moderation(commands.Cog):
             ##print(f"Successfully dmed users!")
         except:
           pass
+        cmd = client.get_command("silentwarn")
+        try:
+          await cmd(ctx,member,reason=(
+            f" {member.mention} was successfully blacklisted by {ctx.author.mention} for {reason} "
+        ))
+        except:
+          pass
         await ctx.channel.send(
             f" {member.mention} was successfully blacklisted by {ctx.author.mention} for {reason} "
         )
@@ -572,9 +579,24 @@ class Moderation(commands.Cog):
             ##print(f"Successfully dmed users!")
         except:
           pass
+        cmd = client.get_command("silentwarn")
+        try:
+          await cmd(ctx,blacklistedmember,reason=(
+            f""" {blacklistedmember.mention} was successfully unblacklisted by {ctx.author.mention} for {reason} """
+        ))
+        except:
+          pass
         await ctx.channel.send(
             f""" {blacklistedmember.mention} was successfully unblacklisted by {ctx.author.mention} for {reason} """
         )
+    @commands.command(brief='This command warns users for a given reason provided.', description='This command warns users for a given reason provided and can be used by users having administrator permission.',usage="@member reason")
+    @commands.check_any(is_bot_staff())
+    async def silentwarn(self, ctx, member: discord.Member,*, reason=None):
+      if reason == None:
+        reason="no reason provided ."
+      warneduserreason = open(f"{ctx.guild.id}_{member.id}.txt", "a")  
+      warneduserreason.write(reason+"\n")
+      warneduserreason.close()
     @commands.command(aliases=['punishments'],brief='This command warns users for a given reason provided.', description='This command warns users for a given reason provided and can be used by users having administrator permission.',usage="@member reason")
     @commands.check_any(is_bot_staff(),
                         commands.has_permissions(administrator=True))
@@ -659,6 +681,13 @@ class Moderation(commands.Cog):
             ##print(f"Successfully dmed users!")
         except:
           pass
+        cmd = client.get_command("silentwarn")
+        try:
+          await cmd(ctx,member,reason=(
+            f" {member.mention} was successfully muted by {ctx.author.mention} for {reason} "
+        ))
+        except:
+          pass
         await ctx.channel.send(
             f" {member.mention} was successfully muted by {ctx.author.mention} for {reason} "
         )
@@ -711,6 +740,13 @@ class Moderation(commands.Cog):
             ##print(f"Successfully dmed users!")
         except:
           pass
+        cmd = client.get_command("silentwarn")
+        try:
+          await cmd(ctx,mutedmember,reason=(
+            f""" {mutedmember.mention} was successfully unmuted by {ctx.author.mention} for {reason} """
+        ))
+        except:
+          pass
         await ctx.channel.send(
             f""" {mutedmember.mention} was successfully unmuted by {ctx.author.mention} for {reason} """
         )
@@ -738,6 +774,13 @@ class Moderation(commands.Cog):
         except:
             await ctx.send(
                 f"{member.mention} couldn't be direct messaged about the server unban ")
+        cmd = client.get_command("silentwarn")
+        try:
+          await cmd(ctx,member,reason=(
+            f"{member.mention} was unbanned from {ctx.guild.name} by {ctx.author.mention} for {reason}"
+        ))
+        except:
+          pass
         await ctx.channel.send(
             f"{member.mention} was unbanned from {ctx.guild.name} by {ctx.author.mention} for {reason}"
         )
@@ -765,6 +808,13 @@ class Moderation(commands.Cog):
         except:
             await ctx.send(
                 f"{member.mention} couldn't be direct messaged about the server ban ")
+        cmd = client.get_command("silentwarn")
+        try:
+          await cmd(ctx,member,reason=(
+            f"{member.mention} was banned from {ctx.guild.name} by {ctx.author.mention} for {reason}"
+        ))
+        except:
+          pass
         await ctx.channel.send(
             f"{member.mention} was banned from {ctx.guild.name} by {ctx.author.mention} for {reason}"
         )
@@ -792,6 +842,13 @@ class Moderation(commands.Cog):
         except:
             await ctx.send(
                 f"{member.mention} couldn't be direct messaged about the server kick ")
+        cmd = client.get_command("silentwarn")
+        try:
+          await cmd(ctx,member,reason=(
+            f"{member.mention} was kicked from {ctx.guild.name} by {ctx.author.mention} for {reason}"
+        ))
+        except:
+          pass
         await ctx.channel.send(
             f"{member.mention} was kicked from {ctx.guild.name} by {ctx.author.mention} for {reason}"
         )
