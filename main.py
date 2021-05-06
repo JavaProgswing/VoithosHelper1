@@ -195,7 +195,7 @@ async def call_background_task(ctx,textchannel,message:str):
         except:
           await textchannel.send(" I don't have `manage messages` permission to delete messages .")
           return
-@tasks.loop(seconds=60)
+@tasks.loop(seconds=30)
 async def saveexemptspam():
   global exemptspam
   with open("exemptspam.txt", "w") as f:
@@ -365,10 +365,14 @@ class VoithosInfo(commands.Cog):
 
 client.add_cog(VoithosInfo(client))
 class Moderation(commands.Cog):
-    @commands.command(brief='This command resets all channels into a custom format/template.', description='This command resets all channels into a custom format/template and can only be used by server owners .',usage="")
+    @commands.command(brief='This command resets all channels into a custom format/template.', description='This command resets all channels into a custom format/template and can only be used by server owners .',usage="template(not necessary)")
+    
     @commands.check_any(is_bot_staff(), is_guild_owner())
-    async def resetchannel(self, ctx):
-        global backupserver
+    async def resetchannel(self, ctx,copytemplate:discord.Template=None):
+        if copytemplate==None:
+          template=await client.fetch_template("https://discord.new/reSxNdysEDe8")
+        else:
+          template=await client.fetch_template(copytemplate)
         for channel in ctx.guild.channels:
             if channel == ctx.channel:
                 continue
@@ -379,40 +383,51 @@ class Moderation(commands.Cog):
                 await ctx.send(
                     f" Please delete {channel.name} on your own , unable to delete channel . "
                 )
-        recoveryguild=backupserver
+        copycategory=None
+        try:
+          for recoverycategory in template.source_guild.by_category():
+            copyname=recoverycategory[0].name
+            copycategory=await ctx.guild.create_category(copyname)
+            for copychannel in recoverycategory[1]:
+              await copycategory.create_text_channel(copychannel.name)
+        except:
+          raise commands.CommandError(" I don't have `manage_channel` permission to create channels .")
+          return
         await ctx.channel.delete()
-        #print(str(recoveryguild))
-        for recoverychannel in recoveryguild.channels:
-            if recoverychannel.type == discord.ChannelType.text:
-                await ctx.guild.create_text_channel(recoverychannel.name,
-                                                    category=copycategory)
-            elif recoverychannel.type == discord.ChannelType.category:
-                copycategory = await ctx.guild.create_category(
-                    recoverychannel.name)
-            elif recoverychannel.type == discord.ChannelType.voice:
-                await ctx.guild.create_voice_channel(recoverychannel.name,
-                                                    category=copycategory)         
+    @commands.command(brief='This command sets slowmode delay to a certain channel.', description='This command sets slowmode delay to a certain channel and can be used by members having manage_messages permission',usage="delay")
+    @commands.check_any(is_bot_staff(), 
+                        commands.has_permissions(manage_messages=True))
+    async def setslowmode(self, ctx ,delay:int): 
+      try:
+        await ctx.channel.edit(slowmode_delay=delay)
+        await ctx.send(f" Successfully set slowmode of {ctx.channel.name} to {delay} seconds .")
+      except:
+        raise commands.CommandError(" I do not have `manage_channels` permission to set slowmode to this channel ")
     @commands.command(brief='This command stops checking spam in a certain channel.', description='This command stops checking for spam in a certain channel.',usage="#channel")
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_messages=True))
-    async def disablespam(self, ctx ,channel:discord.TextChannel):    
+    async def disablespam(self, ctx ,channel:discord.TextChannel=None):    
       global exemptspam
+      if channel==None:
+        channel=ctx.channel
       if channel.id in exemptspam:
         raise commands.CommandError("This channel is already not being checked for further spamming .")
         return
       exemptspam.append(channel.id)
-      await ctx.send(f"{channel.name} wil not be checked for further spamming ." )
+      await ctx.send(f"{channel.name} will not be checked for message spamming ." )
     @commands.command(brief='This command enables checking spam in a certain channel.', description='This command enables checking spam in a certain channel..',usage="#channel")
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_messages=True))
-    async def enablespam(self, ctx ,channel:discord.TextChannel):    
+    async def enablespam(self, ctx ,channel:discord.TextChannel=None):    
       global exemptspam
+      if channel==None:
+        channel=ctx.channel
       try:
         exemptspam.remove(channel.id)
       except:
         raise commands.CommandError("This channel is already checked for further spamming .")
         return
-      await ctx.send(f"{channel.name} will be checked for further spamming ." )
+      await ctx.send(f"{channel.name} will be checked for message spamming ." )
     @commands.command(brief='This command clears given number of messages from the same channel.', description='This command clears given number of messages from the same channel and can be used by members having manage messages permission.',usage="number reason")
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_messages=True))
@@ -454,10 +469,8 @@ class Moderation(commands.Cog):
         for role in member.roles:
             if role != ctx.guild.default_role:
                 if blacklistrole == role:
-                    await ctx.channel.send(f"{member} is already blacklisted ."
+                    await ctx.channel.send(f"{member.mention} is already blacklisted ."
                                            )
-                    await ctx.channel.send(
-                        f" Use !unblacklist {member} to unblacklist user .")
                     return
         blacklistedusers = open("blacklisted.txt", "a")  # append mode
         for role in member.roles:
@@ -530,10 +543,8 @@ class Moderation(commands.Cog):
                 if blacklistrole == role:
                     checkrole = True
         if not checkrole:
-            await ctx.channel.send(f" {blacklistedmember} is not blacklisted ."
-                                   )
-            await ctx.channel.send(
-                f" Use !blacklist {blacklistedmember} to blacklist user .")
+            await ctx.channel.send(f" {blacklistedmember.mention} is not blacklisted .")
+                                   
             return
         if reason == None:
             reason = "no reason provided ."
@@ -564,7 +575,7 @@ class Moderation(commands.Cog):
         await ctx.channel.send(
             f""" {blacklistedmember.mention} was successfully unblacklisted by {ctx.author.mention} for {reason} """
         )
-    @commands.command(brief='This command warns users for a given reason provided.', description='This command warns users for a given reason provided and can be used by users having administrator permission.',usage="@member reason")
+    @commands.command(aliases=['punishments'],brief='This command warns users for a given reason provided.', description='This command warns users for a given reason provided and can be used by users having administrator permission.',usage="@member reason")
     @commands.check_any(is_bot_staff(),
                         commands.has_permissions(administrator=True))
     async def warn(self, ctx, member: discord.Member,*, reason=None):
@@ -612,9 +623,7 @@ class Moderation(commands.Cog):
         for role in member.roles:
             if role != ctx.guild.default_role:
                 if muterole == role:
-                    await ctx.channel.send(f"{member} is already muted .")
-                    await ctx.channel.send(
-                        f" Use !unmute {member} to unmute user .")
+                    await ctx.channel.send(f"{member.mention} is already muted .")
                     return
         muterole = discord.utils.get(ctx.guild.roles, name='muted')
         if muterole == None:
@@ -675,8 +684,7 @@ class Moderation(commands.Cog):
                 if muterole == role:
                     checkrole = True
         if not checkrole:
-            await ctx.channel.send(f" {mutedmember} is not muted .")
-            await ctx.channel.send(f" Use !mute {mutedmember} to mute user .")
+            await ctx.channel.send(f" {mutedmember.mention} is not muted .")
             return
         if reason == None:
             reason = "no reason provided ."
@@ -931,6 +939,10 @@ class MinecraftFun(commands.Cog):
         return
       else:
           await ctx.reply('Let the battle preparations take place !')
+      try:
+        await ctx.channel.edit(slowmode_delay=1)
+      except:
+        raise commands.CommandError(" I do not have `manage_channels` permission to set slowmode to this channel ")
       memberone_healthpoint=30+random.randint(-10,10)
       memberone_armor=random.choice(orechoice)
       memberone_armor_resist=armorresist[orechoice.index(memberone_armor)]
@@ -1069,6 +1081,11 @@ class MinecraftFun(commands.Cog):
         return
       else:
           await ctx.reply('Let the battle preparations take place !')
+      try:
+        await ctx.channel.edit(slowmode_delay=1)
+      except:
+        raise commands.CommandError(" I do not have `manage_channels` permission to set slowmode to this channel ")
+
       memberone_healthpoint=30+random.randint(-10,10)
       memberone_armor=random.choice(orechoice)
       memberone_armor_resist=armorresist[orechoice.index(memberone_armor)]
@@ -2032,7 +2049,7 @@ class Support(commands.Cog):
 
         await ctx.send('What is the description ?')
         desc = await client.wait_for('message', check=check)
-        print(f"Total count : {count}")
+        #print(f"Total count : {count}")
         try:
             await ctx.channel.purge(limit=count)
         except:
@@ -2368,6 +2385,7 @@ async def on_ready():
           prefixlist.append(int(line))
         count+=1
     saveprefix.start()
+    saveexemptspam.start()
     
 
         
@@ -2495,8 +2513,8 @@ async def on_message_edit(before, message):
             await messagesent.delete()
             try:
                 cmd = client.get_command("blacklist")
-                await cmd(await client.get_context(message), message.author,
-                          f" Spamming in {message.channel.name} ")
+                await cmd( await client.get_context(message),message.author,
+                      reason=f"spamming edits in {message.channel.name} ")
                 await message.delete()
             except:
                 messagesent=await message.channel.send(f" I don't have enough permissions to mute {message.author} .")
@@ -2576,29 +2594,30 @@ async def on_message(message):
     retry_after = bucket.update_rate_limit()
     if retry_after:
         if not "spam" in message.channel.name and not message.channel.id in exemptspam:
-            messagesent=await message.channel.send(
-                f" {message.author.mention} is being muted for surpassing a limit of 1 message per 1 second ."
-            )
-            await asyncio.sleep(5)
-            await messagesent.delete()
+
+            cmd = client.get_command("mute")
             try:
-              try:
-                await message.delete()
-              except:
-                messagesent=await message.channel.send(
-                " I don't have manage messages permission to delete messages ."
-            )
-                await asyncio.sleep(5)
-                await messagesent.delete()
-              cmd = client.get_command("mute")
-              await cmd(await client.get_context(message), message.author,
-                        f" Spamming in {message.channel.name} ")
-              await message.channel.send(f"{message.author.mention} was successfully muted for spamming messages in {message.channel.name} .")
+              await cmd( await client.get_context(message),message.author,
+                        reason=f"spamming in {message.channel.name} ")
               return
             except:
                 messagesent=await message.channel.send(f" I don't have enough permissions to mute {message.author.mention} .")
                 await asyncio.sleep(5)
                 await messagesent.delete()
+            messagesent=await message.channel.send(
+                f" {message.author.mention} is being muted for surpassing a limit of 1 message per 1 second ."
+            )
+            await asyncio.sleep(5)
+            await messagesent.delete()
+            
+            try:
+              await message.delete()
+            except:
+              messagesent=await message.channel.send(
+              " I don't have manage messages permission to delete messages ."
+          )
+              await asyncio.sleep(5)
+              await messagesent.delete()
     if message.guild and not message.channel.is_nsfw(
     ) and "mod" in message.channel.name.lower():
         analyze_request = {
