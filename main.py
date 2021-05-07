@@ -169,9 +169,6 @@ async def on_command_error(ctx, error):
         embederror.add_field(name=(" DM Channel "),value="\u200b",inline=False)
         embederror.add_field(name=(f" Member: {ctx.author.mention}"),value="\u200b",inline=False)
         embederror.add_field(name=(f" Message: {ctx.message.content}"),value="\u200b",inline=False)
-
-    
-    try:
         embedone = discord.Embed(title="",color=Color.dark_red())
         embedone.add_field(name=" Command error ",value= errordata,inline=False)
         if not "is not found" in str(error):
@@ -181,9 +178,6 @@ async def on_command_error(ctx, error):
             await channeltwo.send(embed=embederror)
             await channelthree.send(embed=embederror)
           await ctx.channel.send(embed=embedone)
-    except:
-        await ctx.channel.send(" I don't have Embed Link permission in this channel to send embed responses .")
-        await ctx.channel.send( errordata)
 class TopGG(commands.Cog):
     """Handles interactions with the top.gg API"""
 
