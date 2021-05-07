@@ -3,6 +3,7 @@ from keep_alive import keep_alive
 import asyncio
 from googleapiclient import discovery
 import dbl
+import traceback
 import random
 import os
 import psutil
@@ -139,10 +140,24 @@ botowners = ["488643992628494347", "625265223250608138"]
 bot.cooldownvar = commands.CooldownMapping.from_cooldown(
     2.0, 1.0, commands.BucketType.user)
 channelone = None
+channeltwo= None
+channelthree=None
+
 backupserver=None
 @client.event
 async def on_command_error(ctx, error):
-    global channelone
+    global channelone,channeltwo,channelthree
+    errordata=error
+    if isinstance(error, commands.CommandInvokeError):
+      error = error.original
+    if isinstance(error, commands.CheckAnyFailure):
+      errordata=error.errors[0]
+    if isinstance(error, discord.Forbidden):
+        errordata=f" Oops something went wrong while executing the command ."
+    if isinstance(error, commands.BotMissingPermissions):
+        errordata=f" I am lacking the {error.missing_perms[0]} permission ."
+    if isinstance(error, commands.MissingPermissions):
+        errordata=f" You are lacking the {error.missing_perms[0]} permission ."
     embederror = discord.Embed(title=f"Error: {error}",color=Color.dark_red())
     if ctx.guild:
         embederror.add_field(name=(f" Guild: {ctx.guild}"),value="\u200b",inline=False)
@@ -158,13 +173,17 @@ async def on_command_error(ctx, error):
     
     try:
         embedone = discord.Embed(title="",color=Color.dark_red())
-        embedone.add_field(name=" Command error ",value=error,inline=False)
+        embedone.add_field(name=" Command error ",value= errordata,inline=False)
         if not "is not found" in str(error):
-          await channelone.send(embed=embederror)
+          try:
+            await channelone.send(embed=embederror)
+          except:
+            await channeltwo.send(embed=embederror)
+            await channelthree.send(embed=embederror)
           await ctx.channel.send(embed=embedone)
     except:
         await ctx.channel.send(" I don't have Embed Link permission in this channel to send embed responses .")
-        await ctx.channel.send(error)
+        await ctx.channel.send( errordata)
 class TopGG(commands.Cog):
     """Handles interactions with the top.gg API"""
 
@@ -299,8 +318,6 @@ class MyHelp(commands.HelpCommand):
 
     async def send_bot_help(self, mapping):
         copychannel=self.get_destination()
-        serverlang= translator.detect(copychannel.name)
-        print(str(serverlang)+" "+copychannel.name)
         embedone = discord.Embed(title="\u200b",description=f"Use {self.clean_prefix}help command-name to gain more information about that command :smiley:",
                                  color=Color.blue())
 
@@ -368,7 +385,7 @@ class Moderation(commands.Cog):
     @commands.command(brief='This command resets all channels into a custom format/template.', description='This command resets all channels into a custom format/template and can only be used by server owners .',usage="template(not necessary)")
     
     @commands.check_any(is_bot_staff(), is_guild_owner())
-    async def resetchannel(self, ctx,copytemplate:discord.Template=None):
+    async def resetchannel(self, ctx,copytemplate=None):
         if copytemplate==None:
           template=await client.fetch_template("https://discord.new/reSxNdysEDe8")
         else:
@@ -384,15 +401,17 @@ class Moderation(commands.Cog):
                     f" Please delete {channel.name} on your own , unable to delete channel . "
                 )
         copycategory=None
-        try:
-          for recoverycategory in template.source_guild.by_category():
+        for recoverycategory in template.source_guild.by_category():
+          try:
             copyname=recoverycategory[0].name
-            copycategory=await ctx.guild.create_category(copyname)
-            for copychannel in recoverycategory[1]:
+          except:
+            copyname="General"
+          copycategory=await ctx.guild.create_category(copyname)
+          for copychannel in recoverycategory[1]:
+            if copychannel.type==discord.ChannelType.text:
               await copycategory.create_text_channel(copychannel.name)
-        except:
-          raise commands.CommandError(" I don't have `manage_channel` permission to create channels .")
-          return
+            elif copychannel.type==discord.ChannelType.voice:
+              await copycategory.create_voice_channel(copychannel.name)          
         await ctx.channel.delete()
     @commands.command(brief='This command sets slowmode delay to a certain channel.', description='This command sets slowmode delay to a certain channel and can be used by members having manage_messages permission',usage="delay")
     @commands.check_any(is_bot_staff(), 
@@ -2419,10 +2438,12 @@ async def on_guild_join(guild):
 
 @client.event
 async def on_ready():
-    global prefixlist,channelone,backupserver,exemptspam
+    global prefixlist,channelone,backupserver,exemptspam,channeltwo,channelthree
     print(f'{client.user.name} has connected to Discord!')
-    backupserver=client.get_guild(813678409199910932)
-    channelone= client.get_channel(811947788647923753)
+    backupserver=client.get_guild(811864132470571038)
+    channelone= client.get_channel(840193232885121094)
+    channeltwo=client.get_channel(811482453075558420)
+    channelthree=client.get_channel(805389746137858058)
     activity = discord.Activity(
         name="Do !help for commands .",
         type=discord.ActivityType.watching)
@@ -2529,8 +2550,6 @@ async def on_member_join(member):
 
 
 
-    #print(f"Successfully dmed users!")
-
 
 @client.event
 async def on_message_edit(before, message):
@@ -2542,7 +2561,8 @@ async def on_message_edit(before, message):
         postfix = f" in {message.guild}"
     else:
         postfix = " in DM ."
-        return
+        if not checkstaff(message.author):
+          return
     #embeds = message.embeds # return list of embeds
     #for embed in embeds:
         #print(f" {message.author} has edited an embed {postfix} containing :")
@@ -2632,7 +2652,9 @@ async def on_message(message):
         postfix = f" in {message.guild}"
     else:
         postfix = " in DM ."
-        return
+        if not checkstaff(message.author):
+          return
+
     if message.author.bot :
         print(f" {message.author} has sent {message.content}{postfix}")    
         embeds = message.embeds # return list of embeds
