@@ -147,15 +147,22 @@ async def on_command_error(ctx, error):
     errordata=error
     if isinstance(error, commands.CommandInvokeError):
       error = error.original
+    if isinstance(error,commands.CommandNotFound):
+      return
     if isinstance(error, commands.CheckAnyFailure):
       errordata=error.errors[0]
     if isinstance(error, discord.Forbidden):
         errordata=f" Oops something went wrong while executing the command ."
     if isinstance(error, commands.BotMissingPermissions):
-        errordata=f" I am lacking the {error.missing_perms[0]} permission ."
+        errordata=f" I do not have the{error.missing_perms[0]} permission ."
     if isinstance(error, commands.MissingPermissions):
         errordata=f" You are lacking the {error.missing_perms[0]} permission ."
-    embederror = discord.Embed(title=f"Error: {error}",color=Color.dark_red())
+    if isinstance(error,commands.MissingRequiredArgument):
+        errordata=f" Oops looks like you forgot to put the {str(error.param.name)} in the {ctx.command} command ."
+    if isinstance(error,commands.BadArgument):
+        errordata=f" Oops looks like provided the wrong arguments in the {ctx.command} command ."     
+    embedone = discord.Embed(title=f"Error occured ",description=errordata,color=Color.dark_red())
+    embederror = discord.Embed(title=f"Error occured ",description="**{error,color=Color.dark_red())
     if ctx.guild:
         embederror.add_field(name=(f" Guild: {ctx.guild}"),value="\u200b",inline=False)
         embederror.add_field(name=(f" Channel: {ctx.channel.name}"),value="\u200b",inline=False)
@@ -168,9 +175,10 @@ async def on_command_error(ctx, error):
         embederror.add_field(name=(f" Message: {ctx.message.content}"),value="\u200b",inline=False)
         embedone = discord.Embed(title="",color=Color.dark_red())
         embedone.add_field(name=" Command error ",value= errordata,inline=False)
-        if not "is not found" in str(error):
-          await channelone.send(embed=embederror)
-          await ctx.channel.send(embed=embedone)
+    
+    await channelone.send(embed=embederror)
+    await ctx.channel.send(embed=embedone)
+
 class TopGG(commands.Cog):
     """Handles interactions with the top.gg API"""
 
