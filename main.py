@@ -162,7 +162,7 @@ async def on_command_error(ctx, error):
     if isinstance(error,commands.BadArgument):
         errordata=f" Oops looks like provided the wrong arguments in the {ctx.command} command ."     
     embedone = discord.Embed(title=f"Error occured ",description=errordata,color=Color.dark_red())
-    embederror = discord.Embed(title=f"Error occured ",description="**{error,color=Color.dark_red())
+    embederror = discord.Embed(title=f"Error occured ",description=f"**{error}**",color=Color.dark_red())
     if ctx.guild:
         embederror.add_field(name=(f" Guild: {ctx.guild}"),value="\u200b",inline=False)
         embederror.add_field(name=(f" Channel: {ctx.channel.name}"),value="\u200b",inline=False)
