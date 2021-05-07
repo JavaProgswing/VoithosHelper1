@@ -140,13 +140,10 @@ botowners = ["488643992628494347", "625265223250608138"]
 bot.cooldownvar = commands.CooldownMapping.from_cooldown(
     2.0, 1.0, commands.BucketType.user)
 channelone = None
-channeltwo= None
-channelthree=None
-
 backupserver=None
 @client.event
 async def on_command_error(ctx, error):
-    global channelone,channeltwo,channelthree
+    global channelone
     errordata=error
     if isinstance(error, commands.CommandInvokeError):
       error = error.original
@@ -172,11 +169,7 @@ async def on_command_error(ctx, error):
         embedone = discord.Embed(title="",color=Color.dark_red())
         embedone.add_field(name=" Command error ",value= errordata,inline=False)
         if not "is not found" in str(error):
-          try:
-            await channelone.send(embed=embederror)
-          except:
-            await channeltwo.send(embed=embederror)
-            await channelthree.send(embed=embederror)
+          await channelone.send(embed=embederror)
           await ctx.channel.send(embed=embedone)
 class TopGG(commands.Cog):
     """Handles interactions with the top.gg API"""
@@ -2432,12 +2425,10 @@ async def on_guild_join(guild):
 
 @client.event
 async def on_ready():
-    global prefixlist,channelone,backupserver,exemptspam,channeltwo,channelthree
+    global prefixlist,channelone,backupserver,exemptspam
     print(f'{client.user.name} has connected to Discord!')
     backupserver=client.get_guild(811864132470571038)
     channelone= client.get_channel(840193232885121094)
-    channeltwo=client.get_channel(811482453075558420)
-    channelthree=client.get_channel(805389746137858058)
     activity = discord.Activity(
         name="Do !help for commands .",
         type=discord.ActivityType.watching)
