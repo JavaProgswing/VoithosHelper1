@@ -161,6 +161,8 @@ async def on_command_error(ctx, error):
         errordata=f" Oops looks like you forgot to put the {str(error.param.name)} in the {ctx.command} command ."
     if isinstance(error,commands.BadArgument):
         errordata=f" Oops looks like provided the wrong arguments in the {ctx.command} command ."     
+    if isinstance(error,commands.CommandOnCooldown):
+        errordata=f" Seems like you tried this {ctx.command} command recently , try again in {error.retry_after} seconds."     
     embedone = discord.Embed(title=f"Error occured ",description=errordata,color=Color.dark_red())
     embederror = discord.Embed(title=f"Error occured {type(error)}",description=f"**{error}**",color=Color.dark_red())
     if ctx.guild:
