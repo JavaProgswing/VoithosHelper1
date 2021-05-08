@@ -3,9 +3,10 @@ from keep_alive import keep_alive
 import asyncio
 from googleapiclient import discovery
 import dbl
-import traceback
+import validators
 import random
 import os
+import re
 import psutil
 import discord
 import datetime
@@ -88,6 +89,7 @@ handler.setFormatter(logging.Formatter('%(asctime)s:%(levelname)s:%(name)s: %(me
 logger.addHandler(handler)
 exemptspam=[]
 prefixlist=[]
+antilink=[]
 async def get_prefix(client, message):
   if message.guild:
     try:
@@ -194,6 +196,8 @@ class TopGG(commands.Cog):
 
 
 client.add_cog(TopGG(client))
+def convertwords(lst):
+    return ' '.join(lst).split()
 async def call_background_task(ctx,textchannel,message:str):
     messagecontrol=await textchannel.send(f" This is a message to inform that live status for ip {message} was added in this channel , delete this message to stop live server status (every 30 minutes) .")
     controlid=messagecontrol.id
@@ -212,12 +216,19 @@ async def call_background_task(ctx,textchannel,message:str):
           await textchannel.send(" I don't have `manage messages` permission to delete messages .")
           return
 @tasks.loop(seconds=30)
+async def saveantilink():
+  global antilink
+  with open("antilink.txt", "w") as f:
+    for links in antilink:
+        f.write(str(links) +"\n")
+
+@tasks.loop(seconds=30)
 async def saveexemptspam():
   global exemptspam
   with open("exemptspam.txt", "w") as f:
     for channelid in exemptspam:
         f.write(str(channelid) +"\n")
-@tasks.loop(seconds=60)
+@tasks.loop(seconds=120)
 async def saveprefix():
   global prefixlist
   with open("prefixes.txt", "w") as f:
@@ -294,7 +305,13 @@ def convert(time):
         return -2
 
     return val * time_dict[unit]
-
+def validurl(theurl):
+  isvalid=False
+  try:
+     isvalid=validators.url(theurl)
+  except:
+    pass
+  return isvalid
 class MyHelp(commands.HelpCommand):
     def get_command_signature(self, command):
       defcommandusage=command.usage
@@ -379,10 +396,11 @@ class VoithosInfo(commands.Cog):
 
 client.add_cog(VoithosInfo(client))
 class Moderation(commands.Cog):
-    @commands.command(brief='This command resets all channels into a custom format/template.', description='This command resets all channels into a custom format/template and can only be used by server owners .',usage="template(not necessary)")
+    @commands.command(brief='This command resets all channels into a custom format/template.', description='This command resets all channels into a custom format/template and can only be used by administrators .',usage="template url(not necessary)")
     
-    @commands.check_any(is_bot_staff(), is_guild_owner())
-    async def resetchannel(self, ctx,copytemplate=None):
+    @commands.check_any(is_bot_staff(),
+                        commands.has_permissions(administrator=True))
+    async def settemplate(self, ctx,copytemplate=None):
         if copytemplate==None:
           template=await client.fetch_template("https://discord.new/reSxNdysEDe8")
         else:
@@ -397,6 +415,24 @@ class Moderation(commands.Cog):
                 await ctx.send(
                     f" Please delete {channel.name} on your own , unable to delete channel . "
                 )
+        botrole=ctx.me.top_role
+        for role in ctx.guild.roles:
+            try:
+              if not botrole==role:
+                await role.delete()
+                await ctx.channel.send(f" Successfully deleted {role.name}")
+            except:
+                await ctx.send(
+                    f" Please delete {role.name} on your own , unable to delete role . "
+                )
+        await ctx.send(
+            f" Please delete {botrole.name} on your own , unable to delete role . "
+        )        
+        for recoveryrole in template.source_guild.roles:
+          try:
+            await ctx.guild.create_role(name=recoveryrole.name,permissions=recoveryrole.permissions,colour=recoveryrole.colour,mentionable=recoveryrole.mentionable,hoist=recoveryrole.hoist)
+          except:
+            await ctx.send(f" I couldn't create {recoveryrole.name} with {recoveryrole.permissions} and {recoveryrole.colour} colour .")
         copycategory=None
         for recoverycategory in template.source_guild.by_category():
           try:
@@ -410,7 +446,34 @@ class Moderation(commands.Cog):
             elif copychannel.type==discord.ChannelType.voice:
               await copycategory.create_voice_channel(copychannel.name)          
         await ctx.channel.delete()
-    @commands.command(brief='This command sets slowmode delay to a certain channel.', description='This command sets slowmode delay to a certain channel and can be used by members having manage_messages permission',usage="delay")
+    @commands.command(brief='This command checks for links in certain channels.', description='This command checks for links in certain channel and can be used by members having manage_messages permission',usage="#channel")
+    @commands.check_any(is_bot_staff(), 
+                        commands.has_permissions(manage_messages=True))
+    async def enableantilink(self, ctx ,channel:discord.TextChannel=None):
+      global antilink
+      if channel==None:
+        channel=ctx.channel
+      if channel.id in antilink:
+        raise commands.CommandError("This channel is already being checked for links .")
+        return
+      else:
+        antilink.append(channel.id)
+        await ctx.send("Anti-link has been enabled in this channel .")
+    @commands.command(brief='This command disables checking for links in certain channels.', description='This command disables checking for links in certain channel and can be used by members having manage_messages permission',usage="#channel")
+    @commands.check_any(is_bot_staff(), 
+                        commands.has_permissions(manage_messages=True))
+    async def disableantilink(self, ctx ,channel:discord.TextChannel=None): 
+      global antilink
+      if channel==None:
+        channel=ctx.channel    
+      if not channel.id in antilink:
+        raise commands.CommandError("This channel is not being checked for links .")
+        return
+      else:
+        antilink.remove(channel.id)
+        await ctx.send("Anti-link has been disabled in this channel .")
+
+    @commands.command(brief='This command sets slowmode delay to a certain channel.', description='This command sets slowmode delay to a certain channel and can be used by members having manage messages permission',usage="delay")
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_messages=True))
     async def setslowmode(self, ctx ,delay:int): 
@@ -422,7 +485,7 @@ class Moderation(commands.Cog):
     @commands.command(brief='This command stops checking spam in a certain channel.', description='This command stops checking for spam in a certain channel.',usage="#channel")
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_messages=True))
-    async def disablespam(self, ctx ,channel:discord.TextChannel=None):    
+    async def disableantispam(self, ctx ,channel:discord.TextChannel=None):    
       global exemptspam
       if channel==None:
         channel=ctx.channel
@@ -434,7 +497,7 @@ class Moderation(commands.Cog):
     @commands.command(brief='This command enables checking spam in a certain channel.', description='This command enables checking spam in a certain channel..',usage="#channel")
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_messages=True))
-    async def enablespam(self, ctx ,channel:discord.TextChannel=None):    
+    async def enableantispam(self, ctx ,channel:discord.TextChannel=None):    
       global exemptspam
       if channel==None:
         channel=ctx.channel
@@ -605,7 +668,7 @@ class Moderation(commands.Cog):
         await ctx.channel.send(
             f""" {blacklistedmember.mention} was successfully unblacklisted by {ctx.author.mention} for {reason} """
         )
-    @commands.command(brief='This command warns users for a given reason provided.', description='This command warns users for a given reason provided and can be used by users having administrator permission.',usage="@member reason")
+    @commands.command(brief='This command warns users for a given reason provided.', description='This command warns users for a given reason provided and can be used by bot staff.',usage="@member reason")
     @commands.check_any(is_bot_staff())
     async def silentwarn(self, ctx, member: discord.Member,*, reason=None):
       if reason == None:
@@ -613,9 +676,9 @@ class Moderation(commands.Cog):
       warneduserreason = open(f"{ctx.guild.id}_{member.id}.txt", "a")  
       warneduserreason.write(reason+"\n")
       warneduserreason.close()
-    @commands.command(brief='This command warns users for a given reason provided.', description='This command warns users for a given reason provided and can be used by users having administrator permission.',usage="@member reason")
+    @commands.command(brief='This command warns users for a given reason provided.', description='This command warns users for a given reason provided and can be used by members having manage messages permission')
     @commands.check_any(is_bot_staff(),
-                        commands.has_permissions(administrator=True))
+                        commands.has_permissions(manage_roles=True))
     async def warn(self, ctx, member: discord.Member,*, reason=None):
       if reason == None:
         reason="no reason provided ."
@@ -623,9 +686,8 @@ class Moderation(commands.Cog):
       warneduserreason = open(f"{ctx.guild.id}_{member.id}.txt", "a")  
       warneduserreason.write(reason+"\n")
       warneduserreason.close()
-    @commands.command(aliases=['punishments'],brief='This command shows user warnings in the guild .', description='This command shows user warnings in the guild and can be used by users having administrator permission.',usage="@member")
-    @commands.check_any(is_bot_staff(),
-                        commands.has_permissions(administrator=True))
+    @commands.command(aliases=['punishments'],brief='This command shows user warnings in the guild .', description='This command shows user warnings in the guild and can be used by  all users. ',usage="@member")
+    @commands.check_any(is_bot_staff())
     async def warnings(self, ctx, member: discord.Member):
       filename=f"{ctx.guild.id}_{member.id}.txt"
       file_exists = os.path.isfile(filename) 
@@ -2435,7 +2497,7 @@ async def on_guild_join(guild):
 
 @client.event
 async def on_ready():
-    global prefixlist,channelone,backupserver,exemptspam
+    global prefixlist,channelone,backupserver,exemptspam,antilink
     print(f'{client.user.name} has connected to Discord!')
     backupserver=client.get_guild(811864132470571038)
     channelone= client.get_channel(840193232885121094)
@@ -2445,10 +2507,13 @@ async def on_ready():
     await client.change_presence(activity=activity)
     prefixlist=[]
     exemptspam=[]
+    antilink=[]
     with open("exemptspam.txt", "r") as f:
       for line in f:
         exemptspam.append(int(line))
-
+    with open("antilink.txt", "r") as f:
+      for link in f:
+        antilink.append(int(link))
     count=1
     with open("prefixes.txt", "r") as f:
       for line in f:
@@ -2459,7 +2524,7 @@ async def on_ready():
         count+=1
     saveprefix.start()
     saveexemptspam.start()
-    
+    saveantilink.start()
 
         
 
@@ -2542,13 +2607,9 @@ async def on_member_join(member):
         embed.set_image(url="attachment://backgroundone.jpg")
         await channelone.send(file=file, embed=embed)
 
-
-
-
-
 @client.event
 async def on_message_edit(before, message):
-    global maintenancemodestatus,exemptspam
+    global maintenancemodestatus,exemptspam,antilink
     if maintenancemodestatus:
       if not checkstaff(message.author):
         return
@@ -2573,7 +2634,26 @@ async def on_message_edit(before, message):
         #print(f" {message.author} has edited {message.content}{postfix}")
         return
     origmessage=message.content
-    translatedmessage=(translator.translate(origmessage).text)
+    if message.channel.id in antilink:
+      listofsentence=[origmessage]
+      listofwords=convertwords(listofsentence)
+      for word in listofwords:
+        if not word.startswith('http:') and not word.startswith('https:'):
+          wordone="http:"+word
+          wordtwo="https:"+word
+          if validurl(wordone) or validurl(wordtwo):
+            await message.channel.send(f" Links are not allowed in this channel {message.author.mention} .")
+            await message.delete()
+            return
+        else:
+          if validurl(word):
+            await message.channel.send(f" Links are not allowed in this channel {message.author.mention} .")
+            await message.delete()
+            return
+    try:
+      translatedmessage=(translator.translate(origmessage,dest="en").text)
+    except:
+      translatedmessage=origmessage
     bucket = bot.cooldownvar.get_bucket(message)
     retry_after = bucket.update_rate_limit()
     if retry_after:
@@ -2639,7 +2719,7 @@ async def on_message_edit(before, message):
 
 @client.event
 async def on_message(message):
-    global maintenancemodestatus,exemptspam
+    global maintenancemodestatus,exemptspam,antilink
     if maintenancemodestatus:
       if not checkstaff(message.author):
         return
@@ -2658,7 +2738,32 @@ async def on_message(message):
           print(embed.to_dict())
         return
     origmessage=message.content
-    translatedmessage=(translator.translate(origmessage).text)
+    if message.channel.id in antilink:
+      listofsentence=[origmessage]
+      listofwords=convertwords(listofsentence)
+      for word in listofwords:
+        serverinvitecheck= re.compile("(?:https?://)?discord(?:app)?\.(?:com/invite|gg)/[a-zA-Z0-9]+/?")
+        if(serverinvitecheck.match(word)):
+            await message.channel.send(f" Server invites are not allowed in this channel {message.author.mention} .")
+            await message.delete()
+            return          
+        if not word.startswith('http:') and not word.startswith('https:'):
+          wordone="http://"+word
+          wordtwo="https://"+word
+          if validurl(wordone) or validurl(wordtwo):
+            await message.channel.send(f" Links are not allowed in this channel {message.author.mention} .")
+            await message.delete()
+            return
+        else:
+          if validurl(word):
+            await message.channel.send(f" Links are not allowed in this channel {message.author.mention} .")
+            await message.delete()
+            return
+          
+    try:
+      translatedmessage=(translator.translate(origmessage,dest="en").text)
+    except:
+      translatedmessage=origmessage
     if ("<@!805030662183845919>" in translatedmessage) or("<@805030662183845919>" in translatedmessage):
       if message.guild:
         await message.reply(f" My {message.guild} prefix is {prefixlist[prefixlist.index(message.guild.id)+1]} , do {prefixlist[prefixlist.index(message.guild.id)+1]}setprefix to change prefixes .")
