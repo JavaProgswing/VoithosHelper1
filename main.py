@@ -2750,9 +2750,7 @@ async def on_message(message):
         if not word.startswith('http:') and not word.startswith('https:'):
           wordone="http://"+word
           wordtwo="https://"+word
-          wordthree="http://www."+word
-          wordfour="https://www."+word          
-          if validurl(wordone) or validurl(wordtwo)or validurl(wordthree)or validurl(wordfour):
+          if validurl(wordone) or validurl(wordtwo):
             await message.channel.send(f" Links are not allowed in this channel {message.author.mention} .")
             await message.delete()
             return
