@@ -458,7 +458,7 @@ class Moderation(commands.Cog):
         return
       else:
         antilink.append(channel.id)
-        await ctx.send("Anti-link has been enabled in this channel .")
+        await ctx.send("Successfully enabled anti-link in this channel .")
     @commands.command(brief='This command disables checking for links in certain channels.', description='This command disables checking for links in certain channel and can be used by members having manage_messages permission',usage="#channel")
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_messages=True))
@@ -471,7 +471,7 @@ class Moderation(commands.Cog):
         return
       else:
         antilink.remove(channel.id)
-        await ctx.send("Anti-link has been disabled in this channel .")
+        await ctx.send("Successfully disabled anti-link in this channel .")
 
     @commands.command(brief='This command sets slowmode delay to a certain channel.', description='This command sets slowmode delay to a certain channel and can be used by members having manage messages permission',usage="delay")
     @commands.check_any(is_bot_staff(), 
@@ -2750,7 +2750,9 @@ async def on_message(message):
         if not word.startswith('http:') and not word.startswith('https:'):
           wordone="http://"+word
           wordtwo="https://"+word
-          if validurl(wordone) or validurl(wordtwo):
+          wordthree="http://www."+word
+          wordfour="https://www."+word          
+          if validurl(wordone) or validurl(wordtwo)or validurl(wordthree)or validurl(wordfour):
             await message.channel.send(f" Links are not allowed in this channel {message.author.mention} .")
             await message.delete()
             return
