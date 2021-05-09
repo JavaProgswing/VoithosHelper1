@@ -531,16 +531,11 @@ class Moderation(commands.Cog):
             return
         await ctx.channel.send(f"""{ctx.author.mention} has purged {number} messages for {reason}""")
 
-    @commands.command(brief='This command prevents users from viewing any channels on the server.', description='This command prevents users from viewing any channels on the server and can be used by members having manage roles permission.',usage="@member reason time")
+    @commands.command(brief='This command prevents users from viewing any channels on the server.', description='This command prevents users from viewing any channels on the server and can be used by members having manage roles permission.',usage="@member time reason")
     @commands.check_any(is_bot_staff(), commands.has_permissions(manage_roles=True))
-    async def blacklist(self, ctx, member: discord.Member,*, reason=None,timenum=None):
+    async def blacklist(self, ctx, member: discord.Member,timenum=None,*, reason=None):
         if reason == None:
             reason = "no reason provided ."
-        if not ctx.guild.me.guild_permissions.administrator and not ctx.guild.me.guild_permissions.manage_roles:
-            raise commands.CommandError(
-                " I do not have `administrator` permissions , grant me `administrator` or `manage roles` permission to blacklist users ."
-            )
-            return
         if member == client.user:
             raise commands.CommandError("I could not blacklist myself .")
             return
@@ -645,12 +640,6 @@ class Moderation(commands.Cog):
                           ctx,
                           blacklistedmember: discord.Member,*,
                           reason=None):
-        if not ctx.guild.me.guild_permissions.administrator and not ctx.guild.me.guild_permissions.manage_roles:
-            raise commands.CommandError(
-                " I do not have `administrator` permissions , grant me `administrator` or `manage roles` permission to unblacklist users ."
-            )
-            return
-
         blacklistrole = discord.utils.get(ctx.guild.roles, name='blacklisted')
         if blacklistrole == None:
             perms = discord.Permissions(send_messages=False,
@@ -739,15 +728,10 @@ class Moderation(commands.Cog):
             count=count+1
         except:
           pass
-    @commands.command(brief='This command (mutes)prevents user from sending messages in any channel .', description='This command (mutes)prevents user from sending messages in any channel and can be used by users having manage roles permission.',usage="@member reason time")
+    @commands.command(brief='This command (mutes)prevents user from sending messages in any channel .', description='This command (mutes)prevents user from sending messages in any channel and can be used by users having manage roles permission.',usage="@member time reason")
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_roles=True))
-    async def mute(self, ctx, member: discord.Member,*, reason=None,timenum=None):
-        if not ctx.guild.me.guild_permissions.administrator and not ctx.guild.me.guild_permissions.manage_roles:
-            raise commands.CommandError(
-                " I do not have `administrator` permissions , grant me `administrator` or `manage roles` permission to mute users ."
-            )
-            return
+    async def mute(self, ctx, member: discord.Member,timenum=None,*, reason=None):
         if reason == None:
             reason = "no reason provided ."
         if member == client.user:
@@ -843,11 +827,7 @@ class Moderation(commands.Cog):
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_roles=True))
     async def unmute(self, ctx, mutedmember: discord.Member,*, reason=None):
-        if not ctx.guild.me.guild_permissions.administrator and not ctx.guild.me.guild_permissions.manage_roles:
-            raise commands.CommandError(
-                " I do not have `administrator` permissions , grant me `administrator` or `manage roles` permission to mute users ."
-            )
-            return
+
         muterole = discord.utils.get(ctx.guild.roles, name='muted')
         if muterole == None:
             perms = discord.Permissions(send_messages=False,
