@@ -626,7 +626,7 @@ class Moderation(commands.Cog):
           await asyncio.sleep(convertedtime)
           cmd = client.get_command("unblacklist")
           try:
-            await cmd( await client.get_context(ctx),ctx.author,
+            await cmd( ctx,member,
                       reason=f"having elapsed {timenum} .")
             return
           except:
@@ -815,7 +815,7 @@ class Moderation(commands.Cog):
           await asyncio.sleep(convertedtime)
           cmd = client.get_command("unmute")
           try:
-            await cmd( await client.get_context(ctx),ctx.author,
+            await cmd( ctx,member,
                       reason=f"having elapsed {timenum} .")
             return
           except:
