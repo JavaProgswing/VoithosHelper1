@@ -628,15 +628,12 @@ class Moderation(commands.Cog):
         )
         if not timenum==None:
           await asyncio.sleep(convertedtime)
-          cmd = client.get_command("unblacklist")
           try:
-            await cmd( await client.get_context(ctx.message),member,reason=
-                    f"having elapsed {timenum} .")
-            return
+            await ctx.invoke(self.bot.get_command('unblacklist'), mutedmember=member,reason=f"having elapsed {timenum} .")
           except:
-              messagesent=await ctx.send(f" I don't have enough permissions to unblacklist {member.mention} .")
-              await asyncio.sleep(5)
-              await messagesent.delete()
+            messagesent=await ctx.send(f" I don't have enough permissions to unblacklist {member.mention} .")
+            await asyncio.sleep(5)
+            await messagesent.delete()
     @commands.command(brief='This command allows users to view any channel on the server.', description='This command allows users to view any channel on the server and can be used by members having manage roles permission.',usage="@member reason")
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_roles=True))
@@ -822,10 +819,8 @@ class Moderation(commands.Cog):
         )
         if not timenum==None:
           await asyncio.sleep(convertedtime)
-          cmd = client.get_command("unmute")
           try:
-            await cmd( await client.get_context(ctx.message),member,reason=
-                    f"having elapsed {timenum} .")
+            await ctx.invoke(self.bot.get_command('unmute'), mutedmember=member,reason=f"having elapsed {timenum} .")
           except:
             messagesent=await ctx.send(f" I don't have enough permissions to unmute {member.mention} .")
             await asyncio.sleep(5)
