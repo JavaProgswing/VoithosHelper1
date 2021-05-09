@@ -179,8 +179,9 @@ async def on_command_error(ctx, error):
         embederror.add_field(name=(f" Message: {ctx.message.content}"),value="\u200b",inline=False)
         embedone = discord.Embed(title="",color=Color.dark_red())
         embedone.add_field(name=" Command error ",value= errordata,inline=False)
-    
-    await channelone.send(embed=embederror)
+    if not isinstance(error, commands.errors.CommandError):
+      await channelone.send(embed=embederror)
+
     await ctx.channel.send(embed=embedone)
 
 class TopGG(commands.Cog):
@@ -516,8 +517,7 @@ class Moderation(commands.Cog):
         if numberstr =="all" or numberstr=="everything":
             textchannelcloned=await ctx.channel.clone(reason=reason)
             await ctx.channel.delete(reason=reason)
-            await textchannelcloned.send(f"""{ctx.author.mention} has purged all
-             messages for {reason}""")
+            await textchannelcloned.send(f"""{ctx.author.mention} has purged all messages for {reason}""")
             return
         try:
             number=int(numberstr)
@@ -531,14 +531,14 @@ class Moderation(commands.Cog):
             return
         await ctx.channel.send(f"""{ctx.author.mention} has purged {number} messages for {reason}""")
 
-    @commands.command(brief='This command prevents users from viewing any channels on the server.', description='This command prevents users from viewing any channels on the server and can be used by members having manage roles permission.',usage="@member reason")
+    @commands.command(brief='This command prevents users from viewing any channels on the server.', description='This command prevents users from viewing any channels on the server and can be used by members having manage roles permission.',usage="@member reason time")
     @commands.check_any(is_bot_staff(), commands.has_permissions(manage_roles=True))
-    async def blacklist(self, ctx, member: discord.Member,*, reason=None):
+    async def blacklist(self, ctx, member: discord.Member,*, reason=None,timenum=None):
         if reason == None:
             reason = "no reason provided ."
         if not ctx.guild.me.guild_permissions.administrator and not ctx.guild.me.guild_permissions.manage_roles:
             raise commands.CommandError(
-                " I do not have `administrator` permissions , grant me `administrator` or `manage roles` permission to mute users ."
+                " I do not have `administrator` permissions , grant me `administrator` or `manage roles` permission to blacklist users ."
             )
             return
         if member == client.user:
@@ -603,7 +603,41 @@ class Moderation(commands.Cog):
         await ctx.channel.send(
             f" {member.mention} was successfully blacklisted by {ctx.author.mention} for {reason} "
         )
+        if not timenum==None:
+          convertedtime = convert(timenum)
+          if convertedtime == -1:
+              try:
+                  await ctx.channel.purge(limit=count)
+              except:
+                  await ctx.send(
+                      "I do not have `manage messages` permissions to delete messages ."
+                  )
+                  
+              raise commands.CommandError(
+                  "You didn't answer with a proper unit. Use (s|m|h|d) next time!"
+              )
 
+              return
+          elif convertedtime == -2:
+              try:
+                  await ctx.channel.purge(limit=count)
+              except:
+                  await ctx.send("I do not have `manage messages` permissions to delete messages .")
+                  
+              raise commands.CommandError(
+                  "The time must be an integer. Please enter an integer next time."
+              )
+              return
+          await asyncio.sleep(convertedtime)
+          cmd = client.get_command("unblacklist")
+          try:
+            await cmd( await client.get_context(ctx),ctx.author,
+                      reason=f"having elapsed {timenum} .")
+            return
+          except:
+              messagesent=await ctx.send(f" I don't have enough permissions to unblacklist {ctx.author.mention} .")
+              await asyncio.sleep(5)
+              await messagesent.delete()
     @commands.command(brief='This command allows users to view any channel on the server.', description='This command allows users to view any channel on the server and can be used by members having manage roles permission.',usage="@member reason")
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_roles=True))
@@ -613,7 +647,7 @@ class Moderation(commands.Cog):
                           reason=None):
         if not ctx.guild.me.guild_permissions.administrator and not ctx.guild.me.guild_permissions.manage_roles:
             raise commands.CommandError(
-                " I do not have `administrator` permissions , grant me `administrator` or `manage roles` permission to blacklist users ."
+                " I do not have `administrator` permissions , grant me `administrator` or `manage roles` permission to unblacklist users ."
             )
             return
 
@@ -705,10 +739,10 @@ class Moderation(commands.Cog):
             count=count+1
         except:
           pass
-    @commands.command(brief='This command (mutes)prevents user from sending messages in any channel .', description='This command (mutes)prevents user from sending messages in any channel and can be used by users having manage roles permission.',usage="@member reason")
+    @commands.command(brief='This command (mutes)prevents user from sending messages in any channel .', description='This command (mutes)prevents user from sending messages in any channel and can be used by users having manage roles permission.',usage="@member reason time")
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_roles=True))
-    async def mute(self, ctx, member: discord.Member,*, reason=None):
+    async def mute(self, ctx, member: discord.Member,*, reason=None,timenum=None):
         if not ctx.guild.me.guild_permissions.administrator and not ctx.guild.me.guild_permissions.manage_roles:
             raise commands.CommandError(
                 " I do not have `administrator` permissions , grant me `administrator` or `manage roles` permission to mute users ."
@@ -769,6 +803,41 @@ class Moderation(commands.Cog):
         await ctx.channel.send(
             f" {member.mention} was successfully muted by {ctx.author.mention} for {reason} "
         )
+        if not timenum==None:
+          convertedtime = convert(timenum)
+          if convertedtime == -1:
+              try:
+                  await ctx.channel.purge(limit=count)
+              except:
+                  await ctx.send(
+                      "I do not have `manage messages` permissions to delete messages ."
+                  )
+                  
+              raise commands.CommandError(
+                  "You didn't answer with a proper unit. Use (s|m|h|d) next time!"
+              )
+
+              return
+          elif convertedtime == -2:
+              try:
+                  await ctx.channel.purge(limit=count)
+              except:
+                  await ctx.send("I do not have `manage messages` permissions to delete messages .")
+                  
+              raise commands.CommandError(
+                  "The time must be an integer. Please enter an integer next time."
+              )
+              return
+          await asyncio.sleep(convertedtime)
+          cmd = client.get_command("unmute")
+          try:
+            await cmd( await client.get_context(ctx),ctx.author,
+                      reason=f"having elapsed {timenum} .")
+            return
+          except:
+              messagesent=await ctx.send(f" I don't have enough permissions to unmute {ctx.author.mention} .")
+              await asyncio.sleep(5)
+              await messagesent.delete()
 
     @commands.command(brief='This command (unmutes)allows user to send messages in any channel .', description='This command (unmutes)allows user to send messages in any channel and can be used by users having manage roles permission.',usage="@member reason")
     @commands.check_any(is_bot_staff(), 
@@ -1490,7 +1559,6 @@ class Fun(commands.Cog):
         embed.set_image(url="attachment://backgroundone.jpg")
         await ctx.reply(file=file, embed=embed)
 
-
     @commands.command(brief='This command can be used to search on google.', description='This command can be used to search on google.',usage="search-term number")
     async def searchquery(self, ctx,*, query: str, number: int = 1):
         if not uservoted(ctx.author) and not checkstaff(ctx.author) and not checkprivilleged(ctx.author):
@@ -1836,8 +1904,8 @@ class Giveaways(commands.Cog):
 
         channel = client.get_channel(c_id)
 
-        time = convert(answers[1])
-        if time == -1:
+        timenum = convert(answers[1])
+        if timenum == -1:
             try:
                 await ctx.channel.purge(limit=count)
             except:
@@ -1850,14 +1918,14 @@ class Giveaways(commands.Cog):
             )
 
             return
-        elif time == -2:
+        elif timenum == -2:
             try:
                 await ctx.channel.purge(limit=count)
             except:
                 await ctx.send("I do not have `manage messages` permissions to delete messages .")
                 
             raise commands.CommandError(
-                "The time just be an integer. Please enter an integer next time."
+                "The time must be an integer. Please enter an integer next time."
             )
             return
 
@@ -1878,13 +1946,16 @@ class Giveaways(commands.Cog):
 
         await my_msg.add_reaction("🎉")
 
-        await asyncio.sleep(time)
+        await asyncio.sleep(timenum)
 
         new_msg = await channel.fetch_message(my_msg.id)
-
+        await asyncio.sleep(1)
         users = await new_msg.reactions[0].users().flatten()
-        users.pop(users.index(client.user))
-        if users.length<membercount:
+        try:
+          users.pop(users.index(client.user))
+        except:
+          pass
+        if len(users)<membercount:
             raise commands.CommandError(f" Enough number of users didn't participate in giveaway of {prize} . ")
             return
         for i in range(membercount):
