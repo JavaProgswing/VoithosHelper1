@@ -629,7 +629,7 @@ class Moderation(commands.Cog):
         if not timenum==None:
           await asyncio.sleep(convertedtime)
           try:
-            await ctx.invoke(self.bot.get_command('unblacklist'), mutedmember=member,reason=f"having elapsed {timenum} .")
+            await ctx.invoke(client.get_command('unblacklist'), mutedmember=member,reason=f"having elapsed {timenum} .")
           except:
             messagesent=await ctx.send(f" I don't have enough permissions to unblacklist {member.mention} .")
             await asyncio.sleep(5)
@@ -819,12 +819,14 @@ class Moderation(commands.Cog):
         )
         if not timenum==None:
           await asyncio.sleep(convertedtime)
-          try:
-            await ctx.invoke(self.bot.get_command('unmute'), mutedmember=member,reason=f"having elapsed {timenum} .")
+          #try:
+          await ctx.invoke(client.get_command('unmute'), mutedmember=member,reason=f"having elapsed {timenum} .")
+          """
           except:
             messagesent=await ctx.send(f" I don't have enough permissions to unmute {member.mention} .")
             await asyncio.sleep(5)
             await messagesent.delete()
+          """
 
 
 
