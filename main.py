@@ -536,9 +536,38 @@ class Moderation(commands.Cog):
     async def blacklist(self, ctx, member: discord.Member,timenum=None,*, reason=None):
         if reason == None:
             reason = "no reason provided ."
+        if timenum==None:
+          timelength=""
+        else:
+          timelength=f"for a duration of {timenum}."
         if member == client.user:
             raise commands.CommandError("I could not blacklist myself .")
             return
+        if not timenum==None:
+          convertedtime = convert(timenum)
+          if convertedtime == -1:
+              try:
+                  await ctx.channel.purge(limit=count)
+              except:
+                  await ctx.send(
+                      "I do not have `manage messages` permissions to delete messages ."
+                  )
+                  
+              raise commands.CommandError(
+                  "You didn't answer with a proper unit. Use (s|m|h|d) next time!"
+              )
+
+              return
+          elif convertedtime == -2:
+              try:
+                  await ctx.channel.purge(limit=count)
+              except:
+                  await ctx.send("I do not have `manage messages` permissions to delete messages .")
+                  
+              raise commands.CommandError(
+                  "The time must be an integer. Please enter an integer next time."
+              )
+              return
         blacklistrole = discord.utils.get(ctx.guild.roles, name='blacklisted')
         for role in member.roles:
             if role != ctx.guild.default_role:
@@ -596,43 +625,18 @@ class Moderation(commands.Cog):
         except:
           pass
         await ctx.channel.send(
-            f" {member.mention} was successfully blacklisted by {ctx.author.mention} for {reason} "
+            f" {member.mention} was successfully blacklisted by {ctx.author.mention} for {reason} {timelength}"
         )
-        if not timenum==None:
-          convertedtime = convert(timenum)
-          if convertedtime == -1:
-              try:
-                  await ctx.channel.purge(limit=count)
-              except:
-                  await ctx.send(
-                      "I do not have `manage messages` permissions to delete messages ."
-                  )
-                  
-              raise commands.CommandError(
-                  "You didn't answer with a proper unit. Use (s|m|h|d) next time!"
-              )
-
-              return
-          elif convertedtime == -2:
-              try:
-                  await ctx.channel.purge(limit=count)
-              except:
-                  await ctx.send("I do not have `manage messages` permissions to delete messages .")
-                  
-              raise commands.CommandError(
-                  "The time must be an integer. Please enter an integer next time."
-              )
-              return
-          await asyncio.sleep(convertedtime)
-          cmd = client.get_command("unblacklist")
-          try:
-            await cmd( ctx,member,
-                      reason=f"having elapsed {timenum} .")
-            return
-          except:
-              messagesent=await ctx.send(f" I don't have enough permissions to unblacklist {ctx.author.mention} .")
-              await asyncio.sleep(5)
-              await messagesent.delete()
+        await asyncio.sleep(convertedtime)
+        cmd = client.get_command("unblacklist")
+        try:
+          await cmd( await client.get_context(ctx),member,
+                    reason=f"having elapsed {timenum} .")
+          return
+        except:
+            messagesent=await ctx.send(f" I don't have enough permissions to unblacklist {ctx.author.mention} .")
+            await asyncio.sleep(5)
+            await messagesent.delete()
     @commands.command(brief='This command allows users to view any channel on the server.', description='This command allows users to view any channel on the server and can be used by members having manage roles permission.',usage="@member reason")
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_roles=True))
@@ -734,9 +738,38 @@ class Moderation(commands.Cog):
     async def mute(self, ctx, member: discord.Member,timenum=None,*, reason=None):
         if reason == None:
             reason = "no reason provided ."
+        if timenum==None:
+          timelength=""
+        else:
+          timelength=f"for a duration of {timenum}."
         if member == client.user:
             raise commands.CommandError("I could not mute myself .")
             return
+        if not timenum==None:
+          convertedtime = convert(timenum)
+          if convertedtime == -1:
+              try:
+                  await ctx.channel.purge(limit=count)
+              except:
+                  await ctx.send(
+                      "I do not have `manage messages` permissions to delete messages ."
+                  )
+                  
+              raise commands.CommandError(
+                  "You didn't answer with a proper unit. Use (s|m|h|d) next time!"
+              )
+
+              return
+          elif convertedtime == -2:
+              try:
+                  await ctx.channel.purge(limit=count)
+              except:
+                  await ctx.send("I do not have `manage messages` permissions to delete messages .")
+                  
+              raise commands.CommandError(
+                  "The time must be an integer. Please enter an integer next time."
+              )
+              return
         muterole = discord.utils.get(ctx.guild.roles, name='muted')
         for role in member.roles:
             if role != ctx.guild.default_role:
@@ -785,43 +818,18 @@ class Moderation(commands.Cog):
         except:
           pass
         await ctx.channel.send(
-            f" {member.mention} was successfully muted by {ctx.author.mention} for {reason} "
+            f" {member.mention} was successfully muted by {ctx.author.mention} for {reason} {timelength}"
         )
-        if not timenum==None:
-          convertedtime = convert(timenum)
-          if convertedtime == -1:
-              try:
-                  await ctx.channel.purge(limit=count)
-              except:
-                  await ctx.send(
-                      "I do not have `manage messages` permissions to delete messages ."
-                  )
-                  
-              raise commands.CommandError(
-                  "You didn't answer with a proper unit. Use (s|m|h|d) next time!"
-              )
-
-              return
-          elif convertedtime == -2:
-              try:
-                  await ctx.channel.purge(limit=count)
-              except:
-                  await ctx.send("I do not have `manage messages` permissions to delete messages .")
-                  
-              raise commands.CommandError(
-                  "The time must be an integer. Please enter an integer next time."
-              )
-              return
-          await asyncio.sleep(convertedtime)
-          cmd = client.get_command("unmute")
-          try:
-            await cmd( ctx,member,
-                      reason=f"having elapsed {timenum} .")
-            return
-          except:
-              messagesent=await ctx.send(f" I don't have enough permissions to unmute {ctx.author.mention} .")
-              await asyncio.sleep(5)
-              await messagesent.delete()
+        await asyncio.sleep(convertedtime)
+        cmd = client.get_command("unmute")
+        try:
+          await cmd(await client.get_context(ctx),member,
+                    reason=f"having elapsed {timenum} .")
+          return
+        except:
+            messagesent=await ctx.send(f" I don't have enough permissions to unmute {ctx.author.mention} .")
+            await asyncio.sleep(5)
+            await messagesent.delete()
 
     @commands.command(brief='This command (unmutes)allows user to send messages in any channel .', description='This command (unmutes)allows user to send messages in any channel and can be used by users having manage roles permission.',usage="@member reason")
     @commands.check_any(is_bot_staff(), 
