@@ -100,8 +100,8 @@ async def get_prefix(client, message):
       return prefixlist[prefixlist.index(message.guild.id)+1]
   else:
     return "!"
-
-client = commands.Bot(command_prefix=get_prefix,case_insensitive=True)
+intents = discord.Intents.default()
+client = commands.Bot(command_prefix=get_prefix,case_insensitive=True,intents=intents)
 slash = SlashCommand(client, sync_commands=True)
 API_KEY = 'AIzaSyB7O6SC44ARFgK8HjdOYbsXnZ6wY9QiSsQ'
 service = discovery.build('commentanalyzer', 'v1alpha1', developerKey=API_KEY)
@@ -641,6 +641,7 @@ class Moderation(commands.Cog):
                           ctx,
                           blacklistedmember: discord.Member,*,
                           reason=None):
+        blacklistedmember=ctx.guild.get_member(blacklistedmember.id)
         blacklistrole = discord.utils.get(ctx.guild.roles, name='blacklisted')
         if blacklistrole == None:
             perms = discord.Permissions(send_messages=False,
@@ -652,14 +653,14 @@ class Moderation(commands.Cog):
             if role != ctx.guild.default_role:
                 if blacklistrole == role:
                     checkrole = True
-        if not checkrole:
-            await ctx.channel.send(f" {blacklistedmember.mention} is not blacklisted .")
                                    
-            return
         if reason == None:
             reason = "no reason provided ."
         blacklistrole = discord.utils.get(ctx.guild.roles, name='blacklisted')
-        await blacklistedmember.remove_roles(blacklistrole)
+        try:
+          await blacklistedmember.remove_roles(blacklistrole)
+        except:
+          pass
         blacklistdusers = open("blacklisted.txt", "r")
         userstring = blacklistdusers.read()
         userlist = userstring.split(".")
@@ -819,14 +820,13 @@ class Moderation(commands.Cog):
         )
         if not timenum==None:
           await asyncio.sleep(convertedtime)
-          #try:
-          await ctx.invoke(client.get_command('unmute'), mutedmember=member,reason=f"having elapsed {timenum} .")
-          """
+          try:
+            await ctx.invoke(client.get_command('unmute'), mutedmember=member,reason=f"having elapsed {timenum} .")
           except:
             messagesent=await ctx.send(f" I don't have enough permissions to unmute {member.mention} .")
             await asyncio.sleep(5)
             await messagesent.delete()
-          """
+    
 
 
 
@@ -834,6 +834,7 @@ class Moderation(commands.Cog):
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_roles=True))
     async def unmute(self, ctx, mutedmember: discord.Member,*, reason=None):
+        print(mutedmember.roles)
         muterole = discord.utils.get(ctx.guild.roles, name='muted')
         if muterole == None:
             perms = discord.Permissions(send_messages=False,
@@ -845,13 +846,13 @@ class Moderation(commands.Cog):
             if role != ctx.guild.default_role:
                 if muterole == role:
                     checkrole = True
-        if not checkrole:
-            await ctx.channel.send(f" {mutedmember.mention} is not muted .")
-            return
         if reason == None:
             reason = "no reason provided ."
         muterole = discord.utils.get(ctx.guild.roles, name='muted')
-        await mutedmember.remove_roles(muterole)
+        try:
+          await mutedmember.remove_roles(muterole)
+        except:
+          pass
         mutedusers = open("muted.txt", "r")
         userstring = mutedusers.read()
         userlist = userstring.split(".")
