@@ -613,7 +613,7 @@ class Moderation(commands.Cog):
 
         await member.add_roles(blacklistrole)
         try:
-            await member.send(f""" You were blacklisted by {ctx.author.mention} in {ctx.guild.name} for {reason} """)
+            await member.send(f""" You were blacklisted by {ctx.author.mention} in {ctx.guild.name} for {reason} {timelength}""")
             ##print(f"Successfully dmed users!")
         except:
           pass
@@ -806,7 +806,7 @@ class Moderation(commands.Cog):
 
         await member.add_roles(muterole)
         try:
-            await member.send(f""" You were muted by {ctx.author.mention} in {ctx.guild.name} for {reason} """)
+            await member.send(f""" You were muted by {ctx.author.mention} in {ctx.guild.name} for {reason} {timelength}""")
             ##print(f"Successfully dmed users!")
         except:
           pass
