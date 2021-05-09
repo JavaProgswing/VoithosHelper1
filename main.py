@@ -166,24 +166,23 @@ async def on_command_error(ctx, error):
     if isinstance(error,commands.CommandOnCooldown):
         errordata=f" Seems like you tried this {ctx.command} command recently , try again in {error.retry_after} seconds."     
     embedone = discord.Embed(title=f"Error occured ",description=errordata,color=Color.dark_red())
-    embederror = discord.Embed(title=f"Error occured {type(error)}",description=f"**{error}**",color=Color.dark_red())
+    embederror = discord.Embed(title=f"Error occured {type(error)}",description=f"**{error}** in {ctx.command}",color=Color.dark_red())
     if ctx.guild:
         embederror.add_field(name=(f" Guild: {ctx.guild}"),value="\u200b",inline=False)
         embederror.add_field(name=(f" Channel: {ctx.channel.name}"),value="\u200b",inline=False)
         embederror.add_field(name=(f" Member: {ctx.author.mention}"),value="\u200b",inline=False)
-        embederror.add_field(name=(f" Message: {ctx.message.content}"),value="\u200b",inline=False)
+
     else:
 
         embederror.add_field(name=(" DM Channel "),value="\u200b",inline=False)
         embederror.add_field(name=(f" Member: {ctx.author.mention}"),value="\u200b",inline=False)
-        embederror.add_field(name=(f" Message: {ctx.message.content}"),value="\u200b",inline=False)
         embedone = discord.Embed(title="",color=Color.dark_red())
         embedone.add_field(name=" Command error ",value= errordata,inline=False)
+        
     if not isinstance(error, commands.errors.CommandError):
       await channelone.send(embed=embederror)
 
     await ctx.channel.send(embed=embedone)
-
 class TopGG(commands.Cog):
     """Handles interactions with the top.gg API"""
 
@@ -627,16 +626,17 @@ class Moderation(commands.Cog):
         await ctx.channel.send(
             f" {member.mention} was successfully blacklisted by {ctx.author.mention} for {reason} {timelength}"
         )
-        await asyncio.sleep(convertedtime)
-        cmd = client.get_command("unblacklist")
-        try:
-          await cmd( await client.get_context(ctx),member,
-                    reason=f"having elapsed {timenum} .")
-          return
-        except:
-            messagesent=await ctx.send(f" I don't have enough permissions to unblacklist {ctx.author.mention} .")
-            await asyncio.sleep(5)
-            await messagesent.delete()
+        if not timenum==None:
+          await asyncio.sleep(convertedtime)
+          cmd = client.get_command("unblacklist")
+          try:
+            await cmd( await client.get_context(ctx.message),member,reason=
+                    f"having elapsed {timenum} .")
+            return
+          except:
+              messagesent=await ctx.send(f" I don't have enough permissions to unblacklist {member.mention} .")
+              await asyncio.sleep(5)
+              await messagesent.delete()
     @commands.command(brief='This command allows users to view any channel on the server.', description='This command allows users to view any channel on the server and can be used by members having manage roles permission.',usage="@member reason")
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_roles=True))
@@ -820,22 +820,23 @@ class Moderation(commands.Cog):
         await ctx.channel.send(
             f" {member.mention} was successfully muted by {ctx.author.mention} for {reason} {timelength}"
         )
-        await asyncio.sleep(convertedtime)
-        cmd = client.get_command("unmute")
-        try:
-          await cmd(await client.get_context(ctx),member,
-                    reason=f"having elapsed {timenum} .")
-          return
-        except:
-            messagesent=await ctx.send(f" I don't have enough permissions to unmute {ctx.author.mention} .")
+        if not timenum==None:
+          await asyncio.sleep(convertedtime)
+          cmd = client.get_command("unmute")
+          try:
+            await cmd( await client.get_context(ctx.message),member,reason=
+                    f"having elapsed {timenum} .")
+          except:
+            messagesent=await ctx.send(f" I don't have enough permissions to unmute {member.mention} .")
             await asyncio.sleep(5)
             await messagesent.delete()
+
+
 
     @commands.command(brief='This command (unmutes)allows user to send messages in any channel .', description='This command (unmutes)allows user to send messages in any channel and can be used by users having manage roles permission.',usage="@member reason")
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_roles=True))
     async def unmute(self, ctx, mutedmember: discord.Member,*, reason=None):
-
         muterole = discord.utils.get(ctx.guild.roles, name='muted')
         if muterole == None:
             perms = discord.Permissions(send_messages=False,
