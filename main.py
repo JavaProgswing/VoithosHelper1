@@ -144,46 +144,7 @@ bot.cooldownvar = commands.CooldownMapping.from_cooldown(
     2.0, 1.0, commands.BucketType.user)
 channelone = None
 backupserver=None
-@client.event
-async def on_command_error(ctx, error):
-    global channelone
-    errordata=error
-    if isinstance(error, commands.CommandInvokeError):
-      error = error.original
-    if isinstance(error,commands.CommandNotFound):
-      return
-    if isinstance(error, commands.CheckAnyFailure):
-      errordata=error.errors[0]
-    if isinstance(error, discord.Forbidden):
-        errordata=f" Oops something went wrong while executing the command ."
-    if isinstance(error, commands.BotMissingPermissions):
-        errordata=f" I do not have the{error.missing_perms[0]} permission ."
-    if isinstance(error, commands.MissingPermissions):
-        errordata=f" You are lacking the {error.missing_perms[0]} permission ."
-    if isinstance(error,commands.MissingRequiredArgument):
-        errordata=f" Oops looks like you forgot to put the {str(error.param.name)} in the {ctx.command} command ."
-    if isinstance(error,commands.BadArgument):
-        errordata=f" Oops looks like provided the wrong arguments in the {ctx.command} command ."     
-    if isinstance(error,commands.CommandOnCooldown):
-        errordata=f" Seems like you tried this {ctx.command} command recently , try again in {error.retry_after} seconds."     
-    embedone = discord.Embed(title=f"Error occured ",description=errordata,color=Color.dark_red())
-    embederror = discord.Embed(title=f"Error occured {type(error)}",description=f"**{error}** in {ctx.command}",color=Color.dark_red())
-    if ctx.guild:
-        embederror.add_field(name=(f" Guild: {ctx.guild}"),value="\u200b",inline=False)
-        embederror.add_field(name=(f" Channel: {ctx.channel.name}"),value="\u200b",inline=False)
-        embederror.add_field(name=(f" Member: {ctx.author.mention}"),value="\u200b",inline=False)
 
-    else:
-
-        embederror.add_field(name=(" DM Channel "),value="\u200b",inline=False)
-        embederror.add_field(name=(f" Member: {ctx.author.mention}"),value="\u200b",inline=False)
-        embedone = discord.Embed(title="",color=Color.dark_red())
-        embedone.add_field(name=" Command error ",value= errordata,inline=False)
-        
-    if not isinstance(error, commands.errors.CommandError):
-      await channelone.send(embed=embederror)
-
-    await ctx.channel.send(embed=embedone)
 class TopGG(commands.Cog):
     """Handles interactions with the top.gg API"""
 
@@ -316,6 +277,9 @@ def validurl(theurl):
   return isvalid
 async def mutetimer(ctx,timecount,mutedmember,reason=None):
   await asyncio.sleep(timecount)
+  if ctx.me.top_role < mutedmember.top_role:
+      raise commands.CommandError("My highest role is the same or lower than the highest role of the user(s) you're trying to mute, so I am unable to mute.")
+      return    
   muterole = discord.utils.get(ctx.guild.roles, name='muted')
   if muterole == None:
       perms = discord.Permissions(send_messages=False,
@@ -364,6 +328,9 @@ async def mutetimer(ctx,timecount,mutedmember,reason=None):
 
 async def blacklisttimer(ctx,timecount,blacklistedmember,reason=None):
   await asyncio.sleep(timecount)
+  if ctx.me.top_role < blacklistedmember.top_role:
+      raise commands.CommandError("My highest role is the same or lower than the highest role of the user(s) you're trying to mute, so I am unable to mute.")
+      return    
   blacklistrole = discord.utils.get(ctx.guild.roles, name='blacklisted')
   if blacklistrole == None:
       perms = discord.Permissions(send_messages=False,
@@ -636,6 +603,9 @@ class Moderation(commands.Cog):
         if member == client.user:
             raise commands.CommandError("I could not blacklist myself .")
             return
+        if ctx.me.top_role < member.top_role:
+            raise commands.CommandError("My highest role is the same or lower than the highest role of the user(s) you're trying to blacklist, so I am unable to blacklist.")
+            return    
         if not timenum==None:
           convertedtime = convert(timenum)
           if convertedtime == -1:
@@ -730,13 +700,15 @@ class Moderation(commands.Cog):
                           ctx,
                           blacklistedmember: discord.Member,*,
                           reason=None):
-
+        if ctx.me.top_role < blacklistedmember.top_role:
+            raise commands.CommandError("My highest role is the same or lower than the highest role of the user(s) you're trying to unblacklist, so I am unable to unblacklist.")
+            return    
         blacklistrole = discord.utils.get(ctx.guild.roles, name='blacklisted')
         if blacklistrole == None:
             perms = discord.Permissions(send_messages=False,
                                         read_messages=True)
             await ctx.guild.create_role(name='blacklisted', permissions=perms)
-        blacklistrole = discord.utils.get(ctx.guild.roles, name='blacklisted')                 
+        blacklistrole = discord.utils.get(ctx.guild.roles, name='blacklisted')        await blacklistedmember.remove_roles(blacklistrole)         
         if reason == None:
             reason = "no reason provided ."
         blacklistdusers = open("blacklisted.txt", "r")
@@ -821,6 +793,9 @@ class Moderation(commands.Cog):
         if member == client.user:
             raise commands.CommandError("I could not mute myself .")
             return
+        if ctx.me.top_role < member.top_role:
+            raise commands.CommandError("My highest role is the same or lower than the highest role of the user(s) you're trying to mute, so I am unable to mute.")
+            return          
         if not timenum==None:
           convertedtime = convert(timenum)
           if convertedtime == -1:
@@ -907,12 +882,16 @@ class Moderation(commands.Cog):
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_roles=True))
     async def unmute(self, ctx, mutedmember: discord.Member,*, reason=None):
+        if ctx.me.top_role < mutedmember.top_role:
+            raise commands.CommandError("My highest role is the same or lower than the highest role of the user(s) you're trying to unmute, so I am unable to unmute.")
+            return    
         muterole = discord.utils.get(ctx.guild.roles, name='muted')
         if muterole == None:
             perms = discord.Permissions(send_messages=False,
                                         read_messages=True)
             await ctx.guild.create_role(name='muted', permissions=perms)
         muterole = discord.utils.get(ctx.guild.roles, name='muted')
+        await mutedmember.remove_roles(muterole)
         if reason == None:
             reason = "no reason provided ."
         mutedusers = open("muted.txt", "r")
@@ -929,8 +908,10 @@ class Moderation(commands.Cog):
             #print("___")
             if int(userdetails[0]) == ctx.guild.id:
                 role = ctx.guild.get_role(int(userdetails[2]))
-                #print("Roles :"+str(role))
-                await mutedmember.add_roles(role)
+                try:
+                  await mutedmember.add_roles(role)
+                except:
+                  await ctx.send(f" Failed trying to add the role {role} to {mutedmember} .")
             else:
                 filestring += f"{userdetails[0]},{userdetails[1]},{userdetails[2]}."
         remainingmutedusers = open("muted.txt", "w")
@@ -2747,16 +2728,14 @@ async def on_message_edit(before, message):
     #for embed in embeds:
         #print(f" {message.author} has edited an embed {postfix} containing :")
         #print(embed.to_dict())
-    if message.author == client.user:
+    if (message.author.bot):
         print(f" {message.author} has edited {message.content}{postfix}")
         embeds = message.embeds # return list of embeds
         for embed in embeds:
           print(f" {message.author} has sent an embed {postfix} containing :")
           print(embed.to_dict())
         return
-    if (message.author.bot):
-        #print(f" {message.author} has edited {message.content}{postfix}")
-        return
+
     origmessage=message.content
     if message.channel.id in antilink:
       listofsentence=[origmessage]
@@ -2861,7 +2840,7 @@ async def on_message(message):
         for embed in embeds:
           print(f" {message.author} has sent an embed {postfix} containing :")
           print(embed.to_dict())
-     
+        return
     origmessage=message.content
     if message.channel.id in antilink:
       listofsentence=[origmessage]
@@ -2900,14 +2879,8 @@ async def on_message(message):
         if not "spam" in message.channel.name and not message.channel.id in exemptspam:
 
             cmd = client.get_command("mute")
-            try:
-              await cmd( await client.get_context(message),message.author,
-                        reason=f"spamming in {message.channel.name} ")
-              return
-            except:
-                messagesent=await message.channel.send(f" I don't have enough permissions to mute {message.author.mention} .")
-                await asyncio.sleep(5)
-                await messagesent.delete()
+            await cmd( await client.get_context(message),message.author,
+                      reason=f"spamming in {message.channel.name} ")
             messagesent=await message.channel.send(
                 f" {message.author.mention} is being muted for surpassing a limit of 1 message per 1 second ."
             )
