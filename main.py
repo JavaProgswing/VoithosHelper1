@@ -708,7 +708,8 @@ class Moderation(commands.Cog):
             perms = discord.Permissions(send_messages=False,
                                         read_messages=True)
             await ctx.guild.create_role(name='blacklisted', permissions=perms)
-        blacklistrole = discord.utils.get(ctx.guild.roles, name='blacklisted')        await blacklistedmember.remove_roles(blacklistrole)         
+        blacklistrole = discord.utils.get(ctx.guild.roles, name='blacklisted')
+        await blacklistedmember.remove_roles(blacklistrole)
         if reason == None:
             reason = "no reason provided ."
         blacklistdusers = open("blacklisted.txt", "r")
