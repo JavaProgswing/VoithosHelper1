@@ -474,7 +474,7 @@ class MyHelp(commands.HelpCommand):
         embedone.add_field(name=":link:About",value="""This bot is developed by <@488643992628494347>, based on discord.py\n
 Please visit https://top.gg/bot/805030662183845919 to submit ideas or bugs.""")
         embedone.set_author(name="Commands help",icon_url="https://cdn.discordapp.com/avatars/805030662183845919/70fee8581891e9a810da60944dc486ba.webp?size=128")
-        embedone.set_footer(text="Version 1.10 by JavaCoder12",icon_url="https://cdn.discordapp.com/avatars/488643992628494347/e50ae57d9e8880e6acfbc2b444000fa1.webp?size=128")
+        embedone.set_footer(text="Want support? Join here: https://discord.gg/TZDYSHSZgg",icon_url="https://cdn.discordapp.com/avatars/488643992628494347/e50ae57d9e8880e6acfbc2b444000fa1.webp?size=128")
         try:
           await channel.send(embed=embedone)
         except:
@@ -1273,7 +1273,7 @@ class MinecraftFun(commands.Cog):
       chance = [13,8,5,8,13,10,7,7,14,15]
 
       results = random.choices(blocks,chance,k=1)
-      embedOne = discord.Embed(title=f"Blocks mined",
+      embedOne = discord.Embed(title=f"You got {results[0]} .",
                             description=f"\u200b",           color=Color.green())
       embedOne.add_field(name=f"{(blockemojilist[blocks.index(results[0])])} {results[0]}",value="\u200b",inline=False)
       await ctx.send(embed=embedOne)
