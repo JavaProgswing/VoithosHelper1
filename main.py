@@ -2601,29 +2601,6 @@ class Music(commands.Cog):
           if user==client.user:
             return False
           if str(reaction)=='🔀':
-            playingmusic=None
-            messages = client.loop.create_task(ctx.channel.history(limit=50).flatten())
-            asyncio.sleep(1)
-            for message in messages:
-              print(message.content)
-              if message.content.startswith("Now playing:") and message.content.endswith (f"{ctx.author.mention} .") and message.author==client.user:
-                messagefind=message.content
-                startingindex=messagefind.find(":")
-                #print(" Starting index")
-                #print(startingindex)
-                startingstring=messagefind[startingindex+1:]
-                #print(" Starting str")
-                #print(startingstring)
-                endingindex=startingstring.find("requested")
-                #print(" Ending index")
-                #print(endingindex)
-                playingmusic=startingstring[:endingindex]
-                #print(" Music name ")
-                #print(playingmusic)
-                break
-            if playingmusic==None:
-              client.loop.create_task(ctx.send(" I couldn't find the current playing song."))
-              return False
             cmd = client.get_command("loop")
             client.loop.create_task( cmd(ctx))
             
