@@ -2642,7 +2642,6 @@ class Music(commands.Cog):
             playingmusic=None
             messages = client.loop.create_task(ctx.channel.history(limit=50).flatten())
             for message in messages:
-
               if message.content.startswith("Now playing:") and message.content.endswith (f"{ctx.author.mention} .") and message.author==client.user:
                 messagefind=message.content
                 startingindex=messagefind.find(":")
@@ -2661,6 +2660,8 @@ class Music(commands.Cog):
             if playingmusic==None:
               client.loop.create_task(ctx.send(" I couldn't find the current playing song."))
               return False
+            cmd = client.get_command("stop")
+            client.loop.create_task( cmd(ctx))
             cmd = client.get_command("loop")
             client.loop.create_task( cmd(ctx))
             
@@ -2671,8 +2672,7 @@ class Music(commands.Cog):
           if str(reaction)=='▶️':
             cmd = client.get_command("resume")
             client.loop.create_task( cmd(ctx))
-          print(reaction)
-          print(str(reaction)==str('⏸️'))
+
           if str(reaction)=='⏸️':
             cmd = client.get_command("pause")
             client.loop.create_task( cmd(ctx))
