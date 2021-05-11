@@ -145,7 +145,46 @@ bot.cooldownvar = commands.CooldownMapping.from_cooldown(
     2.0, 1.0, commands.BucketType.user)
 channelone = None
 backupserver=None
+@client.event
+async def on_command_error(ctx, error):
+    global channelone
+    errordata=error
+    if isinstance(error, commands.CommandInvokeError):
+      error = error.original
+    if isinstance(error,commands.CommandNotFound):
+      return
+    if isinstance(error, commands.CheckAnyFailure):
+      errordata=error.errors[0]
+    if isinstance(error, discord.Forbidden):
+        errordata=f" Oops something went wrong while executing the command ."
+    if isinstance(error, commands.BotMissingPermissions):
+        errordata=f" I do not have the{error.missing_perms[0]} permission ."
+    if isinstance(error, commands.MissingPermissions):
+        errordata=f" You are lacking the {error.missing_perms[0]} permission ."
+    if isinstance(error,commands.MissingRequiredArgument):
+        errordata=f" Oops looks like you forgot to put the {str(error.param.name)} in the {ctx.command} command ."
+    if isinstance(error,commands.BadArgument):
+        errordata=f" Oops looks like provided the wrong arguments in the {ctx.command} command ."     
+    if isinstance(error,commands.CommandOnCooldown):
+        errordata=f" Seems like you tried this {ctx.command} command recently , try again in {error.retry_after} seconds."     
+    embedone = discord.Embed(title=f"Error occured ",description=errordata,color=Color.dark_red())
+    embederror = discord.Embed(title=f"Error occured {type(error)}",description=f"**{error}** in {ctx.command}",color=Color.dark_red())
+    if ctx.guild:
+        embederror.add_field(name=(f" Guild: {ctx.guild}"),value="\u200b",inline=False)
+        embederror.add_field(name=(f" Channel: {ctx.channel.name}"),value="\u200b",inline=False)
+        embederror.add_field(name=(f" Member: {ctx.author.mention}"),value="\u200b",inline=False)
 
+    else:
+
+        embederror.add_field(name=(" DM Channel "),value="\u200b",inline=False)
+        embederror.add_field(name=(f" Member: {ctx.author.mention}"),value="\u200b",inline=False)
+        embedone = discord.Embed(title="",color=Color.dark_red())
+        embedone.add_field(name=" Command error ",value= errordata,inline=False)
+        
+    if not isinstance(error, commands.errors.CommandError):
+      await channelone.send(embed=embederror)
+
+    await ctx.channel.send(embed=embedone)
 class TopGG(commands.Cog):
     """Handles interactions with the top.gg API"""
 
@@ -2600,6 +2639,15 @@ class Music(commands.Cog):
       def check(reaction, user):
           if user==client.user:
             return False
+          try:
+              channel=ctx.author.voice.channel
+          except:
+              client.loop.create_task(ctx.send(f"{ctx.author.mention} , You are not connected to a voice channel."))
+              return False
+          if ctx.voice_client is not None:
+              client.loop.create_task(ctx.voice_client.move_to(channel))
+          else:
+              client.loop.create_task(channel.connect())
           if str(reaction)=='🔀':
             cmd = client.get_command("loop")
             client.loop.create_task( cmd(ctx))
@@ -2627,9 +2675,9 @@ class Music(commands.Cog):
       try:
           reaction, user = await client.wait_for('reaction_add', timeout=300,check=check)
       except asyncio.TimeoutError:
-          await channel.send(' Run the command again , this commmand has timed out .')
+          await ctx.channel.send(' Run the command again , this commmand has timed out .')
       else:
-        await channel.send(' Command has finished executing .')
+        await ctx.channel.send(' Command has finished executing .')
         pass
     @commands.cooldown(1,20,BucketType.user)
     @commands.command(brief='This command can be used to change volume of song playing.', description='This command can be used to  change volume of song playing in a voice channel.',usage="percentage")
@@ -2656,10 +2704,12 @@ class Music(commands.Cog):
     async def stop(self, ctx):
         """Stops and disconnects the bot from voice"""
         try:
-          await ctx.voice_client.disconnect()
+          await ctx.voice_client.stop()
           await ctx.reply(f"The audio has been stopped by {ctx.author.mention}")
         except:
           raise commands.CommandError("I am not connected to any voice channels .")
+    
+    @stop.before_invoke       
     @loop.before_invoke
     @play.before_invoke
     @playurl.before_invoke
@@ -2669,12 +2719,11 @@ class Music(commands.Cog):
                 await ctx.author.voice.channel.connect()
             else:
                 raise commands.CommandError("You are not connected to a voice channel.")
-        elif ctx.voice_client.is_playing():
-            ctx.voice_client.stop()
+
     @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command can be used to remove the bot from your voice channel.', description='This command can be used to remove the bot from your voice channel.',usage="")
     async def leave(self, ctx):
-        voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
+        voice=ctx.voice_client
         try:
             if voice.is_connected():
                 await voice.disconnect()
@@ -2686,7 +2735,7 @@ class Music(commands.Cog):
     @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command can be used to pause the playing song.', description='This command can be used to pause the playing song in a voice channel.',usage="")
     async def pause(self, ctx):
-        voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
+        voice=ctx.voice_client
         try:
           if voice.is_playing():
               voice.pause()
@@ -2698,7 +2747,7 @@ class Music(commands.Cog):
     @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command can be used to resume the playing song.', description='This command can be used to resume the playing song in a voice channel.',usage="")
     async def resume(self, ctx):
-        voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
+        voice=ctx.voice_client
         try:
           if voice.is_paused():
               voice.resume()
