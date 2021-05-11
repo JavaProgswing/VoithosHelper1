@@ -1188,11 +1188,11 @@ targeted attacks using automated user accounts.""")
       msg = await client.wait_for('message', check=check)
       if msg.content==captchaMessage:
         ea = discord.Embed(title=" Thank you for verifying!",description=f" You have gained access to channels by getting verified in {ctx.guild}")
-        ea.set_footer(" Want to invite this bot in your server? Checkout this link : **https://discord.com/oauth2/authorize?client_id=805030662183845919&permissions=2416012310&scope=bot**.")
+        ea.set_footer(text=" Want to invite this bot in your server? Checkout this link : https://discord.com/oauth2/authorize?client_id=805030662183845919&permissions=2416012310&scope=bot.")
         await ctx.author.send(embed=ea)
         await ctx.author.add_roles(verifyrole)
       else:
-        await ctx.author.send(f" The captcha verification seems to be invalid .")      
+        await ctx.author.send(f" The captcha entered is invalid , try again .")      
         if checkstaff(ctx.author):
           await ctx.author.send(f" Debug: The captcha was **'{captchaMessage}'** .")
       
