@@ -2629,7 +2629,7 @@ class Music(commands.Cog):
         await ctx.send(embed=embedVar)
 
     #@commands.cooldown(1,150,BucketType.user)
-    @commands.command(brief='This command can be used to control the song.', description='This command can be used to control the song .',usage="")
+    @commands.command(aliases=['controlpanel','musicpanel'],brief='This command can be used to control the song.', description='This command can be used to control the song .',usage="")
     async def controlsong(self,ctx):
       embedVar = discord.Embed(title=f" Music panel ",description=" Add reactions to this message to control music .")
       messagesent=await ctx.send(embed=embedVar)
@@ -2637,7 +2637,7 @@ class Music(commands.Cog):
       for emoji in emojis:
         await messagesent.add_reaction(emoji)
       def check(reaction, user):
-          
+  
           if str(reaction)=='🔀':
             playingmusic=None
             messages = client.loop.create_task(ctx.channel.history(limit=50).flatten())
