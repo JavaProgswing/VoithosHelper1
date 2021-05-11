@@ -2571,7 +2571,7 @@ class Music(commands.Cog):
           async with ctx.typing():
               player = await YTDLSource.from_url(url, loop=self.bot.loop, stream=True)
               ctx.voice_client.play(player, after=lambda e: print('Player error: %s' % e) if e else None)
-          await ctx.reply(f' Now playing: {player.title} requested by {ctx.author.mention} .')
+          await ctx.reply(f' Now looping: {player.title} requested by {ctx.author.mention} .')
           embedVar = discord.Embed(title=f" {vidtitle}",
                                   description=viddes,
                                   color=0x00ff00)
@@ -2662,7 +2662,7 @@ class Music(commands.Cog):
               client.loop.create_task(ctx.send(" I couldn't find the current playing song."))
               return False
             cmd = client.get_command("loop")
-            client.loop.create_task( cmd(ctx),playingmusic)
+            client.loop.create_task( cmd(ctx))
             
           if str(reaction)=='🟥':
             cmd = client.get_command("stop")
