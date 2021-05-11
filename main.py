@@ -2529,10 +2529,25 @@ class Music(commands.Cog):
         await ctx.send(embed=embedVar)
     @commands.cooldown(1,90,BucketType.guild)
     @commands.command(brief='This command can be used to loop a song.', description='This command can be used to loop a song in a voice channel.',usage="songname")
-    async def loop(self, ctx, *, songname:str):
+    async def loop(self, ctx ):
+        playingmusic=None
+        messages = await ctx.channel.history(limit=200).flatten()
+        for message in messages:
+          if message.content.startswith(" Now playing:") and message.content.endswith (f"{ctx.author.mention} .") and message.author==client.user:
+            messagefind=message.content
+            startingindex=messagefind.find(":")
+            startingstring=messagefind[startingindex+1]
+            endingindex=startingstring.find("requested")
+            playingmusic=startingstring[:endingindex]
+            break
+        if playingmusic==None:
+          await ctx.send(" I couldn't find the current playing song.")
+          return
+        songname=playingmusic
         voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
         while(ctx.author.voice):
           """Streams from a url (same as yt, but doesn't predownload)"""
+
           videosSearch = VideosSearch(songname, limit = 1)
           #print(videosSearch.result())
           data=videosSearch.result()
@@ -2603,21 +2618,82 @@ class Music(commands.Cog):
         embedVar.set_footer(text=ctx.author.name, icon_url=ctx.author.avatar_url)
         embedVar.set_author(name="Youtube", icon_url="https://cdn.discordapp.com/avatars/812967359312297994/2c234518e4889657d01fe7001cd52422.webp?size=128")
         await ctx.send(embed=embedVar)
+
+    #@commands.cooldown(1,150,BucketType.user)
+    @commands.command(brief='This command can be used to control the song.', description='This command can be used to control the song .',usage="")
+    async def controlsong(self,ctx):
+      embedVar = discord.Embed(title=f" Music panel ",description=" Add reactions to this message to control music .")
+      messagesent=await ctx.send(embed=embedVar)
+      emojis=['🔀','🟥','▶️', '⏸️', '🔊','🔉']
+      for emoji in emojis:
+        await messagesent.add_reaction(emoji)
+      def check(reaction, user):
+          
+          if str(reaction)=='🔀':
+            playingmusic=None
+            messages = client.loop.create_task(ctx.channel.history(limit=200).flatten())
+            for message in messages:
+              if message.content.startswith(" Now playing:") and message.content.endswith (f"{ctx.author.mention} .") and message.author==client.user:
+                messagefind=message.content
+                startingindex=messagefind.find(":")
+                startingstring=messagefind[startingindex+1]
+                endingindex=startingstring.find("requested")
+                playingmusic=startingstring[:endingindex]
+                break
+            if playingmusic==None:
+              client.loop.create_task( ctx.send(" I couldn't find the current playing song."))
+              return False
+            cmd = client.get_command("loop")
+            client.loop.create_task( cmd(ctx),playingmusic)
+            
+          if str(reaction)=='🟥':
+            cmd = client.get_command("stop")
+            client.loop.create_task( cmd(ctx))
+          
+          if str(reaction)=='▶️':
+            cmd = client.get_command("resume")
+            client.loop.create_task( cmd(ctx))
+          print(reaction)
+          print(str(reaction)==str('⏸️'))
+          if str(reaction)=='⏸️':
+            cmd = client.get_command("pause")
+            client.loop.create_task( cmd(ctx))
+            
+          if str(reaction)=='🔊':
+            cmd = client.get_command("volume")
+            client.loop.create_task( cmd(ctx,10,True))            
+          if str(reaction)=='🔉':
+            cmd = client.get_command("volume")
+            client.loop.create_task(cmd(ctx,-10,True))
+              
+          return False
+      try:
+          reaction, user = await client.wait_for('reaction_add', timeout=300,check=check)
+      except asyncio.TimeoutError:
+          await channel.send(' Run the command again , this commmand has timed out .')
+      else:
+        await channel.send(' Command has finished executing .')
+        pass
     @commands.cooldown(1,20,BucketType.user)
     @commands.command(brief='This command can be used to change volume of song playing.', description='This command can be used to  change volume of song playing in a voice channel.',usage="percentage")
-    async def volume(self, ctx, volume: int):
+    async def volume(self, ctx, volume: int,automated=None):
         """Changes the player's volume"""
-        if not uservoted(ctx.author) and not checkstaff(ctx.author) and not checkprivilleged(ctx.author):
-          cmd = client.get_command("vote")
-          await cmd(ctx)
-          raise commands.CommandError(" Vote for our bot on following websites for accessing this feature .")
-          return
+        if not automated==None:
+          currentvolume=ctx.voice_client.source.volume
+          currentvolume+=(volume/100)
+          if currentvolume<0:
+            currentvolume=0
+          if currentvolume>1:
+            currentvolume=1
+          ctx.voice_client.source.volume=currentvolume
+          await ctx.reply(f"{ctx.author.mention} has changed 🔉 to {currentvolume*100} .")
+        else:
+          ctx.voice_client.source.volume = volume / 100
+          await ctx.reply(f"{ctx.author.mention} has changed 🔉 to {volume} .")
         if ctx.voice_client is None:
             await ctx.reply("I am not connected to a voice channel.")
             return 
 
-        ctx.voice_client.source.volume = volume / 100
-        await ctx.reply(f"{ctx.author.mention} has changed 🔉 to {volume} .")
     @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command can be used to stop the playing song.', description='This command can be used to stop the playing song in a voice channel.',usage="")
     async def stop(self, ctx):
