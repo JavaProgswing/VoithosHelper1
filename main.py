@@ -3,7 +3,8 @@ from keep_alive import keep_alive
 import asyncio
 from googleapiclient import discovery
 import dbl
-import traceback
+import string
+from captcha.image import ImageCaptcha
 import validators
 import random
 import os
@@ -144,7 +145,46 @@ bot.cooldownvar = commands.CooldownMapping.from_cooldown(
     2.0, 1.0, commands.BucketType.user)
 channelone = None
 backupserver=None
+@client.event
+async def on_command_error(ctx, error):
+    global channelone
+    errordata=error
+    if isinstance(error, commands.CommandInvokeError):
+      error = error.original
+    if isinstance(error,commands.CommandNotFound):
+      return
+    if isinstance(error, commands.CheckAnyFailure):
+      errordata=error.errors[0]
+    if isinstance(error, discord.Forbidden):
+        errordata=f" Oops something went wrong while executing the command ."
+    if isinstance(error, commands.BotMissingPermissions):
+        errordata=f" I do not have the{error.missing_perms[0]} permission ."
+    if isinstance(error, commands.MissingPermissions):
+        errordata=f" You are lacking the {error.missing_perms[0]} permission ."
+    if isinstance(error,commands.MissingRequiredArgument):
+        errordata=f" Oops looks like you forgot to put the {str(error.param.name)} in the {ctx.command} command ."
+    if isinstance(error,commands.BadArgument):
+        errordata=f" Oops looks like provided the wrong arguments in the {ctx.command} command ."     
+    if isinstance(error,commands.CommandOnCooldown):
+        errordata=f" Seems like you tried this {ctx.command} command recently , try again in {error.retry_after} seconds."     
+    embedone = discord.Embed(title=f"Error occured ",description=errordata,color=Color.dark_red())
+    embederror = discord.Embed(title=f"Error occured {type(error)}",description=f"**{error}** in {ctx.command}",color=Color.dark_red())
+    if ctx.guild:
+        embederror.add_field(name=(f" Guild: {ctx.guild}"),value="\u200b",inline=False)
+        embederror.add_field(name=(f" Channel: {ctx.channel.name}"),value="\u200b",inline=False)
+        embederror.add_field(name=(f" Member: {ctx.author.mention}"),value="\u200b",inline=False)
 
+    else:
+
+        embederror.add_field(name=(" DM Channel "),value="\u200b",inline=False)
+        embederror.add_field(name=(f" Member: {ctx.author.mention}"),value="\u200b",inline=False)
+        embedone = discord.Embed(title="",color=Color.dark_red())
+        embedone.add_field(name=" Command error ",value= errordata,inline=False)
+        
+    if not isinstance(error, commands.errors.CommandError):
+      await channelone.send(embed=embederror)
+
+    await ctx.channel.send(embed=embedone)
 class TopGG(commands.Cog):
     """Handles interactions with the top.gg API"""
 
@@ -420,6 +460,10 @@ class MyHelp(commands.HelpCommand):
                   commandname=":headphones:"+commandname
                 elif commandname=="CustomCommands":
                   commandname=":writing_hand: "+commandname
+                elif commandname=="Captcha":
+                  commandname=":space_invader: "+commandname
+                elif commandname=="VoithosInfo":
+                  commandname=":scroll: "+commandname 
                   
                 embedone.add_field(name=commandname,
                                    value="\n".join(command_signatures),
@@ -1037,6 +1081,120 @@ class Moderation(commands.Cog):
 
 
 client.add_cog(Moderation(client))
+
+def randStr(chars = string.ascii_uppercase + string.digits, N=4):
+	return ''.join(random.choice(chars) for _ in range(N))
+
+class Captcha(commands.Cog):
+    
+    @commands.command(brief='This command sets up a verification channel on the guild.', description='.This command sets up a verification channel on the guild and can be used by administrators.',usage="#channel")
+    @commands.check_any(is_bot_staff(),
+                        commands.has_permissions(administrator=True))
+    async def setupverification(self,ctx,verifychannel:discord.TextChannel):
+      global prefixlist
+      await ctx.send(" Answer the questions provided below (Type #None for no channel) :")
+      questionlist=["Which is the welcome channel.","Which is the rules channel."]
+      answerlist=[]
+      channelspermitted=[]
+      for question in questionlist:
+        await ctx.send(question)
+        def check(m):
+          return ctx.author==m.author and m.channel == ctx.channel
+        try:
+          msg = await client.wait_for('message', check=check,timeout=30)
+        except asyncio.TimeoutError:
+          await ctx.send(" Seems like you didn't respond to the questions in time , try again .")
+          return
+        else:
+          channelcheck= re.compile("<#[0-9]+>")
+          if not channelcheck.match(msg.content):
+            raise commands.CommandError(" You have not provided a valid channel , mention a channel by #channelname .")
+            return
+          answerlist.append(msg.content)
+      
+      for answer in answerlist:
+        if not answer=="#None":
+          channelspermitted.append(answer)
+      channelids=[]
+      for channel in channelspermitted:
+        channelids.append(int(channel[2:(len(channel)-1)]))
+        verifyrole=discord.utils.get(ctx.guild.roles,name='Verified')
+        if verifyrole == None:
+            perms = discord.Permissions(
+                                        view_channel=True)
+            verifyrole=await ctx.guild.create_role(name='Verified', permissions=perms)
+        for channelloop in ctx.guild.channels:
+          permission=channelloop.overwrites_for(ctx.guild.default_role
+          )
+          await channelloop.set_permissions(verifyrole,overwrite=permission)
+        for channelloop in ctx.guild.channels:
+            if channelloop.type == discord.ChannelType.text:
+                await channelloop.set_permissions(ctx.guild.default_role,view_channel=False)
+        channelids.append(verifychannel.id)
+        for channelid in channelids:
+          try:
+            channel=client.get_channel(channelid)
+            await channel.set_permissions(ctx.guild.default_role,read_messages=True,view_channel=True,send_messages=False)
+          except:
+            pass
+        try:
+          await verifychannel.set_permissions(ctx.guild.default_role,send_messages=True)
+        except:
+          pass
+      e = discord.Embed(title=f"{ctx.guild} Verification",description="""Hello! You are required to complete a captcha before entering the server.
+NOTE: This is Case Sensitive.
+
+Why?
+This is to protect the server against
+targeted attacks using automated user accounts.""")
+      e.add_field(name=f"Type {prefixlist[prefixlist.index(ctx.guild.id)+1]}verify to get verified and gain access to channels.",value="\u200b")
+      await verifychannel.send(embed=e)
+      await ctx.send(" Server verification setup was successful ! ")
+      
+      
+
+    @commands.cooldown(1,30,BucketType.user)
+    @commands.command(brief='This command verifies you on the guild.', description='.This command verifies you on the guild.',usage="")
+    async def verify(self,ctx):
+      await ctx.message.delete()
+      verifyrole = discord.utils.get(ctx.guild.roles, name='Verified')   
+      if verifyrole == None:
+        await ctx.send(" Run the **setupverification** command before this command for setting up the roles .")
+        return
+      captchaMessage=randStr()
+      image = ImageCaptcha()
+      data = image.generate(captchaMessage)
+      image.write(captchaMessage, 'captcha.png')
+      f = discord.File("captcha.png", filename="captcha.png")
+      e = discord.Embed(title=f"{ctx.guild} Verification",description="""Hello! You are required to complete a captcha before entering the server.
+NOTE: This is Case Sensitive.
+
+Why?
+This is to protect the server against
+targeted attacks using automated user accounts.""")
+      e.add_field(name=" Your captcha :",value="\u200b" )
+      e.set_image(url="attachment://captcha.png")
+      try:
+        await ctx.author.send(file=f, embed=e)
+      except:
+        f = discord.File("dmEnable.png", filename="dmEnable.png")
+        e = discord.Embed(title=f"Dms disabled")
+        e.set_image(url="attachment://dmEnable.png")
+        await ctx.channel.send(file=f,embed=e)
+        return
+      def check(m):
+          return ctx.author==m.author and not m.guild
+
+      msg = await client.wait_for('message', check=check)
+      if msg.content==captchaMessage:
+        await ctx.author.send(f" You have been verified in {ctx.guild} .")
+        await ctx.author.add_roles(verifyrole)
+      else:
+        await ctx.author.send(f" The captcha verification seems to be invalid .")      
+        if checkstaff(ctx.author):
+          await ctx.author.send(f" Debug: The captcha was **'{captchaMessage}'** .")
+      
+client.add_cog(Captcha(client))
 class MinecraftFun(commands.Cog):
     #cool
     @commands.cooldown(1,30,BucketType.user)
@@ -1055,7 +1213,7 @@ class MinecraftFun(commands.Cog):
           break
         embedOne.add_field(name=item,value="\u200b",inline=False)
       await ctx.send(embed=embedOne)    
-
+    @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command is used to mine items.', description='This command is used to mine items and store it in inventory.',usage="")   
     async def mine(self,ctx):
       """
@@ -1473,6 +1631,7 @@ class MinecraftFun(commands.Cog):
                 raise commands.CommandError("You are not connected to a voice channel.")
         elif ctx.voice_client.is_playing():
             ctx.voice_client.stop()
+    @commands.cooldown(1,120,BucketType.user)
     @commands.command(brief='This command is used to check the server status of a minecraft server ip.', description='This command is used to check the server status of a minecraft server ip.',usage="server-ip")
     async def mcservercheck(self, ctx, ip: str):
         server = MinecraftServer.lookup(ip)
@@ -1504,7 +1663,7 @@ class MinecraftFun(commands.Cog):
         embedOne.add_field(name=f" Updated at {formatted_time}",value="\u200b",inline=True)
         ipmessagesent=await ctx.send(embed=embedOne)
         return ipmessagesent.id
-    #@commands.cooldown(1,3600,BucketType.guild)
+    @commands.cooldown(1,3600,BucketType.guild)
     @commands.command(brief='This command is used to check the server status of a minecraft server ip after every 30 minutes.', description='This command is used to check the server status of a minecraft server ip after every 30 minutes.',usage="server-ip")
     @commands.check_any(is_bot_staff(),
                           commands.has_permissions(administrator=True))
@@ -1530,7 +1689,7 @@ def listToString(s):
     # return string  
     return str2 
 class Fun(commands.Cog):
-
+    @commands.cooldown(1,20,BucketType.user)
     @commands.command(brief='This command can be used to get random responses from the bot.', description='This command can be used to get random responses from the bot.',usage="")
     async def communication(self, ctx):
         responses = ['It is certain.',
@@ -1555,7 +1714,7 @@ class Fun(commands.Cog):
                   'Yes – definitely.',
                   'You may rely on it.']
         await ctx.reply(f"{random.choice(responses)}")
-
+    @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command can be used to welcome users with a custom welcome image.', description='This command can be used to welcome users with a custom welcome image.',usage="@member")
     async def welcomeuser(self, ctx, member: discord.Member = None):
         if member == None:
@@ -1577,7 +1736,7 @@ class Fun(commands.Cog):
         embed = discord.Embed()
         embed.set_image(url="attachment://backgroundone.jpg")
         await ctx.send(file=file, embed=embed)
-
+    @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command can be used to show users in a custom wanted poster.', description='This command can be used to show users in a custom wanted poster.',usage="@member")
     async def wanteduser(self, ctx, member: discord.Member = None):
         if member == None:
@@ -1593,7 +1752,7 @@ class Fun(commands.Cog):
         embed = discord.Embed()
         embed.set_image(url="attachment://backgroundone.jpg")
         await ctx.reply(file=file, embed=embed)
-
+    @commands.cooldown(1,120,BucketType.user)
     @commands.command(brief='This command can be used to search on google.', description='This command can be used to search on google.',usage="search-term number")
     async def searchquery(self, ctx,*, query: str, number: int = 1):
         if not uservoted(ctx.author) and not checkstaff(ctx.author) and not checkprivilleged(ctx.author):
@@ -1614,6 +1773,7 @@ class Fun(commands.Cog):
             embedVar.add_field(name=count,value=j,inline=False)
             count=count+1
         await ctx.reply(embed=embedVar)
+    @commands.cooldown(1,120,BucketType.user)
     @commands.command(brief='This command can be used to get current weather of a city.', description='This command can be used to get current weather of a city.',usage="city-name")
     async def weather(self, ctx, *, city:str):
         if not uservoted(ctx.author) and not checkstaff(ctx.author) and not checkprivilleged(ctx.author):
@@ -1675,7 +1835,7 @@ class Fun(commands.Cog):
 
 
         await ctx.reply(embed=embedVar)
-
+    @commands.cooldown(1,60,BucketType.user)
     @commands.command(brief='This command can be used to get current user response time(ping).', description='This command can be used to get current user response time(ping) in milliseconds.',usage="")
     async def ping(self, ctx):
         if round(client.latency * 1000) <= 50:
@@ -1704,9 +1864,9 @@ class Fun(commands.Cog):
                 color=0x990000)
         await ctx.reply(embed=embed)
 
+    @commands.command(brief='This command can be used to set bot prefix in a guild by members having manage guild permission.', description='This command can be used to set bot prefix in a guild by members having manage guild permission.',usage="prefix")
     @commands.check_any(is_bot_staff(),
                           commands.has_permissions(manage_guild=True))
-    @commands.command(brief='This command can be used to set bot prefix in a guild by members having manage guild permission.', description='This command can be used to set bot prefix in a guild by members having manage guild permission.',usage="prefix")
     async def setprefix(self,ctx, *, prefix):
       global prefixlist
       if not ctx.guild == None:
@@ -1714,14 +1874,15 @@ class Fun(commands.Cog):
         await ctx.reply(f'My prefix has changed to {prefix} in {ctx.guild} .')
       else:
         await ctx.reply("My prefix cannot be changed in a dm channel , my default prefix is ! ")
-
+    @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command can be used to get some java programming facts.', description='This command can be used to get some java programming facts.',usage="")
     async def java(self, ctx):
         await ctx.channel.send(f"```{random.choice(randomjava)}```")
-
+    @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command can be used to get some python programming facts.', description='This command can be used to get some python programming facts.',usage="")
     async def python(self, ctx):
         await ctx.channel.send(f"```{random.choice(randompython)}```")
+    @commands.cooldown(1,45,BucketType.user)
     @commands.command(brief='This command can be used to translate text into another language.', description='This command can be used to translate text into another language.',usage="language text")
     async def translatetext(self, ctx,language="en",*,text):
       origmessage=text
@@ -1752,7 +1913,7 @@ class Fun(commands.Cog):
       translatedmessage=(translator.translate(origmessage,dest=language).text)
       embedOne = discord.Embed(title=" Language : "+language,description=translatedmessage)
       await ctx.send(embed=embedOne)
-    
+    @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command can be used to get some (python or java) facts.', description='This command can be used to get some (python or java) facts.',usage="")
     async def fact(self, ctx):
         fact = random.choice(randomlist)
@@ -1760,7 +1921,7 @@ class Fun(commands.Cog):
             await ctx.channel.send(f"``` Random Java Fact : {fact}```")
         elif fact in randompython:
             await ctx.channel.send(f"``` Random Python Fact : {fact}```")
-
+    @commands.cooldown(1,30,BucketType.user)
     @commands.command(aliases=['server'],brief='This command can be used to get guild information.', description='This command can be used to get guild information.',usage="")
     async def serverinfo(self,ctx):
       guildname = str(ctx.guild.name)
@@ -1800,7 +1961,7 @@ class Fun(commands.Cog):
       embed.set_thumbnail(url=ctx.guild.icon_url)
 
       await ctx.reply(embed=embed)
-
+    @commands.cooldown(1,30,BucketType.user)
     @commands.command(aliases=['user','userinfo'],brief='This command can be used to get user information.', description='This command can be used to get user information.',usage="@member")
     async def profile(self, ctx, member: discord.Member = None):
         if member == None:
@@ -2133,6 +2294,7 @@ class Support(commands.Cog):
       await guildsent.leave()
 
     @commands.command(brief='This command can be used for checking user votes.', description='This command can be used for checking user votes.',usage="@member")
+    @commands.check_any(is_bot_staff())
     async def checkvote(self,ctx,member:discord.Member=None):
       if member==None:
         member=ctx.author
@@ -2146,6 +2308,7 @@ class Support(commands.Cog):
                           ,color=Color.red())
 
       await ctx.reply(embed=embedOne)
+    @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command can be used to get support-server invite.', description='This command can be used to get support-server invite.',usage="")
     async def supportserver(self, ctx):
         embedOne = discord.Embed(title="Support server",
@@ -2196,6 +2359,7 @@ class Support(commands.Cog):
                         except:
                             await ctx.send(f" I cannot send messages in {channel.name}({guild}) .")
                     break
+    @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command can be used to invite this bot.', description='This command can be used to invite this bot.',usage="")
     async def invite(self, ctx):
         await ctx.channel.send(
@@ -2203,7 +2367,7 @@ class Support(commands.Cog):
         await ctx.channel.send(
             "https://discord.com/api/oauth2/authorize?client_id=805030662183845919&permissions=2147491847&scope=bot"
         )
-
+    @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command can be used to vote for this bot.', description='This command can be used to vote for this bot.',usage="")
     async def vote(self, ctx):
         embedOne = discord.Embed(title="Voting websites",
@@ -2219,9 +2383,9 @@ class Support(commands.Cog):
           await ctx.send(" **Voting websites :**")
           await ctx.send("https://discordbotlist.com/bots/voithos-helper/upvote")
           await ctx.send("https://top.gg/bot/805030662183845919/vote")
-
+    @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command can be used to grant bot permissions to add slash-commands.', description='This command can be used to grant bot permissions to add slash-commands.',usage="")
-    async def slashcommand(self, ctx):
+    async def enableslashcommand(self, ctx):
         await ctx.channel.send(
             " Want slash commands to work ? , grant our bot permissions by this link ."
         )
@@ -2437,6 +2601,7 @@ class Music(commands.Cog):
         embedVar.set_footer(text=ctx.author.name, icon_url=ctx.author.avatar_url)
         embedVar.set_author(name="Youtube", icon_url="https://cdn.discordapp.com/avatars/812967359312297994/2c234518e4889657d01fe7001cd52422.webp?size=128")
         await ctx.send(embed=embedVar)
+    @commands.cooldown(1,20,BucketType.user)
     @commands.command(brief='This command can be used to change volume of song playing.', description='This command can be used to  change volume of song playing in a voice channel.',usage="percentage")
     async def volume(self, ctx, volume: int):
         """Changes the player's volume"""
@@ -2451,7 +2616,7 @@ class Music(commands.Cog):
 
         ctx.voice_client.source.volume = volume / 100
         await ctx.reply(f"{ctx.author.mention} has changed 🔉 to {volume} .")
-
+    @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command can be used to stop the playing song.', description='This command can be used to stop the playing song in a voice channel.',usage="")
     async def stop(self, ctx):
         """Stops and disconnects the bot from voice"""
@@ -2471,7 +2636,7 @@ class Music(commands.Cog):
                 raise commands.CommandError("You are not connected to a voice channel.")
         elif ctx.voice_client.is_playing():
             ctx.voice_client.stop()
-
+    @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command can be used to remove the bot from your voice channel.', description='This command can be used to remove the bot from your voice channel.',usage="")
     async def leave(self, ctx):
         voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
@@ -2483,7 +2648,7 @@ class Music(commands.Cog):
                 raise commands.CommandError("The bot is not connected to a voice channel.")
         except:
           raise commands.CommandError("I cannot find any voice channels .")
-
+    @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command can be used to pause the playing song.', description='This command can be used to pause the playing song in a voice channel.',usage="")
     async def pause(self, ctx):
         voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
@@ -2495,7 +2660,7 @@ class Music(commands.Cog):
               raise commands.CommandError("Currently no audio is playing.")
         except:
           raise commands.CommandError("I cannot find any voice channels .")
-
+    @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command can be used to resume the playing song.', description='This command can be used to resume the playing song in a voice channel.',usage="")
     async def resume(self, ctx):
         voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
@@ -2517,6 +2682,7 @@ def guild_check(_custom_commands):
 class CustomCommands(commands.Cog):
 
     _custom_commands = {}
+    @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command can be used to add your own commands and a custom response.', description='This command can be used to add your own commands and a custom response.',usage="commandname output")
     @commands.check_any(is_bot_staff(),
                         commands.has_permissions(administrator=True))
