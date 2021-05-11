@@ -1187,7 +1187,9 @@ targeted attacks using automated user accounts.""")
 
       msg = await client.wait_for('message', check=check)
       if msg.content==captchaMessage:
-        await ctx.author.send(f" You have been verified in {ctx.guild} .")
+        ea = discord.Embed(title=" Thank you for verifying!",description=f" You have gained access to channels by getting verified in {ctx.guild}")
+        ea.set_footer(" Want to invite this bot in your server? Checkout this link : **https://discord.com/oauth2/authorize?client_id=805030662183845919&permissions=2416012310&scope=bot**.")
+        await ctx.author.send(embed=ea)
         await ctx.author.add_roles(verifyrole)
       else:
         await ctx.author.send(f" The captcha verification seems to be invalid .")      
@@ -2318,7 +2320,7 @@ class Support(commands.Cog):
             ,inline=False
         )
 
-        embedOne.add_field(name="https://discord.gg/Nj8Bb9kwA5",value="\u200b",inline=False)
+        embedOne.add_field(name="https://discord.gg/TZDYSHSZgg",value="\u200b",inline=False)
         await ctx.reply(embed=embedOne)
     @commands.command()
     @commands.check_any(is_bot_staff())
@@ -2365,7 +2367,7 @@ class Support(commands.Cog):
         await ctx.channel.send(
             f" Invite {client.user.name} by using the link provided below :")
         await ctx.channel.send(
-            "https://discord.com/api/oauth2/authorize?client_id=805030662183845919&permissions=2147491847&scope=bot"
+            "https://discord.com/oauth2/authorize?client_id=805030662183845919&permissions=2416012310&scope=bot"
         )
     @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command can be used to vote for this bot.', description='This command can be used to vote for this bot.',usage="")
