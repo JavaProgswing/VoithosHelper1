@@ -145,46 +145,7 @@ bot.cooldownvar = commands.CooldownMapping.from_cooldown(
     2.0, 1.0, commands.BucketType.user)
 channelone = None
 backupserver=None
-@client.event
-async def on_command_error(ctx, error):
-    global channelone
-    errordata=error
-    if isinstance(error, commands.CommandInvokeError):
-      error = error.original
-    if isinstance(error,commands.CommandNotFound):
-      return
-    if isinstance(error, commands.CheckAnyFailure):
-      errordata=error.errors[0]
-    if isinstance(error, discord.Forbidden):
-        errordata=f" Oops something went wrong while executing the command ."
-    if isinstance(error, commands.BotMissingPermissions):
-        errordata=f" I do not have the{error.missing_perms[0]} permission ."
-    if isinstance(error, commands.MissingPermissions):
-        errordata=f" You are lacking the {error.missing_perms[0]} permission ."
-    if isinstance(error,commands.MissingRequiredArgument):
-        errordata=f" Oops looks like you forgot to put the {str(error.param.name)} in the {ctx.command} command ."
-    if isinstance(error,commands.BadArgument):
-        errordata=f" Oops looks like provided the wrong arguments in the {ctx.command} command ."     
-    if isinstance(error,commands.CommandOnCooldown):
-        errordata=f" Seems like you tried this {ctx.command} command recently , try again in {error.retry_after} seconds."     
-    embedone = discord.Embed(title=f"Error occured ",description=errordata,color=Color.dark_red())
-    embederror = discord.Embed(title=f"Error occured {type(error)}",description=f"**{error}** in {ctx.command}",color=Color.dark_red())
-    if ctx.guild:
-        embederror.add_field(name=(f" Guild: {ctx.guild}"),value="\u200b",inline=False)
-        embederror.add_field(name=(f" Channel: {ctx.channel.name}"),value="\u200b",inline=False)
-        embederror.add_field(name=(f" Member: {ctx.author.mention}"),value="\u200b",inline=False)
 
-    else:
-
-        embederror.add_field(name=(" DM Channel "),value="\u200b",inline=False)
-        embederror.add_field(name=(f" Member: {ctx.author.mention}"),value="\u200b",inline=False)
-        embedone = discord.Embed(title="",color=Color.dark_red())
-        embedone.add_field(name=" Command error ",value= errordata,inline=False)
-        
-    if not isinstance(error, commands.errors.CommandError):
-      await channelone.send(embed=embederror)
-
-    await ctx.channel.send(embed=embedone)
 class TopGG(commands.Cog):
     """Handles interactions with the top.gg API"""
 
@@ -2637,11 +2598,14 @@ class Music(commands.Cog):
       for emoji in emojis:
         await messagesent.add_reaction(emoji)
       def check(reaction, user):
-  
+          if user==client.user:
+            return False
           if str(reaction)=='🔀':
             playingmusic=None
             messages = client.loop.create_task(ctx.channel.history(limit=50).flatten())
+            asyncio.sleep(1)
             for message in messages:
+              print(message.content)
               if message.content.startswith("Now playing:") and message.content.endswith (f"{ctx.author.mention} .") and message.author==client.user:
                 messagefind=message.content
                 startingindex=messagefind.find(":")
@@ -2660,8 +2624,6 @@ class Music(commands.Cog):
             if playingmusic==None:
               client.loop.create_task(ctx.send(" I couldn't find the current playing song."))
               return False
-            cmd = client.get_command("stop")
-            client.loop.create_task( cmd(ctx))
             cmd = client.get_command("loop")
             client.loop.create_task( cmd(ctx))
             
