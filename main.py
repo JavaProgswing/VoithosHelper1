@@ -2531,14 +2531,23 @@ class Music(commands.Cog):
     @commands.command(brief='This command can be used to loop a song.', description='This command can be used to loop a song in a voice channel.',usage="songname")
     async def loop(self, ctx ):
         playingmusic=None
-        messages = await ctx.channel.history(limit=200).flatten()
+        messages = await ctx.channel.history(limit=50).flatten()
         for message in messages:
-          if message.content.startswith(" Now playing:") and message.content.endswith (f"{ctx.author.mention} .") and message.author==client.user:
+
+          if message.content.startswith("Now playing:") and message.content.endswith (f"{ctx.author.mention} .") and message.author==client.user:
             messagefind=message.content
             startingindex=messagefind.find(":")
-            startingstring=messagefind[startingindex+1]
+            #print(" Starting index")
+            #print(startingindex)
+            startingstring=messagefind[startingindex+1:]
+            #print(" Starting str")
+            #print(startingstring)
             endingindex=startingstring.find("requested")
+            #print(" Ending index")
+            #print(endingindex)
             playingmusic=startingstring[:endingindex]
+            #print(" Music name ")
+            #print(playingmusic)
             break
         if playingmusic==None:
           await ctx.send(" I couldn't find the current playing song.")
@@ -2631,17 +2640,26 @@ class Music(commands.Cog):
           
           if str(reaction)=='🔀':
             playingmusic=None
-            messages = client.loop.create_task(ctx.channel.history(limit=200).flatten())
+            messages = client.loop.create_task(ctx.channel.history(limit=50).flatten())
             for message in messages:
-              if message.content.startswith(" Now playing:") and message.content.endswith (f"{ctx.author.mention} .") and message.author==client.user:
+
+              if message.content.startswith("Now playing:") and message.content.endswith (f"{ctx.author.mention} .") and message.author==client.user:
                 messagefind=message.content
                 startingindex=messagefind.find(":")
-                startingstring=messagefind[startingindex+1]
+                #print(" Starting index")
+                #print(startingindex)
+                startingstring=messagefind[startingindex+1:]
+                #print(" Starting str")
+                #print(startingstring)
                 endingindex=startingstring.find("requested")
+                #print(" Ending index")
+                #print(endingindex)
                 playingmusic=startingstring[:endingindex]
+                #print(" Music name ")
+                #print(playingmusic)
                 break
             if playingmusic==None:
-              client.loop.create_task( ctx.send(" I couldn't find the current playing song."))
+              client.loop.create_task(ctx.send(" I couldn't find the current playing song."))
               return False
             cmd = client.get_command("loop")
             client.loop.create_task( cmd(ctx),playingmusic)
