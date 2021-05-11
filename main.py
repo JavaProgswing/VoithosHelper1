@@ -1273,9 +1273,9 @@ class MinecraftFun(commands.Cog):
       chance = [13,8,5,8,13,10,7,7,14,15]
 
       results = random.choices(blocks,chance,k=1)
-      embedOne = discord.Embed(title=f"You got {results[0]} .",
+      embedOne = discord.Embed(title=f"Current mining results.",
                             description=f"\u200b",           color=Color.green())
-      embedOne.add_field(name=f"{(blockemojilist[blocks.index(results[0])])} {results[0]}",value="\u200b",inline=False)
+      embedOne.add_field(name=f"You mined up 1 {(blockemojilist[blocks.index(results[0])])} {results[0]}",value="\u200b",inline=False)
       await ctx.send(embed=embedOne)
       file1 = open(f"{ctx.author.id}_mine.txt", "w")
       file1.close()
