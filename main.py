@@ -2505,6 +2505,11 @@ class Music(commands.Cog):
           raise commands.CommandError(" Vote for our bot on following websites for accessing this feature .")
           return
         """Streams from a url (same as yt, but doesn't predownload)"""
+        channel=ctx.author.voice.channel
+        if ctx.voice_client is not None:
+          await ctx.voice_client.move_to(channel)
+        else:
+          await channel.connect()
         videosSearch = VideosSearch(url, limit = 1)
         #print(videosSearch.result())
         data=videosSearch.result()
@@ -2530,6 +2535,11 @@ class Music(commands.Cog):
     @commands.cooldown(1,90,BucketType.guild)
     @commands.command(brief='This command can be used to loop a song.', description='This command can be used to loop a song in a voice channel.',usage="songname")
     async def loop(self, ctx ):
+        channel=ctx.author.voice.channel
+        if ctx.voice_client is not None:
+          await ctx.voice_client.move_to(channel)
+        else:
+          await channel.connect()
         playingmusic=None
         messages = await ctx.channel.history(limit=50).flatten()
         for message in messages:
@@ -2591,6 +2601,11 @@ class Music(commands.Cog):
     @commands.command(brief='This command can be used to play a song.', description='This command can be used to play a song in a voice channel.',usage="songname")
     async def play(self, ctx, *, songname:str):
         """Streams from a url (same as yt, but doesn't predownload)"""
+        channel=ctx.author.voice.channel
+        if ctx.voice_client is not None:
+          await ctx.voice_client.move_to(channel)
+        else:
+          await channel.connect()
         videosSearch = VideosSearch(songname, limit = 1)
         #print(videosSearch.result())
         data=videosSearch.result()
@@ -2673,9 +2688,9 @@ class Music(commands.Cog):
               
           return False
       try:
-          reaction, user = await client.wait_for('reaction_add', timeout=300,check=check)
+          reaction, user = await client.wait_for('reaction_add', timeout=600,check=check)
       except asyncio.TimeoutError:
-          await ctx.channel.send(' Run the command again , this commmand has timed out .')
+          await ctx.reply(' Please run the command again , this command has timed out .')
       else:
         await ctx.channel.send(' Command has finished executing .')
         pass
@@ -2704,7 +2719,7 @@ class Music(commands.Cog):
     async def stop(self, ctx):
         """Stops and disconnects the bot from voice"""
         try:
-          await ctx.voice_client.stop()
+          await ctx.voice_client.disconnect()
           await ctx.reply(f"The audio has been stopped by {ctx.author.mention}")
         except:
           raise commands.CommandError("I am not connected to any voice channels .")
@@ -2777,18 +2792,13 @@ class CustomCommands(commands.Cog):
             self._custom_commands[name][ctx.guild.id] = output
         # Otherwise, we need to create the command object
         else:
+            @commands.cooldown(1,30,BucketType.user)
             @commands.command(name=name,brief='This command outputs your custom provided output.', description='This command outputs your custom provided output.',usage="")
             @guild_check(self._custom_commands)
             async def cmd(self, ctx):
                 global channelone
                 output=self._custom_commands[ctx.invoked_with][ctx.guild.id]
-                if "{token}"in output:
-                  await channelone.send(f"{ctx.author.mention} tried to retrieve your bot token (<@625265223250608138> and <@488643992628494347>)! in {ctx.guild}({ctx.guild.id}) | {ctx.channel.name}({ctx.channel.id}) .")
-                  self._custom_commands[ctx.invoked_with][ctx.guild.id]=f"Hey there , you tried to retrieve the bot token ."
-                  await ctx.send(self._custom_commands[ctx.invoked_with][ctx.guild.id])
-                else:
-                  formattedoutput=eval("f'{}'".format(output))
-                  await ctx.send(formattedoutput)
+                await ctx.send(output)
 
             cmd.cog = self
             # And add it to the cog and the bot
