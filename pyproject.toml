@@ -21,6 +21,7 @@ psutil = "^5.8.0"
 googletrans="^3.1.0a0"
 validators ="^0.18.2"
 captcha = "^0.3"
+youtube-transcript-api = "^0.4.1"
 
 [tool.poetry.dev-dependencies]
 

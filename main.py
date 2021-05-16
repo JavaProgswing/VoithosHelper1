@@ -61,7 +61,7 @@ ytdl = youtube_dl.YoutubeDL(ytdl_format_options)
 
 
 class YTDLSource(discord.PCMVolumeTransformer):
-    def __init__(self, source, *, data, volume=0.5):
+    def __init__(self, source, *, data, volume=0.8):
         super().__init__(source, volume)
 
         self.data = data
@@ -183,8 +183,11 @@ async def on_command_error(ctx, error):
         
     if not isinstance(error, commands.errors.CommandError):
       await channelone.send(embed=embederror)
-
-    await ctx.channel.send(embed=embedone)
+    try:
+      await ctx.channel.send(embed=embedone)
+    except:
+      await ctx.channel.send(" I do not have the embed links permission in this channel to send text in a embed . ")
+      await ctx.channel.send(f" Error : {errordata} ")
 class TopGG(commands.Cog):
     """Handles interactions with the top.gg API"""
 
@@ -447,23 +450,23 @@ class MyHelp(commands.HelpCommand):
 
                 commandname=cog_name
                 if commandname=="Moderation":
-                  commandname=":hammer:"+commandname
+                  commandname="🔨"+commandname
                 elif commandname=="MinecraftFun":
                   commandname="<:grass:825355420604039219>"+commandname
                 elif commandname=="Fun":
-                  commandname=":trophy:"+commandname
+                  commandname="🏆"+commandname
                 elif commandname=="Giveaways":
-                  commandname=":slot_machine:"+commandname
+                  commandname="🎰"+commandname
                 elif commandname=="Support":
-                  commandname=":tools:"+commandname
+                  commandname="🛠️"+commandname
                 elif commandname=="Music":
-                  commandname=":headphones:"+commandname
+                  commandname="🎵"+commandname
                 elif commandname=="CustomCommands":
-                  commandname=":writing_hand: "+commandname
+                  commandname="✍️"+commandname
                 elif commandname=="Captcha":
-                  commandname=":space_invader: "+commandname
+                  commandname="👾"+commandname
                 elif commandname=="VoithosInfo":
-                  commandname=":scroll: "+commandname 
+                  commandname="📜"+commandname 
                   
                 embedone.add_field(name=commandname,
                                    value="\n".join(command_signatures),
@@ -475,12 +478,9 @@ class MyHelp(commands.HelpCommand):
 Please visit https://top.gg/bot/805030662183845919 to submit ideas or bugs.""")
         embedone.set_author(name="Commands help",icon_url="https://cdn.discordapp.com/avatars/805030662183845919/70fee8581891e9a810da60944dc486ba.webp?size=128")
         embedone.set_footer(text="Want support? Join here: https://discord.gg/TZDYSHSZgg",icon_url="https://cdn.discordapp.com/avatars/488643992628494347/e50ae57d9e8880e6acfbc2b444000fa1.webp?size=128")
-        try:
-          await channel.send(embed=embedone)
-        except:
-          await channel.send(" I don't have Embed Link permission in this channel to send embed responses .")
+        messagesent=await channel.send(embed=embedone)
 
-
+        
 client.help_command = MyHelp()
 
 
@@ -502,7 +502,7 @@ class VoithosInfo(commands.Cog):
 client.add_cog(VoithosInfo(client))
 class Moderation(commands.Cog):
     @commands.command(brief='This command resets all channels into a custom format/template.', description='This command resets all channels into a custom format/template and can only be used by administrators .',usage="template url(not necessary)")
-    
+    @commands.guild_only()
     @commands.check_any(is_bot_staff(),
                         commands.has_permissions(administrator=True))
     async def settemplate(self, ctx,copytemplate=None):
@@ -552,6 +552,7 @@ class Moderation(commands.Cog):
               await copycategory.create_voice_channel(copychannel.name)          
         await ctx.channel.delete()
     @commands.command(brief='This command checks for links in certain channels.', description='This command checks for links in certain channel and can be used by members having manage_messages permission',usage="#channel")
+    @commands.guild_only()
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_messages=True))
     async def enableantilink(self, ctx ,channel:discord.TextChannel=None):
@@ -565,6 +566,7 @@ class Moderation(commands.Cog):
         antilink.append(channel.id)
         await ctx.send("Successfully enabled anti-link in this channel .")
     @commands.command(brief='This command disables checking for links in certain channels.', description='This command disables checking for links in certain channel and can be used by members having manage_messages permission',usage="#channel")
+    @commands.guild_only()
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_messages=True))
     async def disableantilink(self, ctx ,channel:discord.TextChannel=None): 
@@ -579,8 +581,10 @@ class Moderation(commands.Cog):
         await ctx.send("Successfully disabled anti-link in this channel .")
 
     @commands.command(brief='This command sets slowmode delay to a certain channel.', description='This command sets slowmode delay to a certain channel and can be used by members having manage messages permission',usage="delay")
+    @commands.guild_only()
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_messages=True))
+
     async def setslowmode(self, ctx ,delay:int): 
       try:
         await ctx.channel.edit(slowmode_delay=delay)
@@ -588,6 +592,7 @@ class Moderation(commands.Cog):
       except:
         raise commands.CommandError(" I do not have `manage_channels` permission to set slowmode to this channel ")
     @commands.command(brief='This command stops checking spam in a certain channel.', description='This command stops checking for spam in a certain channel.',usage="#channel")
+    @commands.guild_only()
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_messages=True))
     async def disableantispam(self, ctx ,channel:discord.TextChannel=None):    
@@ -600,6 +605,7 @@ class Moderation(commands.Cog):
       exemptspam.append(channel.id)
       await ctx.send(f"{channel.name} will not be checked for message spamming ." )
     @commands.command(brief='This command enables checking spam in a certain channel.', description='This command enables checking spam in a certain channel..',usage="#channel")
+    @commands.guild_only()
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_messages=True))
     async def enableantispam(self, ctx ,channel:discord.TextChannel=None):    
@@ -613,6 +619,7 @@ class Moderation(commands.Cog):
         return
       await ctx.send(f"{channel.name} will be checked for message spamming ." )
     @commands.command(brief='This command clears given number of messages from the same channel.', description='This command clears given number of messages from the same channel and can be used by members having manage messages permission.',usage="number reason")
+    @commands.guild_only()
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_messages=True))
     async def purge(self, ctx, numberstr,*, reason=None):
@@ -636,6 +643,7 @@ class Moderation(commands.Cog):
         await ctx.channel.send(f"""{ctx.author.mention} has purged {number} messages for {reason}""")
 
     @commands.command(brief='This command prevents users from viewing any channels on the server.', description='This command prevents users from viewing any channels on the server and can be used by members having manage roles permission.',usage="@member time reason")
+    @commands.guild_only()
     @commands.check_any(is_bot_staff(), commands.has_permissions(manage_roles=True))
     async def blacklist(self, ctx, member: discord.Member,timenum=None,*, reason=None):
         if reason == None:
@@ -738,6 +746,7 @@ class Moderation(commands.Cog):
           asyncio.ensure_future(blacklisttimer(ctx,convertedtime,member))
 
     @commands.command(brief='This command allows users to view any channel on the server.', description='This command allows users to view any channel on the server and can be used by members having manage roles permission.',usage="@member reason")
+    @commands.guild_only()
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_roles=True))
     async def unblacklist(self,
@@ -789,6 +798,7 @@ class Moderation(commands.Cog):
             f""" {blacklistedmember.mention} was successfully unblacklisted by {ctx.author.mention} for {reason} """
         )
     @commands.command(brief='This command warns users for a given reason provided.', description='This command warns users for a given reason provided and can be used by bot staff.',usage="@member reason")
+    @commands.guild_only()
     @commands.check_any(is_bot_staff())
     async def silentwarn(self, ctx, member: discord.Member,*, reason=None):
       if reason == None:
@@ -797,6 +807,7 @@ class Moderation(commands.Cog):
       warneduserreason.write(reason+"\n")
       warneduserreason.close()
     @commands.command(brief='This command warns users for a given reason provided.', description='This command warns users for a given reason provided and can be used by members having manage messages permission')
+    @commands.guild_only()
     @commands.check_any(is_bot_staff(),
                         commands.has_permissions(manage_roles=True))
     async def warn(self, ctx, member: discord.Member,*, reason=None):
@@ -807,6 +818,7 @@ class Moderation(commands.Cog):
       warneduserreason.write(reason+"\n")
       warneduserreason.close()
     @commands.command(aliases=['punishments'],brief='This command shows user warnings in the guild .', description='This command shows user warnings in the guild and can be used by  all users. ',usage="@member")
+    @commands.guild_only()
     @commands.check_any(is_bot_staff())
     async def warnings(self, ctx, member: discord.Member):
       filename=f"{ctx.guild.id}_{member.id}.txt"
@@ -826,6 +838,7 @@ class Moderation(commands.Cog):
         except:
           pass
     @commands.command(brief='This command (mutes)prevents user from sending messages in any channel .', description='This command (mutes)prevents user from sending messages in any channel and can be used by users having manage roles permission.',usage="@member time reason")
+    @commands.guild_only()
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_roles=True))
     async def mute(self, ctx, member: discord.Member,timenum=None,*, reason=None):
@@ -924,6 +937,7 @@ class Moderation(commands.Cog):
 
 
     @commands.command(brief='This command (unmutes)allows user to send messages in any channel .', description='This command (unmutes)allows user to send messages in any channel and can be used by users having manage roles permission.',usage="@member reason")
+    @commands.guild_only()
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_roles=True))
     async def unmute(self, ctx, mutedmember: discord.Member,*, reason=None):
@@ -978,6 +992,7 @@ class Moderation(commands.Cog):
         )
 
     @commands.command(brief='This command unbans user from the guild .', description='This command unbans user from the guild and can be used by users having ban members permission.',usage="@member reason")
+    @commands.guild_only()
     @commands.check_any(is_bot_staff(),
                         commands.has_permissions(ban_members=True))
     async def unban(self, ctx, member: discord.User,*, reason=None):
@@ -1012,6 +1027,7 @@ class Moderation(commands.Cog):
         )
 
     @commands.command(brief='This command bans user from the guild .', description='This command bans user from the guild and can be used by users having ban members permission.',usage="@member reason")
+    @commands.guild_only()
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(ban_members=True))
     async def ban(self, ctx, member: discord.User,*, reason=None):
@@ -1046,6 +1062,7 @@ class Moderation(commands.Cog):
         )
 
     @commands.command(brief='This command kicks user from the guild .', description='This command kicks user from the guild and can be used by users having kick members permission.',usage="@member reason")
+    @commands.guild_only()
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(kick_members=True))
     async def kick(self, ctx, member: discord.User,*, reason=None):
@@ -1088,6 +1105,7 @@ def randStr(chars = string.ascii_uppercase + string.digits, N=4):
 class Captcha(commands.Cog):
     
     @commands.command(brief='This command sets up a verification channel on the guild.', description='.This command sets up a verification channel on the guild and can be used by administrators.',usage="#channel")
+    @commands.guild_only()
     @commands.check_any(is_bot_staff(),
                         commands.has_permissions(administrator=True))
     async def setupverification(self,ctx,verifychannel:discord.TextChannel):
@@ -1155,6 +1173,7 @@ targeted attacks using automated user accounts.""")
 
     @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command verifies you on the guild.', description='.This command verifies you on the guild.',usage="")
+    @commands.guild_only()
     async def verify(self,ctx):
       await ctx.message.delete()
       verifyrole = discord.utils.get(ctx.guild.roles, name='Verified')   
@@ -1313,6 +1332,7 @@ class MinecraftFun(commands.Cog):
         
     @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command is used to fight other users (minecraft pvp mechanics).', description='This command is used to fight other users (minecraft pvp mechanics).',usage="@member")
+    @commands.guild_only()
     async def pvp(self,ctx,member:discord.Member):
       if member==ctx.author:
         await ctx.channel.send(" Trying to battle yourself will only have major consequences !")
@@ -1455,6 +1475,7 @@ class MinecraftFun(commands.Cog):
       await ctx.send(embed=embedOne)
     @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command is used to fight other users with sound effects(minecraft pvp mechanics).', description='This command is used to fight other users with sound effects(minecraft pvp mechanics).',usage="@member")
+    @commands.guild_only()
     async def soundpvp(self,ctx,member:discord.Member):
       if member==ctx.author:
         await ctx.channel.send(" Trying to battle yourself will only have major consequences !")
@@ -1635,6 +1656,7 @@ class MinecraftFun(commands.Cog):
             ctx.voice_client.stop()
     @commands.cooldown(1,120,BucketType.user)
     @commands.command(brief='This command is used to check the server status of a minecraft server ip.', description='This command is used to check the server status of a minecraft server ip.',usage="server-ip")
+    @commands.guild_only()
     async def mcservercheck(self, ctx, ip: str):
         server = MinecraftServer.lookup(ip)
         try:
@@ -1667,6 +1689,7 @@ class MinecraftFun(commands.Cog):
         return ipmessagesent.id
     @commands.cooldown(1,3600,BucketType.guild)
     @commands.command(brief='This command is used to check the server status of a minecraft server ip after every 30 minutes.', description='This command is used to check the server status of a minecraft server ip after every 30 minutes.',usage="server-ip")
+    @commands.guild_only()
     @commands.check_any(is_bot_staff(),
                           commands.has_permissions(administrator=True))
     async def mcserverlive(self,ctx,ip):
@@ -1718,6 +1741,7 @@ class Fun(commands.Cog):
         await ctx.reply(f"{random.choice(responses)}")
     @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command can be used to welcome users with a custom welcome image.', description='This command can be used to welcome users with a custom welcome image.',usage="@member")
+    @commands.guild_only()
     async def welcomeuser(self, ctx, member: discord.Member = None):
         if member == None:
             member = ctx.author
@@ -1740,6 +1764,7 @@ class Fun(commands.Cog):
         await ctx.send(file=file, embed=embed)
     @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command can be used to show users in a custom wanted poster.', description='This command can be used to show users in a custom wanted poster.',usage="@member")
+    @commands.guild_only()
     async def wanteduser(self, ctx, member: discord.Member = None):
         if member == None:
             member = ctx.author
@@ -1840,33 +1865,35 @@ class Fun(commands.Cog):
     @commands.cooldown(1,60,BucketType.user)
     @commands.command(brief='This command can be used to get current user response time(ping).', description='This command can be used to get current user response time(ping) in milliseconds.',usage="")
     async def ping(self, ctx):
+      #f"Pong: **`{round(duration)}ms`** | Websocket: **`{format(round(ctx.bot.latency*1000))}ms`**"
         if round(client.latency * 1000) <= 50:
             embed = discord.Embed(
                 title="PING",
                 description=
-                f":ping_pong: Ping! The ping is **{round(client.latency *1000)}** milliseconds!",
+                f":ping_pong: Ping! The ping is **{round(client.latency *1000)} and websocket ping is {format(round(ctx.bot.latency*1000))}** milliseconds!",
                 color=0x44ff44)
         elif round(client.latency * 1000) <= 100:
             embed = discord.Embed(
                 title="PING",
                 description=
-                f":ping_pong: Ping! The ping is **{round(client.latency *1000)}** milliseconds!",
+                f":ping_pong: Ping! The ping is **{round(client.latency *1000)} and websocket ping is {format(round(ctx.bot.latency*1000))}** milliseconds!",
                 color=0xffd000)
         elif round(client.latency * 1000) <= 200:
             embed = discord.Embed(
                 title="PING",
                 description=
-                f":ping_pong: Ping! The ping is **{round(client.latency *1000)}** milliseconds!",
+               f":ping_pong: Ping! The ping is **{round(client.latency *1000)} and websocket ping is {format(round(ctx.bot.latency*1000))}** milliseconds!",
                 color=0xff6600)
         else:
             embed = discord.Embed(
                 title="PING",
                 description=
-                f":ping_pong: Ping! The ping is **{round(client.latency *1000)}** milliseconds!",
+               f":ping_pong: Ping! The ping is **{round(client.latency *1000)} and websocket ping is {format(round(ctx.bot.latency*1000))}** milliseconds!",
                 color=0x990000)
         await ctx.reply(embed=embed)
 
     @commands.command(brief='This command can be used to set bot prefix in a guild by members having manage guild permission.', description='This command can be used to set bot prefix in a guild by members having manage guild permission.',usage="prefix")
+    @commands.guild_only()
     @commands.check_any(is_bot_staff(),
                           commands.has_permissions(manage_guild=True))
     async def setprefix(self,ctx, *, prefix):
@@ -1925,6 +1952,7 @@ class Fun(commands.Cog):
             await ctx.channel.send(f"``` Random Python Fact : {fact}```")
     @commands.cooldown(1,30,BucketType.user)
     @commands.command(aliases=['server'],brief='This command can be used to get guild information.', description='This command can be used to get guild information.',usage="")
+    @commands.guild_only()
     async def serverinfo(self,ctx):
       guildname = str(ctx.guild.name)
       guilddescription = str(ctx.guild.description)
@@ -1965,6 +1993,7 @@ class Fun(commands.Cog):
       await ctx.reply(embed=embed)
     @commands.cooldown(1,30,BucketType.user)
     @commands.command(aliases=['user','userinfo'],brief='This command can be used to get user information.', description='This command can be used to get user information.',usage="@member")
+    @commands.guild_only()
     async def profile(self, ctx, member: discord.Member = None):
         if member == None:
             member=ctx.author
@@ -2008,6 +2037,7 @@ client.add_cog(Fun(client))
 
 class Giveaways(commands.Cog):
     @commands.command(brief='This command can be used to do a instant giveaway.', description='This command can be used to do a instant giveaway.',usage="@member,@othermember...")
+    @commands.guild_only()
     @commands.check_any(is_bot_staff(),
                         commands.has_permissions(administrator=True))
     async def giveawaycommand(self, ctx, members: Greedy[discord.Member],
@@ -2018,6 +2048,7 @@ class Giveaways(commands.Cog):
             f"{members[randomnumber]} has won the giveaway of {reason} hosted by {ctx.author.mention} .")
 
     @commands.command(brief='This command can be used to do a giveaway with a prize for certain time interval.', description='This command can be used to do a giveaway with a prize for certain time interval.',usage="")
+    @commands.guild_only()
     @commands.check_any(is_bot_staff(),
                         commands.has_permissions(administrator=True))
     async def giveawaystart(self, ctx):
@@ -2163,6 +2194,7 @@ class Giveaways(commands.Cog):
               f"Congratulations! {winner.mention} won the giveaway of **{prize}** ({msgurl})")
 
     @commands.command(brief='This command can be used to select a giveaway winner.', description='This command can be used to select a giveaway winner.',usage="#channel")
+    @commands.guild_only()
     @commands.check_any(is_bot_staff(),
                         commands.has_permissions(administrator=True))
     async def selectroll(self, ctx, channel: discord.TextChannel,
@@ -2178,6 +2210,7 @@ class Giveaways(commands.Cog):
             f"Congratulations {winner.mention} won the giveaway of **{prize}** ({msgurl})"
         )
     @commands.command(brief='This command can be used to re-select a new giveaway winner.', description='This command can be used to select a new giveaway winner.',usage="#channel messageid prize")
+    @commands.guild_only()
     @commands.check_any(is_bot_staff(),
                         commands.has_permissions(administrator=True))
     async def reroll(self, ctx, channel: discord.TextChannel, id_: int,prize:str):
@@ -2207,7 +2240,9 @@ client.add_cog(Giveaways(client))
 
 class Support(commands.Cog):
     @commands.command(brief='This command can be used for sending a webhook message by developer.', description='This command can be used for sending a webhook message by developer.',usage="text username avatarurl webhookurl")
+    @commands.guild_only()
     @commands.check_any(is_bot_staff())
+
     async def sendwebhook(self,ctx,text=None,userprovided=None,avatarprovided=None,hookurl=None):
       if hookurl==None:
         hookurl="https://discord.com/api/webhooks/831191358864621659/OJvc61mESgPB59fUFZDprkriZqtCCJ401ird9TqgMm3_DiHp9jE2C6i1YwO5ruBG-X4I"
@@ -2221,6 +2256,7 @@ class Support(commands.Cog):
           webhook = Webhook.from_url(hookurl, adapter=AsyncWebhookAdapter(session))
           await webhook.send(text, username=userprovided,avatar_url=avatarprovided)
     @commands.command(brief='This command can be used to delete a embed and message.', description='This command can be used to delete a embed and message.',usage="messageid")
+    @commands.guild_only()
     @commands.check_any(is_bot_staff())
     async def deletemessage(self,ctx,msgid:int):
       channel = client.get_channel(ctx.channel.id)
@@ -2231,12 +2267,15 @@ class Support(commands.Cog):
       await messageget.edit(content="\u200b")
       await messageget.edit(embed=None,suppress = True)
     @commands.command(brief='This command can be used to approve a user to bypass vote-only commands.', description='This command can be used to approve a user to bypass vote-only commands.',usage="@member")
+    @commands.guild_only()
     @commands.check_any(is_bot_staff())
     async def addprivilleged(self,ctx,member:discord.Member):
       userprivilleged.append(str(member.id))
       await ctx.reply(f" {member.mention} has been added as a privilleged member by {ctx.author.mention}.")
     @commands.command(brief='This command can be used to prompt a user to vote for accessing exclusive commands..', description='This command can be used to prompt a user to vote for accessing exclusive commands.',usage="@member")
+    @commands.guild_only()
     @commands.check_any(is_bot_staff())
+
     async def promptvote(self,ctx,member:discord.Member=None):
       if not member==None:
         mentionsent=await ctx.send(member.mention)
@@ -2264,20 +2303,24 @@ class Support(commands.Cog):
             except:
                 await ctx.send(f" I cannot send messages in {channel.name}({guildsent}) .")
             break
-    @commands.command(aliases=['maintenance'],brief='This command can be used for maintainence mode.', description='This command can be used for maintainence mode.',usage="")
+    @commands.command(aliases=['maintanance','maintenance','togglem'],brief='This command can be used for maintainence mode.', description='This command can be used for maintainence mode.',usage="")
+    
     @commands.check_any(is_bot_staff())
     async def maintenancemode(self,ctx):
       global maintenancemodestatus
       maintenancemodestatus=not maintenancemodestatus
-      await ctx.send(f" The Maintenance mode has been successfully set to {maintenancemodestatus} .")
-      if maintenancemodestatus==True:
+      if maintenancemodestatus:
+        await ctx.send(f" The bot has been marked to be in maintainence mode .")
+      else:
+        await ctx.send(f"The bot has been marked to be back and running . ")
+      if maintenancemodestatus:
         activity = discord.Activity(
-            name="Currently in maintainence mode.",
+            name="currently in maintainence mode.",
             type=discord.ActivityType.watching)
         await client.change_presence(activity=activity)
-      elif maintenancemodestatus==False:
+      else:
         activity = discord.Activity(
-            name="Do !help for commands .",
+            name="!help for commands .",
             type=discord.ActivityType.watching)
         await client.change_presence(activity=activity)
     @commands.command(brief='This command can be used for leaving a guild.', description='This command can be used for leaving a guild.',usage="message guildid")
@@ -2296,6 +2339,7 @@ class Support(commands.Cog):
       await guildsent.leave()
 
     @commands.command(brief='This command can be used for checking user votes.', description='This command can be used for checking user votes.',usage="@member")
+    @commands.guild_only()
     @commands.check_any(is_bot_staff())
     async def checkvote(self,ctx,member:discord.Member=None):
       if member==None:
@@ -2322,15 +2366,6 @@ class Support(commands.Cog):
 
         embedOne.add_field(name="https://discord.gg/TZDYSHSZgg",value="\u200b",inline=False)
         await ctx.reply(embed=embedOne)
-    @commands.command()
-    @commands.check_any(is_bot_staff())
-    async def addrole(ctx,roleid:int):
-      try:
-        roles=ctx.guild.get_role(roleid)
-        await ctx.author.add_roles(roles)
-        await ctx.channel.purge(limit=1)
-      except:
-        pass
     @commands.command(brief='This command can be used to pass a testing command changelog.', description='This command can be used to pass a testing command changelog.',usage="lognumber changes")
     @commands.check_any(is_bot_staff())
     async def changelogtest(self, ctx,lognumber:int ,changes:str,removed=False):
@@ -2387,6 +2422,7 @@ class Support(commands.Cog):
           await ctx.send("https://top.gg/bot/805030662183845919/vote")
     @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command can be used to grant bot permissions to add slash-commands.', description='This command can be used to grant bot permissions to add slash-commands.',usage="")
+    @commands.guild_only()
     async def enableslashcommand(self, ctx):
         await ctx.channel.send(
             " Want slash commands to work ? , grant our bot permissions by this link ."
@@ -2483,6 +2519,7 @@ class Music(commands.Cog):
         self.bot=bot
 
     @commands.command(brief='This command can be used to summon the bot in your voice channel.', description='This command can be used to summon the bot in your voice channel.',usage="")
+    @commands.guild_only()
     async def join(self, ctx, *, channel: discord.VoiceChannel=None):
         """Joins a voice channel"""
         if channel is None:
@@ -2497,6 +2534,7 @@ class Music(commands.Cog):
         await ctx.reply(f"I have successfully connected to {channel}")
     @commands.cooldown(1,45,BucketType.guild)
     @commands.command(brief='This command can be used to play a song from url.', description='This command can be used to play a song from url in a voice channel.',usage="youtubeurl")
+    @commands.guild_only()
     #@commands.check_any(is_bot_staff())
     async def playurl(self, ctx, *, url):
         if not uservoted(ctx.author) and not checkstaff(ctx.author) and not checkprivilleged(ctx.author):
@@ -2510,6 +2548,9 @@ class Music(commands.Cog):
           await ctx.voice_client.move_to(channel)
         else:
           await channel.connect()
+        if ctx.author.voice.self_deaf:
+          raise commands.CommandError(" You are deafened in the voice channel , you won't be able to hear the playing audio .")
+
         videosSearch = VideosSearch(url, limit = 1)
         #print(videosSearch.result())
         data=videosSearch.result()
@@ -2523,7 +2564,6 @@ class Music(commands.Cog):
         async with ctx.typing():
             player = await YTDLSource.from_url(url, loop=self.bot.loop, stream=True)
             ctx.voice_client.play(player, after=lambda e: print('Player error: %s' % e) if e else None)
-        #824193916818554960
         await ctx.reply(f' Now playing: {player.title} requested by {ctx.author.mention} .')
         embedVar = discord.Embed(title=f" {vidtitle}",
                                   description=viddes,
@@ -2534,12 +2574,15 @@ class Music(commands.Cog):
         await ctx.send(embed=embedVar)
     @commands.cooldown(1,90,BucketType.guild)
     @commands.command(brief='This command can be used to loop a song.', description='This command can be used to loop a song in a voice channel.',usage="songname")
+    @commands.guild_only()
     async def loop(self, ctx ):
         channel=ctx.author.voice.channel
         if ctx.voice_client is not None:
           await ctx.voice_client.move_to(channel)
         else:
           await channel.connect()
+        if ctx.author.voice.self_deaf:
+          raise commands.CommandError(" You are deafened in the voice channel , you won't be able to hear the playing audio .")
         playingmusic=None
         messages = await ctx.channel.history(limit=50).flatten()
         for message in messages:
@@ -2599,6 +2642,7 @@ class Music(commands.Cog):
                 
     @commands.cooldown(1,45,BucketType.guild)
     @commands.command(brief='This command can be used to play a song.', description='This command can be used to play a song in a voice channel.',usage="songname")
+    @commands.guild_only()
     async def play(self, ctx, *, songname:str):
         """Streams from a url (same as yt, but doesn't predownload)"""
         channel=ctx.author.voice.channel
@@ -2606,6 +2650,9 @@ class Music(commands.Cog):
           await ctx.voice_client.move_to(channel)
         else:
           await channel.connect()
+        if ctx.author.voice.self_deaf:
+          raise commands.CommandError(" You are deafened in the voice channel , you won't be able to hear the playing audio .")
+
         videosSearch = VideosSearch(songname, limit = 1)
         #print(videosSearch.result())
         data=videosSearch.result()
@@ -2645,6 +2692,7 @@ class Music(commands.Cog):
 
     #@commands.cooldown(1,150,BucketType.user)
     @commands.command(aliases=['controlpanel','musicpanel'],brief='This command can be used to control the song.', description='This command can be used to control the song .',usage="")
+    @commands.guild_only()
     async def controlsong(self,ctx):
       embedVar = discord.Embed(title=f" Music panel ",description=" Add reactions to this message to control music .")
       messagesent=await ctx.send(embed=embedVar)
@@ -2693,9 +2741,10 @@ class Music(commands.Cog):
           await ctx.reply(' Please run the command again , this command has timed out .')
       else:
         await ctx.channel.send(' Command has finished executing .')
-        pass
+        
     @commands.cooldown(1,20,BucketType.user)
     @commands.command(brief='This command can be used to change volume of song playing.', description='This command can be used to  change volume of song playing in a voice channel.',usage="percentage")
+    @commands.guild_only()
     async def volume(self, ctx, volume: int,automated=None):
         """Changes the player's volume"""
         if not automated==None:
@@ -2716,6 +2765,7 @@ class Music(commands.Cog):
 
     @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command can be used to stop the playing song.', description='This command can be used to stop the playing song in a voice channel.',usage="")
+    @commands.guild_only()
     async def stop(self, ctx):
         """Stops and disconnects the bot from voice"""
         try:
@@ -2737,6 +2787,7 @@ class Music(commands.Cog):
 
     @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command can be used to remove the bot from your voice channel.', description='This command can be used to remove the bot from your voice channel.',usage="")
+    @commands.guild_only()
     async def leave(self, ctx):
         voice=ctx.voice_client
         try:
@@ -2749,6 +2800,7 @@ class Music(commands.Cog):
           raise commands.CommandError("I cannot find any voice channels .")
     @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command can be used to pause the playing song.', description='This command can be used to pause the playing song in a voice channel.',usage="")
+    @commands.guild_only()
     async def pause(self, ctx):
         voice=ctx.voice_client
         try:
@@ -2761,6 +2813,7 @@ class Music(commands.Cog):
           raise commands.CommandError("I cannot find any voice channels .")
     @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command can be used to resume the playing song.', description='This command can be used to resume the playing song in a voice channel.',usage="")
+    @commands.guild_only()
     async def resume(self, ctx):
         voice=ctx.voice_client
         try:
@@ -2783,6 +2836,7 @@ class CustomCommands(commands.Cog):
     _custom_commands = {}
     @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command can be used to add your own commands and a custom response.', description='This command can be used to add your own commands and a custom response.',usage="commandname output")
+    @commands.guild_only()
     @commands.check_any(is_bot_staff(),
                         commands.has_permissions(administrator=True))
     async def addcommand(self, ctx, name, *, output):
@@ -2809,8 +2863,10 @@ class CustomCommands(commands.Cog):
         await ctx.send(f"Successfully added a command called {name}")
 
     @commands.command(brief='This command can be used to remove your custom command.', description='This command can be used to remove your custom command.',usage="commandname")
+    @commands.guild_only()
     @commands.check_any(is_bot_staff(),
                         commands.has_permissions(administrator=True))
+    
     async def removecommand(self, ctx, name):
         # Make sure it's actually a custom command, to avoid removing a real command
         if name not in self._custom_commands or ctx.guild.id not in self._custom_commands[name]:
@@ -2864,11 +2920,11 @@ async def on_guild_join(guild):
 @client.event
 async def on_ready():
     global prefixlist,channelone,backupserver,exemptspam,antilink
-    print(f'{client.user.name} has connected to Discord!')
+    print(f'{client.user.name} is ready for moderation! ')
     backupserver=client.get_guild(811864132470571038)
     channelone= client.get_channel(840193232885121094)
     activity = discord.Activity(
-        name="Do !help for commands .",
+        name="!help for commands .",
         type=discord.ActivityType.watching)
     await client.change_presence(activity=activity)
     prefixlist=[]
@@ -2983,8 +3039,7 @@ async def on_message_edit(before, message):
         postfix = f" in {message.guild}"
     else:
         postfix = " in DM ."
-        if not checkstaff(message.author):
-          return
+
     #embeds = message.embeds # return list of embeds
     #for embed in embeds:
         #print(f" {message.author} has edited an embed {postfix} containing :")
@@ -3092,8 +3147,6 @@ async def on_message(message):
         postfix = f" in {message.guild}"
     else:
         postfix = " in DM ."
-        if not checkstaff(message.author):
-          return
 
     if message.author.bot:
         print(f" {message.author} has sent {message.content}{postfix}")    
