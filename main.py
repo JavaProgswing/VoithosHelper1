@@ -721,7 +721,8 @@ class Moderation(commands.Cog):
                     await channelloop.set_permissions(blacklistrole,
                                                       read_messages=False,
                                                       send_messages=False)
-
+                elif channelloop.type == discord.ChannelType.voice:
+                    await channelloop.set_permissions(blacklistrole,view_channel=False)
         blacklistrole = discord.utils.get(ctx.guild.roles, name='blacklisted')
         for perm in blacklistrole.permissions:
             permstr = str(perm).replace("(", "")
@@ -917,6 +918,8 @@ class Moderation(commands.Cog):
         for channelloop in ctx.guild.channels:
             if channelloop.type == discord.ChannelType.text:
                 await channelloop.set_permissions(muterole,read_messages=None,send_messages=False)
+            elif channelloop.type == discord.ChannelType.voice:
+                await channelloop.set_permissions(muterole,view_channel=False)
 
 
         muterole = discord.utils.get(ctx.guild.roles, name='muted')
