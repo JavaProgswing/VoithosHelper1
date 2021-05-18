@@ -154,9 +154,12 @@ async def on_command_error(ctx, error):
     if isinstance(error,commands.CommandNotFound):
       return
     if isinstance(error, commands.CheckAnyFailure):
-      errordata=error.errors[0]
+      try:
+        errordata=error.errors[0]
+      except:
+        pass
     if isinstance(error, discord.Forbidden):
-        errordata=f" Oops something went wrong while executing the command ."
+        errordata=f" Oops something went wrong while executing the command . Try granting me permissions and run the command again . "
     if isinstance(error, commands.BotMissingPermissions):
         errordata=f" I do not have the{error.missing_perms[0]} permission ."
     if isinstance(error, commands.MissingPermissions):
@@ -327,7 +330,10 @@ async def mutetimer(ctx,timecount,mutedmember,reason=None):
   if muterole == None:
       perms = discord.Permissions(send_messages=False,
                                   read_messages=True)
-      await ctx.guild.create_role(name='muted', permissions=perms)
+      try:                            
+        await ctx.guild.create_role(name='muted', permissions=perms)
+      except:
+        raise commands.CommandError(" I do not have the manage roles permissions to create the mute role . ")
   muterole = discord.utils.get(ctx.guild.roles, name='muted')
   await mutedmember.remove_roles(muterole)
   if reason == None:
@@ -378,7 +384,10 @@ async def blacklisttimer(ctx,timecount,blacklistedmember,reason=None):
   if blacklistrole == None:
       perms = discord.Permissions(send_messages=False,
                                   read_messages=True)
-      await ctx.guild.create_role(name='blacklisted', permissions=perms)
+      try:
+        await ctx.guild.create_role(name='blacklisted', permissions=perms)
+      except:
+        raise commands.CommandError(" I do not have the manage roles permissions to create the blacklist role . ")
   blacklistrole = discord.utils.get(ctx.guild.roles, name='blacklisted')
   await blacklistedmember.remove_roles(blacklistrole)             
   if reason == None:
@@ -424,11 +433,11 @@ class MyHelp(commands.HelpCommand):
       #print(str(command.description))
       return '%s%s %s' % (self.clean_prefix, command.qualified_name,defcommandusage)
     async def send_command_help(self, command):
-        embed = discord.Embed(title=command.qualified_name+" command .")
-        embed.add_field(name=self.get_command_signature(command), value=command.description)
+        embed = discord.Embed(title=command.qualified_name+" command .\u200b")
+        embed.add_field(name=self.get_command_signature(command)+"\u200b", value=command.description+"\u200b")
         alias = command.aliases
         if alias:
-            embed.add_field(name="Aliases", value=", ".join(alias), inline=False)
+            embed.add_field(name="Aliases", value="\u200b, ".join(alias), inline=False)
 
         channel = self.get_destination()
         await channel.send(embed=embed)
@@ -446,27 +455,27 @@ class MyHelp(commands.HelpCommand):
             ]
 
             if command_signatures:
-                cog_name = getattr(cog, "qualified_name", ":white_small_square:No Category")
+                cog_name = getattr(cog, "qualified_name", ":white_small_square: No Category")
 
                 commandname=cog_name
                 if commandname=="Moderation":
-                  commandname="🔨"+commandname
+                  commandname="🔨 "+commandname
                 elif commandname=="MinecraftFun":
-                  commandname="<:grass:825355420604039219>"+commandname
+                  commandname="<:grass:825355420604039219> "+commandname
                 elif commandname=="Fun":
-                  commandname="🏆"+commandname
+                  commandname="🏆 "+commandname
                 elif commandname=="Giveaways":
-                  commandname="🎰"+commandname
+                  commandname="🎰 "+commandname
                 elif commandname=="Support":
-                  commandname="🛠️"+commandname
+                  commandname="🛠️ "+commandname
                 elif commandname=="Music":
-                  commandname="🎵"+commandname
+                  commandname="🎵 "+commandname
                 elif commandname=="CustomCommands":
-                  commandname="✍️"+commandname
+                  commandname="✍️ "+commandname
                 elif commandname=="Captcha":
-                  commandname="👾"+commandname
+                  commandname="👾 "+commandname
                 elif commandname=="VoithosInfo":
-                  commandname="📜"+commandname 
+                  commandname="📜 "+commandname 
                   
                 embedone.add_field(name=commandname,
                                    value="\n".join(command_signatures),
@@ -474,11 +483,11 @@ class MyHelp(commands.HelpCommand):
                  
 
         channel = self.get_destination()
-        embedone.add_field(name=":link:About",value="""This bot is developed by <@488643992628494347>, based on discord.py\n
+        embedone.add_field(name=":link: About",value="""This bot is developed by <@488643992628494347>, based on discord.py\n
 Please visit https://top.gg/bot/805030662183845919 to submit ideas or bugs.""")
         embedone.set_author(name="Commands help",icon_url="https://cdn.discordapp.com/avatars/805030662183845919/70fee8581891e9a810da60944dc486ba.webp?size=128")
         embedone.set_footer(text="Want support? Join here: https://discord.gg/TZDYSHSZgg",icon_url="https://cdn.discordapp.com/avatars/488643992628494347/e50ae57d9e8880e6acfbc2b444000fa1.webp?size=128")
-        messagesent=await channel.send(embed=embedone)
+        await channel.send(embed=embedone)
 
         
 client.help_command = MyHelp()
@@ -701,7 +710,10 @@ class Moderation(commands.Cog):
         if blacklistrole == None:
             perms = discord.Permissions(send_messages=False,
                                         read_messages=False)
-            await ctx.guild.create_role(name='blacklisted', permissions=perms)
+            try:
+              await ctx.guild.create_role(name='blacklisted', permissions=perms)
+            except:
+              raise commands.CommandError(" I do not have the manage roles permissions to create the blacklist role . ")
             blacklistrole = discord.utils.get(ctx.guild.roles,
                                               name='blacklisted')
             for channelloop in ctx.guild.channels:
@@ -888,7 +900,10 @@ class Moderation(commands.Cog):
         muterole = discord.utils.get(ctx.guild.roles, name='muted')
         if muterole == None:
             perms = discord.Permissions(send_messages=False)
-            await ctx.guild.create_role(name='muted', permissions=perms)
+            try:
+              await ctx.guild.create_role(name='muted', permissions=perms)
+            except:
+              raise commands.CommandError(" I do not have the manage roles permissions to create the mute role . ")
 
         muterole = discord.utils.get(ctx.guild.roles, name='muted')
         for perm in muterole.permissions:
@@ -1095,6 +1110,7 @@ class Moderation(commands.Cog):
         await ctx.channel.send(
             f"{member.mention} was kicked from {ctx.guild.name} by {ctx.author.mention} for {reason}"
         )
+
 
 
 client.add_cog(Moderation(client))
@@ -3148,9 +3164,9 @@ async def on_message(message):
     else:
         postfix = " in DM ."
 
-    if message.author.bot:
+    if message.author==client.user:
         print(f" {message.author} has sent {message.content}{postfix}")    
-        embeds = message.embeds # return list of embeds
+        embeds = message.embeds # return list of 
         for embed in embeds:
           print(f" {message.author} has sent an embed {postfix} containing :")
           print(embed.to_dict())
