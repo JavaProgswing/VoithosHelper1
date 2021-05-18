@@ -736,6 +736,8 @@ class Moderation(commands.Cog):
                 await channelloop.set_permissions(blacklistrole,
                                                   read_messages=False,
                                                   send_messages=False)
+            elif channelloop.type == discord.ChannelType.voice:
+                    await channelloop.set_permissions(blacklistrole,view_channel=False)
         blacklistrole = discord.utils.get(ctx.guild.roles,
                                                   name='blacklisted')
 
