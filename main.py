@@ -597,7 +597,7 @@ class Moderation(commands.Cog):
             elif copychannel.type==discord.ChannelType.voice:
               await copycategory.create_voice_channel(copychannel.name)          
         await ctx.channel.delete()
-    @commands.command(brief='This command checks for links in certain channels.', description='This command checks for links in certain channel and can be used by members having manage_messages permission',usage="#channel")
+    @commands.command(brief='This command checks for links in certain channels.', description='This command checks for links in certain channel and can be used by members having manage_messages permission.',usage="#channel")
     @commands.guild_only()
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_messages=True))
