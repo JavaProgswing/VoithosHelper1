@@ -437,7 +437,6 @@ class MyHelp(commands.HelpCommand):
     async def send_command_help(self, command):
         embed = discord.Embed(title=command.qualified_name+" command .\u200b")
         embed.add_field(name="Syntax", value=self.get_command_signature(command)+"\u200b")
-        embed.add_field(name="Description",value=command.description+"\u200b")
         alias = command.aliases
         if alias:
             embed.add_field(name="Aliases", value="\u200b, ".join(alias), inline=False)
