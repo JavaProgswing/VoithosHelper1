@@ -611,7 +611,7 @@ class Moderation(commands.Cog):
       else:
         antilink.append(channel.id)
         await ctx.send("Successfully enabled anti-link in this channel .")
-    @commands.command(brief='This command disables checking for links in certain channels.', description='This command disables checking for links in certain channel and can be used by members having manage_messages permission',usage="#channel")
+    @commands.command(brief='This command disables checking for links in certain channels.', description='This command disables checking for links in certain channel and can be used by members having manage_messages permission.',usage="#channel")
     @commands.guild_only()
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_messages=True))
