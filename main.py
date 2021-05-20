@@ -1,6 +1,8 @@
 from __future__ import unicode_literals
 from keep_alive import keep_alive
 import asyncio
+import typing
+from textwrap import wrap
 from googleapiclient import discovery
 import dbl
 import string
@@ -431,10 +433,11 @@ class MyHelp(commands.HelpCommand):
       if defcommandusage==None:
         defcommandusage="command-name"
       #print(str(command.description))
-      return '%s%s %s' % (self.clean_prefix, command.qualified_name,defcommandusage)
+      return '**%s%s %s** :\n %s' % (self.clean_prefix, command.qualified_name,defcommandusage,command.description)
     async def send_command_help(self, command):
         embed = discord.Embed(title=command.qualified_name+" command .\u200b")
-        embed.add_field(name=self.get_command_signature(command)+"\u200b", value=command.description+"\u200b")
+        embed.add_field(name="Syntax", value=self.get_command_signature(command)+"\u200b")
+        embed.add_field(name="Description",value=command.description+"\u200b")
         alias = command.aliases
         if alias:
             embed.add_field(name="Aliases", value="\u200b, ".join(alias), inline=False)
@@ -445,9 +448,10 @@ class MyHelp(commands.HelpCommand):
 
     async def send_bot_help(self, mapping):
         copychannel=self.get_destination()
-        embedone = discord.Embed(title="\u200b",description=f"Use {self.clean_prefix}help command-name to gain more information about that command :smiley:",
+        embedone = discord.Embed(title="\u200b",description=f"Use {self.clean_prefix}help command-name to gain more information about that command :smiley: . Click on the reactions below to get help .",
                                  color=Color.blue())
-
+        commandlist=[]
+        titlelist=[]
         for cog, commandloop in mapping.items():
             filtered = await self.filter_commands(commandloop, sort=True)
             command_signatures = [
@@ -476,10 +480,12 @@ class MyHelp(commands.HelpCommand):
                   commandname="👾 "+commandname
                 elif commandname=="VoithosInfo":
                   commandname="📜 "+commandname 
-                  
-                embedone.add_field(name=commandname,
+                embedone.add_field(name=commandname,value="\u200b",inline=False)
+                commandlist.append("\n".join(command_signatures))
+                titlelist.append(str(commandname))
+                """embedone.add_field(name=commandname,
                                    value="\n".join(command_signatures),
-                                   inline=False)
+                                   inline=False)"""
                  
 
         channel = self.get_destination()
@@ -487,8 +493,38 @@ class MyHelp(commands.HelpCommand):
 Please visit https://top.gg/bot/805030662183845919 to submit ideas or bugs.""")
         embedone.set_author(name="Commands help",icon_url="https://cdn.discordapp.com/avatars/805030662183845919/70fee8581891e9a810da60944dc486ba.webp?size=128")
         embedone.set_footer(text="Want support? Join here: https://discord.gg/TZDYSHSZgg",icon_url="https://cdn.discordapp.com/avatars/488643992628494347/e50ae57d9e8880e6acfbc2b444000fa1.webp?size=128")
-        await channel.send(embed=embedone)
+        messagesent=await channel.send(embed=embedone)
+        emojis=['📜','🔨','👾','<:grass:825355420604039219>','🏆', '🎰', '🛠️','🎵','✍️']
+        for emoji in emojis:
+          await messagesent.add_reaction(emoji)
+                    
+        def check(reaction, user):
+          if user==client.user:
+            return False
+          client.loop.create_task(messagesent.remove_reaction(reaction,user))
+          titlecommand=titlelist[emojis.index(str(reaction))]
+          descriptioncommand=commandlist[emojis.index(str(reaction))]
+          length=len(descriptioncommand)
+          strdes=str(descriptioncommand)
+          if length>=1800:
+            listofembed=wrap(strdes, 1800)
+          else:
+            listofembed=[strdes]
 
+          for i in listofembed:
+            i=i.replace(".",".\n\n")
+            embedtwo = discord.Embed(title=titlecommand,description=i,
+                                 color=Color.blue())
+            titlecommand=""
+            client.loop.create_task(channel.send(embed=embedtwo))
+          return False
+        try:
+            reaction, user = await client.wait_for('reaction_add', timeout=30,check=check)
+        except asyncio.TimeoutError:
+          embedone.set_footer(text="This help command is outdated , invoke the help command again for getting reaction response.(Support server:https://discord.gg/TZDYSHSZgg)",icon_url="https://cdn.discordapp.com/avatars/488643992628494347/e50ae57d9e8880e6acfbc2b444000fa1.webp?size=128")
+          await messagesent.edit(embed=embedone)
+        else:
+          await channel.send(' Command has finished executing .')
         
 client.help_command = MyHelp()
 
@@ -613,7 +649,7 @@ class Moderation(commands.Cog):
         return
       exemptspam.append(channel.id)
       await ctx.send(f"{channel.name} will not be checked for message spamming ." )
-    @commands.command(brief='This command enables checking spam in a certain channel.', description='This command enables checking spam in a certain channel..',usage="#channel")
+    @commands.command(brief='This command enables checking spam in a certain channel.', description='This command enables checking spam in a certain channel.',usage="#channel")
     @commands.guild_only()
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_messages=True))
@@ -821,7 +857,7 @@ class Moderation(commands.Cog):
       warneduserreason = open(f"{ctx.guild.id}_{member.id}.txt", "a")  
       warneduserreason.write(reason+"\n")
       warneduserreason.close()
-    @commands.command(brief='This command warns users for a given reason provided.', description='This command warns users for a given reason provided and can be used by members having manage messages permission')
+    @commands.command(brief='This command warns users for a given reason provided.', description='This command warns users for a given reason provided and can be used by members having manage messages permission.')
     @commands.guild_only()
     @commands.check_any(is_bot_staff(),
                         commands.has_permissions(manage_roles=True))
@@ -1116,16 +1152,151 @@ class Moderation(commands.Cog):
             f"{member.mention} was kicked from {ctx.guild.name} by {ctx.author.mention} for {reason}"
         )
 
+    
+    @commands.command(brief='This command creates a support ticket panel.', description='This command creates a support ticket panel which can be used by users having manage guild permission .',usage="channel supportrole reaction supportmessage")
+    @commands.guild_only()
+    @commands.check_any(is_bot_staff(), 
+                        commands.has_permissions(manage_messages=True))
+
+    async def createticketpanel(self, ctx ,channelname: typing.Union[discord.TextChannel,str],supportrole=None,reaction=None,*,supportmessage=None):
+      if isinstance(channelname, str):
+        channel = await ctx.guild.create_text_channel(channelname,category=ctx.channel.category)
+      else:
+        channel=channelname
+      overwritesb = {
+      ctx.guild.default_role: discord.PermissionOverwrite(
+        view_channel=True,
+        read_messages=True,
+        send_messages=False,
+      )
+      }
+      await channel.edit(overwrites=overwritesb)
+      if channelname==None:
+        channelname="Support-channel"
+      if supportrole==None:
+        supportrole = discord.utils.get(ctx.guild.roles, name='Support-staff')
+        if supportrole==None:
+          supportrole=await ctx.guild.create_role(name="Support-staff")
+      
+      if reaction==None:
+        reaction='🙋'
+      if supportmessage==None:
+        supportmessage=f" Want to create a support ticket ? , click on the {reaction} on this message ."
+      embedone = discord.Embed(title="Support ticket", description=supportmessage, color=Color.green())
+      messagesent=await channel.send(embed=embedone)
+      emojis=[reaction]
+      for emoji in emojis:
+        await messagesent.add_reaction(emoji)
+      def check(reactionadd, user):
+          if user==client.user:
+            return False
+          if str(reactionadd)==str(reaction):
+            client.loop.create_task(messagesent.remove_reaction(reaction,user))
+            overwritesa = {
+      user: discord.PermissionOverwrite(
+        view_channel=False,)}
+            client.loop.create_task(channel.edit(overwrites=overwritesa))
+            client.loop.create_task(createticket(user,ctx.guild,ctx.channel.category,channel,supportrole))
+            return False
+          return False
 
 
+      try:
+          await ctx.send(f"The channel ({channel.mention}) was successfully created as a ticket panel .")
+          reaction, user = await client.wait_for('reaction_add',check=check)
+      except asyncio.TimeoutError:
+          await ctx.reply(' Please run the command again , this command has timed out .')
+      else:
+        await ctx.channel.send(' Command has finished executing .')
+      
+      
+      
 client.add_cog(Moderation(client))
+async def lockticket(user,userone,supportchannel):
+        overwritesa = {
+      user: discord.PermissionOverwrite(
+          view_channel=True,
+          read_messages=True,
+          send_messages=False,
+        )}
+        await supportchannel.edit(overwrites=overwritesa)
+        await supportchannel.send(f" This channel has been locked by {userone.mention}.")
 
+async def unlockticket(user,userone,supportchannel):
+        overwritesa = {
+      user: discord.PermissionOverwrite(
+          view_channel=True,
+          read_messages=True,
+          send_messages=True,
+        )}
+        await supportchannel.edit(overwrites=overwritesa)
+        await supportchannel.send(f" This channel has been unlocked by {userone.mention}.")
+
+async def deleteticket(user,userone,supportchannel,origchannel):
+    await supportchannel.send(f" This channel will be deleted in 5 seconds requested by {userone.mention}.")
+    await asyncio.sleep(4)
+    overwritesa = {
+      user: discord.PermissionOverwrite(
+        view_channel=True,)}
+    await origchannel.edit(overwrites=overwritesa)
+    await( supportchannel.delete())
+
+async def createticket(user,guild,category,channelorig,role):
+  supportchannel=await guild.create_text_channel(f"{user.name}'s support-ticket",category=category)
+  overwrites = {
+  guild.default_role: discord.PermissionOverwrite(
+    view_channel=False,
+    read_messages=False,
+    send_messages=False,
+  ),
+  role: discord.PermissionOverwrite(
+    view_channel=True,
+    read_messages=True,
+    send_messages=True,
+  ),
+  user: discord.PermissionOverwrite(
+    view_channel=True,
+    read_messages=True,
+    send_messages=True,
+  )
+}
+  await supportchannel.edit(overwrites=overwrites)
+  embedtwo = discord.Embed(title=f"{user.name}'s Support ticket", description=" Click on the following reactions to close/edit ticket", color=Color.green())
+  messagesent=await supportchannel.send(embed=embedtwo)
+  ghostping=await supportchannel.send(user.mention)
+  await ghostping.delete()
+  emojis=['🟥','🔒','🔓']
+  for emoji in emojis:
+    await messagesent.add_reaction(emoji)
+  
+  def check(reaction, userone):
+      if userone==client.user:
+        return False
+      if userone==user:
+        return False
+      client.loop.create_task(messagesent.remove_reaction(reaction,userone))
+      if str(reaction)=='🟥':
+        client.loop.create_task(deleteticket(user,userone,supportchannel,channelorig))
+        return False
+      if str(reaction)=='🔒':
+        client.loop.create_task(lockticket(user,userone,supportchannel))
+        return False
+      if str(reaction)=='🔓':
+        client.loop.create_task(unlockticket(user,userone,supportchannel))
+        return False
+      return False
+  try:
+      reaction, user = await client.wait_for('reaction_add',check=check)
+  except asyncio.TimeoutError:
+      await supportchannel.reply(' Please run the command again , this command has timed out .')
+  else:
+    pass
 def randStr(chars = string.ascii_uppercase + string.digits, N=4):
 	return ''.join(random.choice(chars) for _ in range(N))
 
 class Captcha(commands.Cog):
     
-    @commands.command(brief='This command sets up a verification channel on the guild.', description='.This command sets up a verification channel on the guild and can be used by administrators.',usage="#channel")
+    @commands.command(brief='This command sets up a verification channel on the guild.', description='This command sets up a verification channel on the guild and can be used by administrators.',usage="#channel")
     @commands.guild_only()
     @commands.check_any(is_bot_staff(),
                         commands.has_permissions(administrator=True))
@@ -1193,7 +1364,7 @@ targeted attacks using automated user accounts.""")
       
 
     @commands.cooldown(1,30,BucketType.user)
-    @commands.command(brief='This command verifies you on the guild.', description='.This command verifies you on the guild.',usage="")
+    @commands.command(brief='This command verifies you on the guild.', description='This command verifies you on the guild.',usage="")
     @commands.guild_only()
     async def verify(self,ctx):
       await ctx.message.delete()
@@ -2057,10 +2228,10 @@ client.add_cog(Fun(client))
 
 
 class Giveaways(commands.Cog):
-    @commands.command(brief='This command can be used to do a instant giveaway.', description='This command can be used to do a instant giveaway.',usage="@member,@othermember...")
+    @commands.command(brief='This command can be used to do a instant giveaway for all the members provided.', description='This command can be used to do a instant giveaway for all the members provided and can be used by members having manage guild permission.',usage="@member,@othermember")
     @commands.guild_only()
     @commands.check_any(is_bot_staff(),
-                        commands.has_permissions(administrator=True))
+                        commands.has_permissions(manage_guild=True))
     async def giveawaycommand(self, ctx, members: Greedy[discord.Member],
                               reason: str):
         length = len(members)
@@ -2068,10 +2239,10 @@ class Giveaways(commands.Cog):
         await ctx.channel.send(
             f"{members[randomnumber]} has won the giveaway of {reason} hosted by {ctx.author.mention} .")
 
-    @commands.command(brief='This command can be used to do a giveaway with a prize for certain time interval.', description='This command can be used to do a giveaway with a prize for certain time interval.',usage="")
+    @commands.command(brief='This command can be used to do a giveaway with a prize for certain time interval.', description='This command can be used to do a giveaway with a prize for certain time interval and can be used by members having manage guild permission.',usage="")
     @commands.guild_only()
     @commands.check_any(is_bot_staff(),
-                        commands.has_permissions(administrator=True))
+                        commands.has_permissions(manage_guild=True))
     async def giveawaystart(self, ctx):
         count=1
         await ctx.send(
@@ -2214,10 +2385,10 @@ class Giveaways(commands.Cog):
           await channel.send(
               f"Congratulations! {winner.mention} won the giveaway of **{prize}** ({msgurl})")
 
-    @commands.command(brief='This command can be used to select a giveaway winner.', description='This command can be used to select a giveaway winner.',usage="#channel")
+    @commands.command(brief='This command can be used to select a giveaway winner.', description='This command can be used to select a giveaway winner and can be used by members having manage guild permission.',usage="#channel")
     @commands.guild_only()
     @commands.check_any(is_bot_staff(),
-                        commands.has_permissions(administrator=True))
+                        commands.has_permissions(manage_guild=True))
     async def selectroll(self, ctx, channel: discord.TextChannel,
                          winner: discord.Member,id_:int,prize:str):
         if not uservoted(ctx.author) and not checkstaff(ctx.author) and not checkprivilleged(ctx.author):
@@ -2230,10 +2401,10 @@ class Giveaways(commands.Cog):
         await channel.send(
             f"Congratulations {winner.mention} won the giveaway of **{prize}** ({msgurl})"
         )
-    @commands.command(brief='This command can be used to re-select a new giveaway winner.', description='This command can be used to select a new giveaway winner.',usage="#channel messageid prize")
+    @commands.command(brief='This command can be used to re-select a new giveaway winner.', description='This command can be used to select a new giveaway winner and can be used by members having manage guild permission.',usage="#channel messageid prize")
     @commands.guild_only()
     @commands.check_any(is_bot_staff(),
-                        commands.has_permissions(administrator=True))
+                        commands.has_permissions(manage_guild=True))
     async def reroll(self, ctx, channel: discord.TextChannel, id_: int,prize:str):
         if not uservoted(ctx.author) and not checkstaff(ctx.author) and not checkprivilleged(ctx.author):
           cmd = client.get_command("vote")
@@ -2732,6 +2903,7 @@ class Music(commands.Cog):
               client.loop.create_task(ctx.voice_client.move_to(channel))
           else:
               client.loop.create_task(channel.connect())
+          client.loop.create_task(messagesent.remove_reaction(reaction,user))
           if str(reaction)=='🔀':
             cmd = client.get_command("loop")
             client.loop.create_task( cmd(ctx))
@@ -2855,7 +3027,7 @@ def guild_check(_custom_commands):
 class CustomCommands(commands.Cog):
 
     _custom_commands = {}
-    @commands.cooldown(1,30,BucketType.user)
+    @commands.cooldown(1,120,BucketType.user)
     @commands.command(brief='This command can be used to add your own commands and a custom response.', description='This command can be used to add your own commands and a custom response.',usage="commandname output")
     @commands.guild_only()
     @commands.check_any(is_bot_staff(),
@@ -2882,7 +3054,7 @@ class CustomCommands(commands.Cog):
             # Now add it to our list of custom commands
             self._custom_commands[name] = {ctx.guild.id: output}
         await ctx.send(f"Successfully added a command called {name}")
-
+    @commands.cooldown(1,240,BucketType.user)
     @commands.command(brief='This command can be used to remove your custom command.', description='This command can be used to remove your custom command.',usage="commandname")
     @commands.guild_only()
     @commands.check_any(is_bot_staff(),
@@ -2903,7 +3075,7 @@ async def on_guild_join(guild):
     global prefixlist
     guildindexexists=True
     try:
-      index=prefixlist.index(guild.id)
+      prefixlist.index(guild.id)
     except:
       guildindexexists=False
     if not guildindexexists:
