@@ -2459,10 +2459,9 @@ class Support(commands.Cog):
       channel = client.get_channel(ctx.channel.id)
       messageget = await channel.fetch_message(msgid)
       if messageget.author!=client.user:
-        raise commands.CommandError(" I cannot edit messages that are posted by other users .")
+        raise commands.CommandError(" I cannot delete messages that are posted by other users .")
         return
-      await messageget.edit(content="\u200b")
-      await messageget.edit(embed=None,suppress = True)
+      await messageget.delete()
     @commands.command(brief='This command can be used to approve a user to bypass vote-only commands.', description='This command can be used to approve a user to bypass vote-only commands.',usage="@member")
     @commands.guild_only()
     @commands.check_any(is_bot_staff())
@@ -2563,36 +2562,7 @@ class Support(commands.Cog):
 
         embedOne.add_field(name="https://discord.gg/TZDYSHSZgg",value="\u200b",inline=False)
         await ctx.reply(embed=embedOne)
-    @commands.command(brief='This command can be used to pass a testing command changelog.', description='This command can be used to pass a testing command changelog.',usage="lognumber changes")
-    @commands.check_any(is_bot_staff())
-    async def changelogtest(self, ctx,lognumber:int ,changes:str,removed=False):
-        colorOne=Color.blue()
-        embedOne = discord.Embed(title="Test-Changelog(in consideration)",
-                              description="Build#"+str(lognumber),
-                              color=colorOne)
-        embedOne.add_field(name=changes,value="\u200b",inline=False)
-        await ctx.channel.send(embed=embedOne)
-    @commands.command(brief='This command can be used to pass a approved command changelog.', description='This command can be used to pass a approved command changelog.',usage="lognumber changes")
-    @commands.check_any(is_bot_staff())
-    async def changelog(self, ctx,lognumber:int ,changes:str,removed=False):
-        colorOne=Color.green()
-        embedOne = discord.Embed(title="Commands Changelog",
-                              description="Build#"+str(lognumber),
-                              color=colorOne)
-        embedOne.add_field(name=changes,value="\u200b",inline=False)
-        for guild in client.guilds:
-            for channel in guild.channels:
-                if channel.type == discord.ChannelType.text and channel.permissions_for(
-                        guild.me).send_messages:
-                    try:
-                        await channel.send(embed=embedOne)
-                    except:
-                        await ctx.send(f" `embed link` permission has been denied in {channel.name}({guild}) .")
-                        try:
-                            await channel.send("Commands Changelog :"+changes)
-                        except:
-                            await ctx.send(f" I cannot send messages in {channel.name}({guild}) .")
-                    break
+ 
     @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command can be used to invite this bot.', description='This command can be used to invite this bot.',usage="")
     async def invite(self, ctx):
