@@ -500,6 +500,8 @@ Please visit https://top.gg/bot/805030662183845919 to submit ideas or bugs.""")
         def check(reaction, user):
           if user==client.user:
             return False
+          if not reaction.message.channel==channel:
+            return False
           client.loop.create_task(messagesent.remove_reaction(reaction,user))
           titlecommand=titlelist[emojis.index(str(reaction))]
           descriptioncommand=commandlist[emojis.index(str(reaction))]
@@ -624,7 +626,7 @@ class Moderation(commands.Cog):
         antilink.remove(channel.id)
         await ctx.send("Successfully disabled anti-link in this channel .")
 
-    @commands.command(brief='This command sets slowmode delay to a certain channel.', description='This command sets slowmode delay to a certain channel and can be used by members having manage messages permission',usage="delay")
+    @commands.command(brief='This command sets slowmode delay to a certain channel.', description='This command sets slowmode delay to a certain channel and can be used by members having manage messages permission.',usage="delay")
     @commands.guild_only()
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_messages=True))
@@ -1157,7 +1159,7 @@ class Moderation(commands.Cog):
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_messages=True))
 
-    async def createticketpanel(self, ctx ,channelname: typing.Union[discord.TextChannel,str],supportrole=None,reaction=None,*,supportmessage=None):
+    async def createticketpanel(self, ctx ,channelname: typing.Union[discord.TextChannel,str],supportrole:discord.Role=None,reaction=None,*,supportmessage=None):
       if isinstance(channelname, str):
         channel = await ctx.guild.create_text_channel(channelname,category=ctx.channel.category)
       else:
@@ -1188,6 +1190,8 @@ class Moderation(commands.Cog):
         await messagesent.add_reaction(emoji)
       def check(reactionadd, user):
           if user==client.user:
+            return False
+          if not reactionadd.message.channel==channel:
             return False
           if str(reactionadd)==str(reaction):
             client.loop.create_task(messagesent.remove_reaction(reaction,user))
@@ -1241,8 +1245,7 @@ async def deleteticket(user,userone,supportchannel,origchannel):
     await( supportchannel.delete())
 
 async def createticket(user,guild,category,channelorig,role):
-  supportchannel=await guild.create_text_channel(f"{user.name}'s support-ticket",category=category)
-  overwrites = {
+  overwriteperm = {
   guild.default_role: discord.PermissionOverwrite(
     view_channel=False,
     read_messages=False,
@@ -1259,7 +1262,8 @@ async def createticket(user,guild,category,channelorig,role):
     send_messages=True,
   )
 }
-  await supportchannel.edit(overwrites=overwrites)
+  supportchannel=await guild.create_text_channel(f"{user.name}'s support-ticket",category=category)
+  await supportchannel.edit(overwrites=overwriteperm)
   embedtwo = discord.Embed(title=f"{user.name}'s Support ticket", description=" Click on the following reactions to close/edit ticket", color=Color.green())
   messagesent=await supportchannel.send(embed=embedtwo)
   ghostping=await supportchannel.send(user.mention)
@@ -1272,6 +1276,8 @@ async def createticket(user,guild,category,channelorig,role):
       if userone==client.user:
         return False
       if userone==user:
+        return False
+      if not reaction.message.channel==supportchannel:
         return False
       client.loop.create_task(messagesent.remove_reaction(reaction,userone))
       if str(reaction)=='🟥':
@@ -2892,6 +2898,10 @@ class Music(commands.Cog):
         await messagesent.add_reaction(emoji)
       def check(reaction, user):
           if user==client.user:
+            return False
+          if not user.guild==ctx.guild:
+            return False
+          if not reaction.message.channel==ctx.channel:
             return False
           try:
               channel=ctx.author.voice.channel
