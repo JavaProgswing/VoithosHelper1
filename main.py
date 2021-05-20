@@ -500,7 +500,7 @@ Please visit https://top.gg/bot/805030662183845919 to submit ideas or bugs.""")
         def check(reaction, user):
           if user==client.user:
             return False
-          if not reaction.message.channel==channel:
+          if not reaction.message==messagesent:
             return False
           client.loop.create_task(messagesent.remove_reaction(reaction,user))
           titlecommand=titlelist[emojis.index(str(reaction))]
@@ -1191,7 +1191,7 @@ class Moderation(commands.Cog):
       def check(reactionadd, user):
           if user==client.user:
             return False
-          if not reactionadd.message.channel==channel:
+          if not reactionadd.message==messagesent:
             return False
           if str(reactionadd)==str(reaction):
             client.loop.create_task(messagesent.remove_reaction(reaction,user))
@@ -1277,7 +1277,7 @@ async def createticket(user,guild,category,channelorig,role):
         return False
       if userone==user:
         return False
-      if not reaction.message.channel==supportchannel:
+      if not reaction.message==messagesent:
         return False
       client.loop.create_task(messagesent.remove_reaction(reaction,userone))
       if str(reaction)=='🟥':
@@ -2899,9 +2899,7 @@ class Music(commands.Cog):
       def check(reaction, user):
           if user==client.user:
             return False
-          if not user.guild==ctx.guild:
-            return False
-          if not reaction.message.channel==ctx.channel:
+          if not reaction.message==messagesent:
             return False
           try:
               channel=ctx.author.voice.channel
