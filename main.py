@@ -1198,7 +1198,7 @@ class Moderation(commands.Cog):
       ticketpanels.append(messagesent.id)
       ticketpanels.append(supportrole.id)
       ticketpanels.append(emoji)
-      
+      await ctx.send(f"The channel ({channel.mention}) was successfully created as a ticket panel .")
       
       
 client.add_cog(Moderation(client))
