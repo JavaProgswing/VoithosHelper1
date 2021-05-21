@@ -94,6 +94,7 @@ logger.addHandler(handler)
 exemptspam=[]
 prefixlist=[]
 antilink=[]
+ticketpanels=[]
 async def get_prefix(client, message):
   if message.guild:
     try:
@@ -226,6 +227,12 @@ async def call_background_task(ctx,textchannel,message:str):
         except:
           await textchannel.send(" I don't have `manage messages` permission to delete messages .")
           return
+@tasks.loop(seconds=30)
+async def saveticketpanels():
+  global ticketpanels
+  with open("ticketpanels.txt", "w") as f:
+    for links in ticketpanels:
+        f.write(str(links) +"\n")
 @tasks.loop(seconds=30)
 async def saveantilink():
   global antilink
@@ -1188,29 +1195,9 @@ class Moderation(commands.Cog):
       emojis=[reaction]
       for emoji in emojis:
         await messagesent.add_reaction(emoji)
-      def check(reactionadd, user):
-          if user==client.user:
-            return False
-          if not reactionadd.message==messagesent:
-            return False
-          if str(reactionadd)==str(reaction):
-            client.loop.create_task(messagesent.remove_reaction(reaction,user))
-            overwritesa = {
-      user: discord.PermissionOverwrite(
-        view_channel=False,)}
-            client.loop.create_task(channel.edit(overwrites=overwritesa))
-            client.loop.create_task(createticket(user,ctx.guild,ctx.channel.category,channel,supportrole))
-            return False
-          return False
-
-
-      try:
-          await ctx.send(f"The channel ({channel.mention}) was successfully created as a ticket panel .")
-          reaction, user = await client.wait_for('reaction_add',check=check)
-      except asyncio.TimeoutError:
-          await ctx.reply(' Please run the command again , this command has timed out .')
-      else:
-        await ctx.channel.send(' Command has finished executing .')
+      ticketpanels.append(messagesent.id)
+      ticketpanels.append(supportrole.id)
+      ticketpanels.append(emoji)
       
       
       
@@ -1244,7 +1231,14 @@ async def deleteticket(user,userone,supportchannel,origchannel):
     await origchannel.edit(overwrites=overwritesa)
     await( supportchannel.delete())
 
-async def createticket(user,guild,category,channelorig,role):
+async def createticket(user,guild,category,channelorig,role:discord.Role):
+  print(user)
+  print(guild)
+  print(category)
+  print(channelorig)
+  print(role)
+  if isinstance(role, int):  
+    role=guild.get_role(role)
   overwriteperm = {
   guild.default_role: discord.PermissionOverwrite(
     view_channel=False,
@@ -3046,7 +3040,28 @@ class CustomCommands(commands.Cog):
         await ctx.send(f"Successfully removed a command called {name}")
   
 client.add_cog(CustomCommands(client))
-
+@client.event
+async def on_reaction_add(reaction, user):
+  if user==client.user:
+    return
+  global ticketpanels
+  print(f" List : {ticketpanels} ")
+  print(f" Reaction added : {reaction} .")
+  print(f" User reacted : {user} .")
+  length=len(ticketpanels)
+  for i in range(length):
+    if i %3==0 or i==0:
+      supportmsgid=ticketpanels[i]
+      print(f" Support message {supportmsgid} .")
+      supportroleid=ticketpanels[i+1]
+      print(f" Support role id {supportroleid} .")
+      reactionemoji=ticketpanels[i+2]
+      print(f" Support emoji {reactionemoji} .")
+      if supportmsgid==reaction.message.id and str(reactionemoji)==str(reaction):
+        await reaction.message.remove_reaction(reaction,user)
+        await createticket(user,reaction.message.guild,reaction.message.channel.category,reaction.message.channel,supportroleid)
+        
+    
 @client.event
 async def on_guild_join(guild):
     global prefixlist
@@ -3089,7 +3104,7 @@ async def on_guild_join(guild):
 
 @client.event
 async def on_ready():
-    global prefixlist,channelone,backupserver,exemptspam,antilink
+    global prefixlist,channelone,backupserver,exemptspam,antilink,ticketpanels
     print(f'{client.user.name} is ready for moderation! ')
     backupserver=client.get_guild(811864132470571038)
     channelone= client.get_channel(840193232885121094)
@@ -3100,6 +3115,15 @@ async def on_ready():
     prefixlist=[]
     exemptspam=[]
     antilink=[]
+    ticketpanels=[]
+    count=1
+    with open("ticketpanels.txt", "r") as f:
+      for line in f:
+        if not count%3==0:
+          ticketpanels.append(int(line))
+        else:
+          ticketpanels.append(line.replace("\n", ""))
+        count=count+1
     with open("exemptspam.txt", "r") as f:
       for line in f:
         exemptspam.append(int(line))
@@ -3117,7 +3141,7 @@ async def on_ready():
     saveprefix.start()
     saveexemptspam.start()
     saveantilink.start()
-
+    saveticketpanels.start()
         
 
 
