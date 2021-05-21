@@ -94,53 +94,24 @@ logger.addHandler(handler)
 exemptspam=[]
 prefixlist=[]
 antilink=[]
+ticketpanels=[]
 async def get_prefix(client, message):
   if message.guild:
     try:
       return prefixlist[prefixlist.index(message.guild.id)+1]
     except:
       prefixlist.append(message.guild.id)
-      prefixlist.append("!")
+      prefixlist.append("gn!")
       return prefixlist[prefixlist.index(message.guild.id)+1]
   else:
-    return "!"
+    return "gn!"
 intents = discord.Intents.default()
+intents.presences=True
+intents.members=True
 client = commands.Bot(command_prefix=get_prefix,case_insensitive=True,intents=intents)
 slash = SlashCommand(client, sync_commands=True)
 API_KEY = 'AIzaSyB7O6SC44ARFgK8HjdOYbsXnZ6wY9QiSsQ'
 service = discovery.build('commentanalyzer', 'v1alpha1', developerKey=API_KEY)
-randomjava = [
-    "The original name for Java was Oak. It was eventually changed to Java by Sun's marketing department when Sun lawyers found that there was already a computer company registered as Oak. But a legend has it that Gosling and his gang of programmers went out to the local cafe to discuss names and ended up naming it Java. ",
-    'James Gosling was working at Sun Labs, around 1992. Gosling and his team was building a set-top box and started by "cleaning up" C++ and wound up with a new language and runtime. Thus, Java or Oak came into being.',
-    'Though many would argue that Java is all time favourite among developers, it is the second most popular programming language after C. Java is ranked second in popularity among programming languages.',
-    'Currently, about 3 billion mobile phones are working in Java, as well as 125 million TV sets and each Blu-Ray player. This language is continually ranked first in the rankings of software developers as the best choice of programming languages.',
-    'Java is free from the concept of Pointer as adding pointers to Java language would compromise security and the robustness, making this language more complex.',
-    'In Java, The meaning of Final keyword is not final. It has different meanings in java. It can be Final class, Final method, Final field or Final variable.',
-    'Java is used by 95% of the enterprises as their primary language. It is much more than C and the other languages.',
-    'A Java developer’s median salary is $83, 975.00. It pays to be a Java developer.',
-    'Today, Java rationally runs on more than 1 billion as the Android operating system of Google uses Java APIs.',
-    'In one year Java gets downloaded one billion times.'
-]
-randompython = [
-    'This name ‘Python’ is extracted from a British comedy series, “Monty Python’s Flying Circus”. It is not named a snake. It is said that this was the favorite series of its inventor Guido Van Rossum. He named it Python because it is short, mysterious and unique.',
-    'Tim Peters wrote an interesting poem about Python which highlights some of the python facts. It is popular as “The Zen of Python”. This poem is beautifully composed. You can get this poem if you write import this in your python compiler.',
-    'In Python, there can be multiple comparisons at once. It is able to check multiple conditions at the same time. While in other programming languages, you can not program a chain of comparison operators. The comparison operators can be chained randomly. It does not have to follow a particular order of operators.',
-    'Python offers a feature to return multiple values using function. It returns the value as a tuple. While it is not possible with other languages such as Java, C, etc.',
-    'Python relies on an interpreter. Unlike other programming languages, it does not need a compiler. The code is stored in a .pyc file. This file acts as a dynamic engine for Python eliminating the need of any compiler.',
-    'In Python, every program is done by reference. It does not support pointer.',
-    'Python has incorporated the variants of C and Java such as CPython, Jython, etc. The C variant is CPython, to give Python the glimpse benefits of C language. It is because CPython is beneficial in terms of performance, as it has both a compiler and an interpreter. The Java variant of Python is Jython. It drops the highlighting feature of Java such as productivity.',
-    'It another interesting fact about Python. It allows you to easily unpack a list or dictionary of all the functions you have used in your program. You can unpack a list by using * and dictionary by using **.',
-    'Unlike other languages, Python is the only language that can use else within for a loop. This will be true only when the loop exists naturally and do not break in between.',
-    'One can use an “else” clause with a “for” loop in Python. It’s a special type of syntax that executes only if the for loop exits naturally, without any break statements.',
-    'Function Argument Unpacking is another awesome feature of Python. One can unpack a list or a dictionary as function arguments using * and ** respectively. This is commonly known as the Splat operator. ',
-    ' Want to find the index inside a for loop? Wrap an iterable with ‘enumerate’ and it will yield the item along with its index',
-    'One can chain comparison operators in Python answer= 1<x<10 is executable in Python.',
-    'We can’t define Infinities right? But wait! Not for Python. . E.g : p_infinity  , n_infinity',
-    'Instead of building a list with a loop, one can build it more concisely with a list comprehension. See this code for more understanding.',
-    'Finally, Python’s special Slice Operator. It is a way to get items from lists, as well as change them',
-    "Python vs java is a common comparsion . Python is dynamically coded and Java is staticly coded . So Java is much faster than python . Java can't do everything that python can , its vice-versa too ."
-]
-randomlist = randomjava + randompython
 userprivilleged=[]
 botowners = ["488643992628494347", "625265223250608138"]
 bot.cooldownvar = commands.CooldownMapping.from_cooldown(
@@ -198,7 +169,7 @@ class TopGG(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjgwNTAzMDY2MjE4Mzg0NTkxOSIsImJvdCI6dHJ1ZSwiaWF0IjoxNjE2NTEzMzI4fQ.2Ds8_hdV3b5wA8nTPIkNRDaCrH4T2pjupIZPvIMSNL0' # set this to your DBL token
+        self.token = 'INVALID' # set this to your DBL token
         self.dblpy = dbl.DBLClient(self.bot, self.token, autopost=True) # Autopost will post your guild count every 30 minutes
 
     async def on_guild_post():
@@ -209,23 +180,14 @@ class TopGG(commands.Cog):
 client.add_cog(TopGG(client))
 def convertwords(lst):
     return ' '.join(lst).split()
-async def call_background_task(ctx,textchannel,message:str):
-    messagecontrol=await textchannel.send(f" This is a message to inform that live status for ip {message} was added in this channel , delete this message to stop live server status (every 30 minutes) .")
-    controlid=messagecontrol.id
-    while True:
-        controlmsg=textchannel.get_partial_message(controlid)
-        if controlmsg == None:
-          await textchannel.send("The **control message** has been deleted , stopping live server status .")
-          break
-        cmd = client.get_command("mcservercheck")
-        prevmessageid=await cmd(ctx,message)
-        await asyncio.sleep(1800)
-        ipmsg=textchannel.get_partial_message(prevmessageid)
-        try:
-          await ipmsg.delete()
-        except:
-          await textchannel.send(" I don't have `manage messages` permission to delete messages .")
-          return
+    
+@tasks.loop(seconds=30)
+async def saveticketpanels():
+  global ticketpanels
+  with open("ticketpanels.txt", "w") as f:
+    for links in ticketpanels:
+        f.write(str(links) +"\n")
+
 @tasks.loop(seconds=30)
 async def saveantilink():
   global antilink
@@ -489,9 +451,9 @@ class MyHelp(commands.HelpCommand):
 
         channel = self.get_destination()
         embedone.add_field(name=":link: About",value="""This bot is developed by <@488643992628494347>, based on discord.py\n
-Please visit https://top.gg/bot/805030662183845919 to submit ideas or bugs.""")
-        embedone.set_author(name="Commands help",icon_url="https://cdn.discordapp.com/avatars/805030662183845919/70fee8581891e9a810da60944dc486ba.webp?size=128")
-        embedone.set_footer(text="Want support? Join here: https://discord.gg/TZDYSHSZgg",icon_url="https://cdn.discordapp.com/avatars/488643992628494347/e50ae57d9e8880e6acfbc2b444000fa1.webp?size=128")
+Please visit our support server to submit ideas or bugs.""")
+        embedone.set_author(name="Commands help",icon_url="https://cdn.discordapp.com/avatars/845182628981243915/9392c5a6a147a3e5e89c3a643bc5a451.png?size=256")
+        embedone.set_footer(text="Want support? Join here: https://discord.gg/TZDYSHSZgg",icon_url="https://cdn.discordapp.com/avatars/625265223250608138/5eea61e43419ed1ba98c0ebe5e5c1083.png?size=256")
         messagesent=await channel.send(embed=embedone)
         emojis=['📜','🔨','👾','<:grass:825355420604039219>','🏆', '🎰', '🛠️','🎵','✍️']
         for emoji in emojis:
@@ -536,11 +498,13 @@ class VoithosInfo(commands.Cog):
       embedVar = discord.Embed(title=f"{client.user}",
                                   description=" ",
                                   color=0x00ff00)
-      embedVar.add_field(name='CPU usage ', value=f"{psutil.cpu_percent(1)}%",inline=False)
-      embedVar.add_field(name='RAM usage ', value=f"{psutil.virtual_memory()[2]}%",inline=False)
+      if checkstaff(ctx.author):
+        embedVar.add_field(name='CPU usage ', value=f"{psutil.cpu_percent(1)}%",inline=False)
+      if checkstaff(ctx.author):
+        embedVar.add_field(name='RAM usage ', value=f"{psutil.virtual_memory()[2]}%",inline=False)
       embedVar.add_field(name="Author",value=" This bot is made by <@625265223250608138> and <@488643992628494347> .",inline=False)
-      embedVar.add_field(name="Information",value="""An all-in-one moderation bot coded in python with a punishments system, entertainment facts and profane message filter.""",inline=False)
-      embedVar.add_field(name="Websites",value="https://top.gg/bot/805030662183845919",inline=False)
+      embedVar.add_field(name="Information",value="""Grian helper is a newly released bot having many features : 1)Music 2)Moderation 3)MIinecraft 4)Customizable commands 5)Economy 6)Fun 7)Support tickets""",inline=False)
+      embedVar.add_field(name="Websites",value="Coming soon!",inline=False)
       embedVar.set_thumbnail(url="https://cdn.discordapp.com/avatars/805030662183845919/70fee8581891e9a810da60944dc486ba.webp?size=128")
       embedVar.set_author(name="JavaCoder", icon_url="https://cdn.discordapp.com/avatars/488643992628494347/e50ae57d9e8880e6acfbc2b444000fa1.webp?size=128")
       await ctx.reply(embed=embedVar)
@@ -1188,30 +1152,9 @@ class Moderation(commands.Cog):
       emojis=[reaction]
       for emoji in emojis:
         await messagesent.add_reaction(emoji)
-      def check(reactionadd, user):
-          if user==client.user:
-            return False
-          if not reactionadd.message==messagesent:
-            return False
-          if str(reactionadd)==str(reaction):
-            client.loop.create_task(messagesent.remove_reaction(reaction,user))
-            overwritesa = {
-      user: discord.PermissionOverwrite(
-        view_channel=False,)}
-            client.loop.create_task(channel.edit(overwrites=overwritesa))
-            client.loop.create_task(createticket(user,ctx.guild,ctx.channel.category,channel,supportrole))
-            return False
-          return False
-
-
-      try:
-          await ctx.send(f"The channel ({channel.mention}) was successfully created as a ticket panel .")
-          reaction, user = await client.wait_for('reaction_add',check=check)
-      except asyncio.TimeoutError:
-          await ctx.reply(' Please run the command again , this command has timed out .')
-      else:
-        await ctx.channel.send(' Command has finished executing .')
-      
+      ticketpanels.append(messagesent.id)
+      ticketpanels.append(supportrole.id)
+      ticketpanels.append(emoji)
       
       
 client.add_cog(Moderation(client))
@@ -1244,7 +1187,9 @@ async def deleteticket(user,userone,supportchannel,origchannel):
     await origchannel.edit(overwrites=overwritesa)
     await( supportchannel.delete())
 
-async def createticket(user,guild,category,channelorig,role):
+async def createticket(user,guild,category,channelorig,role:discord.Role):
+  if isinstance(role, int):  
+    role=guild.get_role(role)
   overwriteperm = {
   guild.default_role: discord.PermissionOverwrite(
     view_channel=False,
@@ -1414,91 +1359,6 @@ targeted attacks using automated user accounts.""")
       
 client.add_cog(Captcha(client))
 class MinecraftFun(commands.Cog):
-    #cool
-    @commands.cooldown(1,30,BucketType.user)
-    @commands.command(brief='This command shows the mined inventory items.', description='This command shows the mined inventory items of the user.',usage="")
-    async def inventory(self,ctx):
-      file1 = open(f"{ctx.author.id}_mine.txt", "w")
-      file1.close()
-      inventory = open(f"{ctx.author.id}_mine.txt", "r")
-      invstring = inventory.read()
-      itemslist = invstring.split(",")
-      embedOne = discord.Embed(title=f"{ctx.author.name}",
-                            description="Inventory",           color=Color.green())
-      
-      for item in itemslist:
-        if item == '':
-          break
-        embedOne.add_field(name=item,value="\u200b",inline=False)
-      await ctx.send(embed=embedOne)    
-    @commands.cooldown(1,30,BucketType.user)
-    @commands.command(brief='This command is used to mine items.', description='This command is used to mine items and store it in inventory.',usage="")   
-    async def mine(self,ctx):
-      """
-      mobappearlist=["mine","mine","mine","mob"]
-      mobappearchances=[20,20,30,30]
-      mobappearlist=random.choices(mobappearlist,mobappearchances,k=1)
-      mobappearresult=mobappearlist[0]
-      if mobappearresult=="mob":
-        minecraftmobs=["Zombie","Skeleton","Creeper"]
-
-        creeperdamage=[10,15,0,5,0]
-        skeletondamage=[2,3,4,5,0]
-        zombiedamage=[2.5,3,4.5,0]
-        selectedmob=random.choice(minecraftmobs)
-        embedOne = discord.Embed(title=f"{ctx.author.name}",
-                            description=f"A wild {selectedmob} appeared !",           color=Color.red())
-        embedOne.add_field(name=f"Pvp the {selectedmob} by typing `f`.",value="\u200b",inline=False)
-        await ctx.send(embed=embedOne)
-        pvpmember_health=25
-        mob_health=20
-        pvpmember=ctx.author
-        def check(m):
-          nonlocal pvpmember,selectedmob,creeperdamage,zombiedamage,skeletondamage,pvpmember_health,mob_health
-          if pvpmember==m.author:
-            strengthlist=[1,2,3]
-            randomdamage=random.choice(strengthlist)
-            client.loop.create_task( ctx.channel.send(f"{pvpmember.mention} dealt {randomdamage} to {selectedmob} ."))
-            mob_health-=randomdamage
-            if mob_health<=0:
-              client.loop.create_task( ctx.channel.send(f"{pvpmember.mention} defeated the {selectedmob} "))
-              return True
-            if selectedmob=="Zombie":
-              damagedealt=random.choice(zombiedamage)
-            if selectedmob=="Creeper":
-              damagedealt=random.choice(creeperdamage)
-            if selectedmob=="Skeleton":
-              damagedealt=random.choice(skeletondamage)
-            pvpmember_health-=damagedealt
-            client.loop.create_task( ctx.channel.send(f" **{selectedmob}** dealt {damagedealt} to {pvpmember.mention} ."))
-            if pvpmember_health<=0:
-              client.loop.create_task( ctx.channel.send(f" **{pvpmember.mention}** was defeated by the mob {selectedmob} ."))
-              return True        
-            player_health=""
-            for i in range(int(pvpmember_health/2)):
-              player_health+=":heart:"
-            client.loop.create_task( ctx.channel.send(f" {pvpmember.mention} health : {player_health} "))
-            
-          return False
-        msg = await client.wait_for('message', check=check,timeout=120)
-        return
-      """
-
-      blocks=["Clay","Coal","Diamond","Gold","Gravel","Ice","Iron","Sand","Stone","Grass"]
-      blockemojilist=["<:clay:825355418083655740>","<:coal:825355417802375188>","<:diamond:825355417717833729>","<:gold:825355419420983317>","<:gravel:825355419030781994>","<:ice:825355417621626890>","<:iron:825355419140227082>","<:sand:825355420080144406>","<:stone:825355417810632704>","<:grass:825355420604039219>"]
-      chance = [13,8,5,8,13,10,7,7,14,15]
-
-      results = random.choices(blocks,chance,k=1)
-      embedOne = discord.Embed(title=f"Current mining results.",
-                            description=f"\u200b",           color=Color.green())
-      embedOne.add_field(name=f"You mined up 1 {(blockemojilist[blocks.index(results[0])])} {results[0]}",value="\u200b",inline=False)
-      await ctx.send(embed=embedOne)
-      file1 = open(f"{ctx.author.id}_mine.txt", "w")
-      file1.close()
-      file1 = open(f"{ctx.author.id}_mine.txt", "a")
-      file1.write(results[0]+",")
-      file1.close()
-
     @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command is used to generate terrain (similar to minecraft).', description='This command is used to generate terrain (similar to minecraft).',usage="number")
     async def generateterrain(self,ctx,number=8):
@@ -1884,18 +1744,7 @@ class MinecraftFun(commands.Cog):
         embedOne.add_field(name=f" Updated at {formatted_time}",value="\u200b",inline=True)
         ipmessagesent=await ctx.send(embed=embedOne)
         return ipmessagesent.id
-    @commands.cooldown(1,3600,BucketType.guild)
-    @commands.command(brief='This command is used to check the server status of a minecraft server ip after every 30 minutes.', description='This command is used to check the server status of a minecraft server ip after every 30 minutes.',usage="server-ip")
-    @commands.guild_only()
-    @commands.check_any(is_bot_staff(),
-                          commands.has_permissions(administrator=True))
-    async def mcserverlive(self,ctx,ip):
-        if not uservoted(ctx.author) and not checkstaff(ctx.author) and not checkprivilleged(ctx.author):
-          cmd = client.get_command("vote")
-          await cmd(ctx)
-          raise commands.CommandError(" Vote for our bot on following websites for accessing this feature .")
-          return
-        asyncio.ensure_future(call_background_task(ctx,ctx.channel,ip))
+
 
 client.add_cog(MinecraftFun(client))
 
@@ -1913,7 +1762,7 @@ def listToString(s):
 class Fun(commands.Cog):
     @commands.cooldown(1,20,BucketType.user)
     @commands.command(brief='This command can be used to get random responses from the bot.', description='This command can be used to get random responses from the bot.',usage="")
-    async def communication(self, ctx):
+    async def communication(self, ctx,*,yourmessage):
         responses = ['It is certain.',
                   'As I see it, yes.',
                   'Ask again later.',
@@ -1939,7 +1788,7 @@ class Fun(commands.Cog):
     @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command can be used to welcome users with a custom welcome image.', description='This command can be used to welcome users with a custom welcome image.',usage="@member")
     @commands.guild_only()
-    async def welcomeuser(self, ctx, member: discord.Member = None):
+    async def welcome(self, ctx, member: discord.Member = None):
         if member == None:
             member = ctx.author
         imgbackground = Image.open("background.jpg")
@@ -1962,7 +1811,7 @@ class Fun(commands.Cog):
     @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command can be used to show users in a custom wanted poster.', description='This command can be used to show users in a custom wanted poster.',usage="@member")
     @commands.guild_only()
-    async def wanteduser(self, ctx, member: discord.Member = None):
+    async def wantedframe(self, ctx, member: discord.Member = None):
         if member == None:
             member = ctx.author
         wanted = Image.open("wanted.jpg")
@@ -1978,7 +1827,7 @@ class Fun(commands.Cog):
         await ctx.reply(file=file, embed=embed)
     @commands.cooldown(1,120,BucketType.user)
     @commands.command(brief='This command can be used to search on google.', description='This command can be used to search on google.',usage="search-term number")
-    async def searchquery(self, ctx,*, query: str, number: int = 1):
+    async def search(self, ctx,*, query: str, number: int = 1):
         if not uservoted(ctx.author) and not checkstaff(ctx.author) and not checkprivilleged(ctx.author):
           cmd = client.get_command("vote")
           await cmd(ctx)
@@ -2100,14 +1949,6 @@ class Fun(commands.Cog):
         await ctx.reply(f'My prefix has changed to {prefix} in {ctx.guild} .')
       else:
         await ctx.reply("My prefix cannot be changed in a dm channel , my default prefix is ! ")
-    @commands.cooldown(1,30,BucketType.user)
-    @commands.command(brief='This command can be used to get some java programming facts.', description='This command can be used to get some java programming facts.',usage="")
-    async def java(self, ctx):
-        await ctx.channel.send(f"```{random.choice(randomjava)}```")
-    @commands.cooldown(1,30,BucketType.user)
-    @commands.command(brief='This command can be used to get some python programming facts.', description='This command can be used to get some python programming facts.',usage="")
-    async def python(self, ctx):
-        await ctx.channel.send(f"```{random.choice(randompython)}```")
     @commands.cooldown(1,45,BucketType.user)
     @commands.command(brief='This command can be used to translate text into another language.', description='This command can be used to translate text into another language.',usage="language text")
     async def translatetext(self, ctx,language="en",*,text):
@@ -2130,7 +1971,7 @@ class Fun(commands.Cog):
             score_value = attribute_dict['spanScores'][0]['score']['value']
             if score_value >= 0.6:
               if ctx.guild and not ctx.channel.is_nsfw(
-  ) and "mod" in ctx.channel.name.lower():
+  ) :
                 await ctx.send(" Your message contained harmful content , translation aborted .")
                 return
       except:
@@ -2139,14 +1980,6 @@ class Fun(commands.Cog):
       translatedmessage=(translator.translate(origmessage,dest=language).text)
       embedOne = discord.Embed(title=" Language : "+language,description=translatedmessage)
       await ctx.send(embed=embedOne)
-    @commands.cooldown(1,30,BucketType.user)
-    @commands.command(brief='This command can be used to get some (python or java) facts.', description='This command can be used to get some (python or java) facts.',usage="")
-    async def fact(self, ctx):
-        fact = random.choice(randomlist)
-        if fact in randomjava:
-            await ctx.channel.send(f"``` Random Java Fact : {fact}```")
-        elif fact in randompython:
-            await ctx.channel.send(f"``` Random Python Fact : {fact}```")
     @commands.cooldown(1,30,BucketType.user)
     @commands.command(aliases=['server'],brief='This command can be used to get guild information.', description='This command can be used to get guild information.',usage="")
     @commands.guild_only()
@@ -2436,22 +2269,6 @@ client.add_cog(Giveaways(client))
 
 
 class Support(commands.Cog):
-    @commands.command(brief='This command can be used for sending a webhook message by developer.', description='This command can be used for sending a webhook message by developer.',usage="text username avatarurl webhookurl")
-    @commands.guild_only()
-    @commands.check_any(is_bot_staff())
-
-    async def sendwebhook(self,ctx,text=None,userprovided=None,avatarprovided=None,hookurl=None):
-      if hookurl==None:
-        hookurl="https://discord.com/api/webhooks/831191358864621659/OJvc61mESgPB59fUFZDprkriZqtCCJ401ird9TqgMm3_DiHp9jE2C6i1YwO5ruBG-X4I"
-      if text==None:
-        text="Hi this is webhook testing ."
-      if userprovided==None:
-        userprovided=ctx.author.name
-      if avatarprovided==None:
-        avatarprovided=ctx.author.avatar_url
-      async with aiohttp.ClientSession() as session:
-          webhook = Webhook.from_url(hookurl, adapter=AsyncWebhookAdapter(session))
-          await webhook.send(text, username=userprovided,avatar_url=avatarprovided)
     @commands.command(brief='This command can be used to delete a embed and message.', description='This command can be used to delete a embed and message.',usage="messageid")
     @commands.guild_only()
     @commands.check_any(is_bot_staff())
@@ -2486,19 +2303,6 @@ class Support(commands.Cog):
 
       cmd = client.get_command("vote")
       await cmd(ctx)
-    @commands.command(brief='This command can be used to send messages in a certain guild.', description='This command can be used to send messages in a certain guild.',usage="message guildid")
-    @commands.check_any(is_bot_staff())
-    async def sendguild(self,ctx,message,guildid:int):
-      guildsent=client.get_guild(guildid)
-      await ctx.send(str(guildsent))
-      for channel in guildsent.channels:
-          if channel.type == discord.ChannelType.text and channel.permissions_for(
-                  guildsent.me).send_messages:
-            try:
-              await channel.send(message)
-            except:
-                await ctx.send(f" I cannot send messages in {channel.name}({guildsent}) .")
-            break
     @commands.command(aliases=['maintanance','maintenance','togglem'],brief='This command can be used for maintainence mode.', description='This command can be used for maintainence mode.',usage="")
     
     @commands.check_any(is_bot_staff())
@@ -2519,20 +2323,6 @@ class Support(commands.Cog):
             name="!help for commands .",
             type=discord.ActivityType.watching)
         await client.change_presence(activity=activity)
-    @commands.command(brief='This command can be used for leaving a guild.', description='This command can be used for leaving a guild.',usage="message guildid")
-    @commands.check_any(is_bot_staff())
-    async def leaveguild(self,ctx,message,guildid:int):
-      guildsent=client.get_guild(guildid)
-      await ctx.send(str(guildsent))
-      for channel in guildsent.channels:
-          if channel.type == discord.ChannelType.text and channel.permissions_for(
-                  guildsent.me).send_messages:
-            try:
-              await channel.send(message)
-            except:
-                await ctx.send(f" I cannot send messages in {channel.name}({guildsent}) .")
-            break
-      await guildsent.leave()
 
     @commands.command(brief='This command can be used for checking user votes.', description='This command can be used for checking user votes.',usage="@member")
     @commands.guild_only()
@@ -2569,8 +2359,15 @@ class Support(commands.Cog):
         await ctx.channel.send(
             f" Invite {client.user.name} by using the link provided below :")
         await ctx.channel.send(
-            "https://discord.com/oauth2/authorize?client_id=805030662183845919&permissions=2416012310&scope=bot"
+            "https://discord.com/api/oauth2/authorize?client_id=845182628981243915&permissions=268561526&scope=bot"
         )
+    @commands.cooldown(1,30,BucketType.user)
+    @commands.command(brief='This command can be used to report bugs of this bot.', description='This command can be used to report bug of this bot.',usage="")
+    async def report(self,ctx,*,bugdetail):
+      global channelone
+      embedone = discord.Embed(title=f"Bug Report by {ctx.author.mention}",description=bugdetail,color=Color.dark_red())
+      await channelone.send(embed=embedone)
+      await ctx.channel.send(f" Thanks for reporting this bug , {ctx.author.mention} . Be sure to join the support server for a detailed bug report . ")
     @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command can be used to vote for this bot.', description='This command can be used to vote for this bot.',usage="")
     async def vote(self, ctx):
@@ -2578,38 +2375,13 @@ class Support(commands.Cog):
                               description="",
                               color=Color.green())
         embedOne.add_field(name=(
-            "https://discordbotlist.com/bots/voithos-helper/upvote"),value="\u200b",inline=False)
-        embedOne.add_field(name=(
-            "https://top.gg/bot/805030662183845919/vote"),value="\u200b",inline=False)
+            "Coming soon"),value="\u200b",inline=False)
         try:
           await ctx.reply(embed=embedOne)
         except:
           await ctx.send(" **Voting websites :**")
-          await ctx.send("https://discordbotlist.com/bots/voithos-helper/upvote")
-          await ctx.send("https://top.gg/bot/805030662183845919/vote")
-    @commands.cooldown(1,30,BucketType.user)
-    @commands.command(brief='This command can be used to grant bot permissions to add slash-commands.', description='This command can be used to grant bot permissions to add slash-commands.',usage="")
-    @commands.guild_only()
-    async def enableslashcommand(self, ctx):
-        await ctx.channel.send(
-            " Want slash commands to work ? , grant our bot permissions by this link ."
-        )
-        await ctx.channel.send(
-            "https://discord.com/api/oauth2/authorize?client_id=805030662183845919&permissions=0&scope=applications.commands%20bot"
-        )
+          await ctx.send("Coming soon")
 
-    @commands.command(brief='This command can be used to see bot joined servers.', description='This command can be used to see bot joined servers.',usage="")
-    @commands.check_any(is_bot_staff())
-    async def joinedservers(self, ctx):
-        count = 0
-        embedOne = discord.Embed(title="Joined servers",
-                              description="",
-                              color=Color.green())
-        for guild in client.guilds:
-            await ctx.send(f"{guild} is moderated by {client.user.name} with {guild.member_count} members.")
-            count = count + 1
-        embedOne.add_field(name=f" Total number of guilds : {count}.",value="\u200b",inline=False)
-        await ctx.reply(embed=embedOne)
 
     @commands.command(brief='This command can be used to make bot status offline.', description='This command can be used to make bot status offline.',usage="")
     @commands.check_any(is_bot_staff())
@@ -2699,46 +2471,6 @@ class Music(commands.Cog):
 
         await channel.connect()
         await ctx.reply(f"I have successfully connected to {channel}")
-    @commands.cooldown(1,45,BucketType.guild)
-    @commands.command(brief='This command can be used to play a song from url.', description='This command can be used to play a song from url in a voice channel.',usage="youtubeurl")
-    @commands.guild_only()
-    #@commands.check_any(is_bot_staff())
-    async def playurl(self, ctx, *, url):
-        if not uservoted(ctx.author) and not checkstaff(ctx.author) and not checkprivilleged(ctx.author):
-          cmd = client.get_command("vote")
-          await cmd(ctx)
-          raise commands.CommandError(" Vote for our bot on following websites for accessing this feature .")
-          return
-        """Streams from a url (same as yt, but doesn't predownload)"""
-        channel=ctx.author.voice.channel
-        if ctx.voice_client is not None:
-          await ctx.voice_client.move_to(channel)
-        else:
-          await channel.connect()
-        if ctx.author.voice.self_deaf:
-          raise commands.CommandError(" You are deafened in the voice channel , you won't be able to hear the playing audio .")
-
-        videosSearch = VideosSearch(url, limit = 1)
-        #print(videosSearch.result())
-        data=videosSearch.result()
-        vidtitle=data['result'][0]['title']
-        try:
-          viddes=data['result'][0]['descriptionSnippet'][0]['text']
-        except:
-          viddes=" No description"
-        vidviews=data['result'][0]['viewCount']['text']
-        vidpublished=data['result'][0]['publishedTime']
-        async with ctx.typing():
-            player = await YTDLSource.from_url(url, loop=self.bot.loop, stream=True)
-            ctx.voice_client.play(player, after=lambda e: print('Player error: %s' % e) if e else None)
-        await ctx.reply(f' Now playing: {player.title} requested by {ctx.author.mention} .')
-        embedVar = discord.Embed(title=f" {vidtitle}",
-                                  description=viddes,
-                                  color=0x00ff00)
-        embedVar.add_field(name=url,value=str(vidviews)+" | published "+str(vidpublished))
-        embedVar.set_footer(text=ctx.author.name, icon_url=ctx.author.avatar_url)
-        embedVar.set_author(name="Youtube", icon_url="https://cdn.discordapp.com/avatars/812967359312297994/2c234518e4889657d01fe7001cd52422.webp?size=128")
-        await ctx.send(embed=embedVar)
     @commands.cooldown(1,90,BucketType.guild)
     @commands.command(brief='This command can be used to loop a song.', description='This command can be used to loop a song in a voice channel.',usage="songname")
     @commands.guild_only()
@@ -2845,7 +2577,7 @@ class Music(commands.Cog):
             player = await YTDLSource.from_url(url, loop=self.bot.loop, stream=True)
             ctx.voice_client.play(player, after=lambda e: print('Player error: %s' % e) if e else None)
         vidtitle=player.title
-        await ctx.reply(f' Now playing: {player.title} requested by {ctx.author.mention} .')
+        await ctx.reply(f' Now playing: {player.title} requested by {ctx.author.mention} , Try out our music panel command !')
         if boolvideoexist:
           embedVar = discord.Embed(title=f" {vidtitle}",
                                   description=viddes,
@@ -2947,7 +2679,6 @@ class Music(commands.Cog):
     @stop.before_invoke       
     @loop.before_invoke
     @play.before_invoke
-    @playurl.before_invoke
     async def ensure_voice(self, ctx):
         if ctx.voice_client is None:
             if ctx.author.voice:
@@ -3046,7 +2777,24 @@ class CustomCommands(commands.Cog):
         await ctx.send(f"Successfully removed a command called {name}")
   
 client.add_cog(CustomCommands(client))
+@client.event
+async def on_reaction_add(reaction, user):
+  if user==client.user:
+    return
+  global ticketpanels
 
+  length=len(ticketpanels)
+  for i in range(length):
+    if i %3==0 or i==0:
+      supportmsgid=ticketpanels[i]
+      #print(f" Support message {supportmsgid} .")
+      supportroleid=ticketpanels[i+1]
+      #print(f" Support role id {supportroleid} .")
+      reactionemoji=ticketpanels[i+2]
+      #print(f" Support emoji {reactionemoji} .")
+      if supportmsgid==reaction.message.id and str(reactionemoji)==str(reaction):
+        await reaction.message.remove_reaction(reaction,user)
+        await createticket(user,reaction.message.guild,reaction.message.channel.category,reaction.message.channel,supportroleid)
 @client.event
 async def on_guild_join(guild):
     global prefixlist
@@ -3057,14 +2805,14 @@ async def on_guild_join(guild):
       guildindexexists=False
     if not guildindexexists:
       prefixlist.append(guild.id)
-      prefixlist.append("!")
+      prefixlist.append("gn!")
     embedOne = discord.Embed(title="Walkthrough Guide ",
                               description=f"Prefix {prefixlist[prefixlist.index(guild.id)+1]}",
                               color=Color.green())
     for channel in guild.channels:
         if channel.type == discord.ChannelType.text and channel.permissions_for(
                 guild.me).send_messages:
-            embedOne.add_field(name=f" Invoke our bot by sending {prefixlist[prefixlist.index(guild.id)+1]}help in a channel in which bot has permissions to read . For moderating messages in a channel add (mod) to the name and to ignore spam in a channel add spam to channelname to ignore spamming .",value="\u200b"
+            embedOne.add_field(name=f" Invoke our bot by sending {prefixlist[prefixlist.index(guild.id)+1]}help in a channel in which bot has permissions to read or mentioning the bot to get prefixes .",value="\u200b"
                 ,inline=False)
 
             embedOne.add_field(name=" Thanks for inviting " + client.user.name +
@@ -3077,7 +2825,7 @@ async def on_guild_join(guild):
             except:
                 await channel.send(" I don't have `Embed Link` permission in this channel to send embed responses .")
                 await channel.send(
-                    f" Prefix {prefixlist[prefixlist.index(guild.id)+1]} Test our bot by sending {prefixlist[prefixlist.index(guild.id)+1]}help  in a channel in which bot has permissions to read . For moderating messages in a channel add (mod) to the name and to ignore spam in a channel add spam to channelname to ignore spamming ."
+                    f" Prefix {prefixlist[prefixlist.index(guild.id)+1]} Invoke our bot by sending {prefixlist[prefixlist.index(guild.id)+1]}help or mentioning the bot to get prefixes ."
                 )
                 await channel.send(" Thanks for inviting " + client.user.name +
                                   " to " + str(guild.name))
@@ -3089,17 +2837,26 @@ async def on_guild_join(guild):
 
 @client.event
 async def on_ready():
-    global prefixlist,channelone,backupserver,exemptspam,antilink
+    global prefixlist,channelone,backupserver,exemptspam,antilink,ticketpanels
     print(f'{client.user.name} is ready for moderation! ')
     backupserver=client.get_guild(811864132470571038)
     channelone= client.get_channel(840193232885121094)
     activity = discord.Activity(
-        name="!help for commands .",
+        name="gn!help for commands .",
         type=discord.ActivityType.watching)
     await client.change_presence(activity=activity)
     prefixlist=[]
     exemptspam=[]
     antilink=[]
+    ticketpanels=[]
+    count=1
+    with open("ticketpanels.txt", "r") as f:
+      for line in f:
+        if not count%3==0:
+          ticketpanels.append(int(line))
+        else:
+          ticketpanels.append(line.replace("\n", ""))
+        count=count+1
     with open("exemptspam.txt", "r") as f:
       for line in f:
         exemptspam.append(int(line))
@@ -3117,31 +2874,24 @@ async def on_ready():
     saveprefix.start()
     saveexemptspam.start()
     saveantilink.start()
-
+    saveticketpanels.start()
         
 
 
 @client.event
 async def on_member_join(member):
     sendfailed = False
-    try:
-        await member.create_dm()
-        sendfailed = False
-        await member.dm_channel.send(
-            f'Hi {member.name}, Welcome to {member.guild} .')
-    except:
-        sendfailed = True
         #print(f"Unsuccessfully DMed users, try again later.")
-        for channelone in member.guild.text_channels:
-            if channelone.permissions_for(
-                    member.guild.me).send_messages:
+    for channelone in member.guild.text_channels:
+        if channelone.permissions_for(
+                member.guild.me).send_messages:
+            await channelone.send(
+                f"""Welcome {member.mention}! to {member.guild} .""")
+            if sendfailed:
                 await channelone.send(
-                    f"""Welcome {member.mention}! to {member.guild} .""")
-                if sendfailed:
-                    await channelone.send(
-                        f" Couldn't direct message {member.name} for a warm welcome to {member.guild} ."
-                    )
-                break
+                    f" Couldn't direct message {member.name} for a warm welcome to {member.guild} ."
+                )
+            break
 
         #
     channelone=None
@@ -3199,113 +2949,6 @@ async def on_member_join(member):
         embed.set_image(url="attachment://backgroundone.jpg")
         await channelone.send(file=file, embed=embed)
 
-@client.event
-async def on_message_edit(before, message):
-    global maintenancemodestatus,exemptspam,antilink
-    if maintenancemodestatus:
-      if not checkstaff(message.author):
-        return
-    if message.guild:
-        postfix = f" in {message.guild}"
-    else:
-        postfix = " in DM ."
-
-    #embeds = message.embeds # return list of embeds
-    #for embed in embeds:
-        #print(f" {message.author} has edited an embed {postfix} containing :")
-        #print(embed.to_dict())
-    if (message.author.bot):
-        print(f" {message.author} has edited {message.content}{postfix}")
-        embeds = message.embeds # return list of embeds
-        for embed in embeds:
-          print(f" {message.author} has sent an embed {postfix} containing :")
-          print(embed.to_dict())
-        return
-
-    origmessage=message.content
-    if message.channel.id in antilink:
-      listofsentence=[origmessage]
-      listofwords=convertwords(listofsentence)
-      for word in listofwords:
-        if not word.startswith('http:') and not word.startswith('https:'):
-          wordone="http:"+word
-          wordtwo="https:"+word
-          if validurl(wordone) or validurl(wordtwo):
-            await message.channel.send(f" Links are not allowed in this channel {message.author.mention} .")
-            await message.delete()
-            return
-        else:
-          if validurl(word):
-            await message.channel.send(f" Links are not allowed in this channel {message.author.mention} .")
-            await message.delete()
-            return
-    try:
-      translatedmessage=(translator.translate(origmessage,dest="en").text)
-    except:
-      translatedmessage=origmessage
-    bucket = bot.cooldownvar.get_bucket(message)
-    retry_after = bucket.update_rate_limit()
-    if retry_after:
-        if not "spam" in message.channel.name and not message.channel.id in exemptspam :
-            messagesent=await message.channel.send(
-                f" {message.author.mention} is being rate - limited(blacklisted) for spamming message edits."
-            )
-            await asyncio.sleep(5)
-            await messagesent.delete()
-            try:
-                cmd = client.get_command("blacklist")
-                await cmd( await client.get_context(message),message.author,
-                      reason=f"spamming edits in {message.channel.name} ")
-                await message.delete()
-            except:
-                messagesent=await message.channel.send(f" I don't have enough permissions to mute {message.author} .")
-                await asyncio.sleep(5)
-                await messagesent.delete()
-
-    if message.guild and not message.channel.is_nsfw(
-    ) and "mod" in message.channel.name.lower():
-        analyze_request = {
-            'comment': {
-                'text': translatedmessage
-            },
-            'requestedAttributes': {
-                "PROFANITY": {},"SPAM": {}
-            }
-        }
-    elif not message.guild:
-        analyze_request = {
-            'comment': {
-                'text': translatedmessage
-            },
-            'requestedAttributes': {
-                "PROFANITY": {},"SPAM": {}
-            }
-        }
-
-    attributes = ["PROFANITY","SPAM"]
-    try:
-        response = service.comments().analyze(body=analyze_request).execute()
-        #out=str(json.dumps(response, indent=2))
-        #channelone = client.get_channel(811947788647923753)
-        ##print(out)
-        for attribute in attributes:
-            attribute_dict = response['attributeScores'][attribute]
-            score_value = attribute_dict['spanScores'][0]['score']['value']
-            #print(" Probability of " + str(attribute) + " is " +
-                  #str(score_value))
-
-            #print(emojis[count])
-            if score_value >= 0.6:
-                ##print(str(message.author)+" violated rules !")
-                await message.channel.send(
-                    " Kindly don't send these kind of messages " +
-                    str(message.author.mention))
-                await message.delete()
-    except:
-      pass
-      #print(" No language recognised .")
-
-
 
 @client.event
 async def on_message(message):
@@ -3352,9 +2995,14 @@ async def on_message(message):
       translatedmessage=(translator.translate(origmessage,dest="en").text)
     except:
       translatedmessage=origmessage
-    if ("<@!805030662183845919>" in translatedmessage) or("<@805030662183845919>" in translatedmessage):
+    if ("<@!845182628981243915>" in translatedmessage) or("<@845182628981243915>" in translatedmessage):
       if message.guild:
-        await message.reply(f" My {message.guild} prefix is {prefixlist[prefixlist.index(message.guild.id)+1]} , do {prefixlist[prefixlist.index(message.guild.id)+1]}setprefix to change prefixes .")
+        try:
+          await message.reply(f" My {message.guild} prefix is {prefixlist[prefixlist.index(message.guild.id)+1]} , do {prefixlist[prefixlist.index(message.guild.id)+1]}setprefix to change prefixes .")
+        except:
+          prefixlist.append(message.guild.id)
+          prefixlist.append("gn!")
+          await message.reply(f" My {message.guild} prefix is {prefixlist[prefixlist.index(message.guild.id)+1]} , do {prefixlist[prefixlist.index(message.guild.id)+1]}setprefix to change prefixes .")
       else:
         await message.reply(" My default dm prefix is ! .")
     bucket = bot.cooldownvar.get_bucket(message)
@@ -3380,7 +3028,7 @@ async def on_message(message):
               await asyncio.sleep(5)
               await messagesent.delete()
     if message.guild and not message.channel.is_nsfw(
-    ) and "mod" in message.channel.name.lower():
+    ) :
         analyze_request = {
             'comment': {
                 'text': translatedmessage

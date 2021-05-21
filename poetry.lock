@@ -31,7 +31,7 @@ description = "Higher level Datagram support for Asyncio"
 name = "asyncio-dgram"
 optional = false
 python-versions = ">=3.5"
-version = "1.2.0"
+version = "2.0.0"
 
 [package.extras]
 test = ["black (>=20.8b1)", "flake8 (>=3.8.3)", "pytest (>=5.4.3)", "pytest-asyncio (>=0.14.0)"]
@@ -231,10 +231,10 @@ description = "Google API client core library"
 name = "google-api-core"
 optional = false
 python-versions = ">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*"
-version = "1.27.0"
+version = "1.28.0"
 
 [package.dependencies]
-google-auth = ">=1.21.1,<2.0dev"
+google-auth = ">=1.25.0,<2.0dev"
 googleapis-common-protos = ">=1.6.0,<2.0dev"
 packaging = ">=14.3"
 protobuf = ">=3.12.0"
@@ -797,8 +797,8 @@ async-timeout = [
     {file = "async_timeout-3.0.1-py3-none-any.whl", hash = "sha256:4291ca197d287d274d0b6cb5d6f8f8f82d434ed288f962539ff18cc9012f9ea3"},
 ]
 asyncio-dgram = [
-    {file = "asyncio-dgram-1.2.0.tar.gz", hash = "sha256:c5464927f3ebc9a32aa6bbb3676fc1d645ae8bc9b4597feac8ab527b6fc33f38"},
-    {file = "asyncio_dgram-1.2.0-py3-none-any.whl", hash = "sha256:d969f2c033542dbddab2fd8c0add51b62c3e01b686a21f84b8d3011cdfd4ce89"},
+    {file = "asyncio-dgram-2.0.0.tar.gz", hash = "sha256:91cb4012203bfccbd849f86779abf58a58a7bfa7f83b4bcefcc437ea25f4e42b"},
+    {file = "asyncio_dgram-2.0.0-py3-none-any.whl", hash = "sha256:527777174cb54cba268ff27791f55088f795c29e79cc339f5eac7deb8ce26515"},
 ]
 attrs = [
     {file = "attrs-21.2.0-py2.py3-none-any.whl", hash = "sha256:149e90d6d8ac20db7a955ad60cf0e6881a3f20d37096140088356da6c716b0b1"},
@@ -916,8 +916,8 @@ google = [
     {file = "google-3.0.0.tar.gz", hash = "sha256:143530122ee5130509ad5e989f0512f7cb218b2d4eddbafbad40fd10e8d8ccbe"},
 ]
 google-api-core = [
-    {file = "google-api-core-1.27.0.tar.gz", hash = "sha256:407e3e52435a44f6d59d4fef7b5e115bed7b20d77cbdab79e00232bfff7bf912"},
-    {file = "google_api_core-1.27.0-py2.py3-none-any.whl", hash = "sha256:edfca00d76081f359bed7b2efa2dc3a057309e55bf0a91628a0639730e31c357"},
+    {file = "google-api-core-1.28.0.tar.gz", hash = "sha256:02646803bd728e12dd1f45ee1dcc31c12614c9a1ac451b9a1ce26aa65df9b957"},
+    {file = "google_api_core-1.28.0-py2.py3-none-any.whl", hash = "sha256:a658a4e367511a444c7daf2c58855ff6fd7f7d138c154e5b17186c1f8154c8cb"},
 ]
 google-api-python-client = [
     {file = "google-api-python-client-1.12.8.tar.gz", hash = "sha256:f3b9684442eec2cfe9f9bb48e796ef919456b82142c7528c5fd527e5224f08bb"},

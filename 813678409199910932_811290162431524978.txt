@@ -1,2 +1,0 @@
- <@811290162431524978> was successfully muted by <@625265223250608138> for spamming 
- <@811290162431524978> was successfully unmuted by <@625265223250608138> for having elapsed 5 seconds. 
