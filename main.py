@@ -94,8 +94,6 @@ logger.addHandler(handler)
 exemptspam=[]
 prefixlist=[]
 antilink=[]
-ticketmsg=[]
-supportticket=[]
 async def get_prefix(client, message):
   if message.guild:
     try:
@@ -228,27 +226,14 @@ async def call_background_task(ctx,textchannel,message:str):
         except:
           await textchannel.send(" I don't have `manage messages` permission to delete messages .")
           return
-@tasks.loop(seconds=60)
-async def savesupportticket():
-  global supportticket
-  with open("supportticket.txt", "w") as f:
-    for msg in supportticket:
-        f.write(str(msg) +"\n")
-@tasks.loop(seconds=60)
-async def saveticketmsg():
-  global ticketmsg
-  with open("ticketmsg.txt", "w") as f:
-    for msg in ticketmsg:
-        f.write(str(msg) +"\n")
-
-@tasks.loop(seconds=60)
+@tasks.loop(seconds=30)
 async def saveantilink():
   global antilink
   with open("antilink.txt", "w") as f:
     for links in antilink:
         f.write(str(links) +"\n")
 
-@tasks.loop(seconds=60)
+@tasks.loop(seconds=30)
 async def saveexemptspam():
   global exemptspam
   with open("exemptspam.txt", "w") as f:
@@ -338,7 +323,6 @@ def validurl(theurl):
   except:
     pass
   return isvalid
-
 async def mutetimer(ctx,timecount,mutedmember,reason=None):
   await asyncio.sleep(timecount)
   if ctx.me.top_role < mutedmember.top_role:
@@ -555,8 +539,7 @@ class VoithosInfo(commands.Cog):
       embedVar.add_field(name='CPU usage ', value=f"{psutil.cpu_percent(1)}%",inline=False)
       embedVar.add_field(name='RAM usage ', value=f"{psutil.virtual_memory()[2]}%",inline=False)
       embedVar.add_field(name="Author",value=" This bot is made by <@625265223250608138> and <@488643992628494347> .",inline=False)
-      embedVar.add_field(name="Information",value="""Voithos helper is a cool social bot having features such as Moderation, Logging, Music, Giveaways, Custom commands and more...
-Some exclusive features include anti profane , anti spam , anti link , anti advert and more...""",inline=False)
+      embedVar.add_field(name="Information",value="""An all-in-one moderation bot coded in python with a punishments system, entertainment facts and profane message filter.""",inline=False)
       embedVar.add_field(name="Websites",value="https://top.gg/bot/805030662183845919",inline=False)
       embedVar.set_thumbnail(url="https://cdn.discordapp.com/avatars/805030662183845919/70fee8581891e9a810da60944dc486ba.webp?size=128")
       embedVar.set_author(name="JavaCoder", icon_url="https://cdn.discordapp.com/avatars/488643992628494347/e50ae57d9e8880e6acfbc2b444000fa1.webp?size=128")
@@ -1177,12 +1160,18 @@ class Moderation(commands.Cog):
                         commands.has_permissions(manage_messages=True))
 
     async def createticketpanel(self, ctx ,channelname: typing.Union[discord.TextChannel,str],supportrole:discord.Role=None,reaction=None,*,supportmessage=None):
-      global ticketmsg
       if isinstance(channelname, str):
         channel = await ctx.guild.create_text_channel(channelname,category=ctx.channel.category)
       else:
         channel=channelname
-      
+      overwritesb = {
+      ctx.guild.default_role: discord.PermissionOverwrite(
+        view_channel=True,
+        read_messages=True,
+        send_messages=False,
+      )
+      }
+      await channel.edit(overwrites=overwritesb)
       if channelname==None:
         channelname="Support-channel"
       if supportrole==None:
@@ -1199,41 +1188,63 @@ class Moderation(commands.Cog):
       emojis=[reaction]
       for emoji in emojis:
         await messagesent.add_reaction(emoji)
-      ticketmsg.append(messagesent)
-      ticketmsg.append(emoji)
-      ticketmsg.append(supportrole)
+      def check(reactionadd, user):
+          if user==client.user:
+            return False
+          if not reactionadd.message==messagesent:
+            return False
+          if str(reactionadd)==str(reaction):
+            client.loop.create_task(messagesent.remove_reaction(reaction,user))
+            overwritesa = {
+      user: discord.PermissionOverwrite(
+        view_channel=False,)}
+            client.loop.create_task(channel.edit(overwrites=overwritesa))
+            client.loop.create_task(createticket(user,ctx.guild,ctx.channel.category,channel,supportrole))
+            return False
+          return False
+
+
+      try:
+          await ctx.send(f"The channel ({channel.mention}) was successfully created as a ticket panel .")
+          reaction, user = await client.wait_for('reaction_add',check=check)
+      except asyncio.TimeoutError:
+          await ctx.reply(' Please run the command again , this command has timed out .')
+      else:
+        await ctx.channel.send(' Command has finished executing .')
+      
+      
       
 client.add_cog(Moderation(client))
-async def lockticket(user,supportchannela):
+async def lockticket(user,userone,supportchannel):
         overwritesa = {
       user: discord.PermissionOverwrite(
           view_channel=True,
           read_messages=True,
           send_messages=False,
         )}
-        await supportchannela.edit(overwrites=overwritesa)
-        await supportchannela.send(f" This channel has been locked .")
+        await supportchannel.edit(overwrites=overwritesa)
+        await supportchannel.send(f" This channel has been locked by {userone.mention}.")
 
-async def unlockticket(user,supportchannela):
+async def unlockticket(user,userone,supportchannel):
         overwritesa = {
       user: discord.PermissionOverwrite(
           view_channel=True,
           read_messages=True,
           send_messages=True,
         )}
-        await supportchannela.edit(overwrites=overwritesa)
-        await supportchannela.send(f" This channel has been unlocked .")
+        await supportchannel.edit(overwrites=overwritesa)
+        await supportchannel.send(f" This channel has been unlocked by {userone.mention}.")
 
-async def deleteticket(user,supportchannela):
-    global supportchannel
-    await supportchannela.send(f" This channel will be deleted in 5 seconds.")
+async def deleteticket(user,userone,supportchannel,origchannel):
+    await supportchannel.send(f" This channel will be deleted in 5 seconds requested by {userone.mention}.")
     await asyncio.sleep(4)
-    supportchannel.remove(supportchannel)
-    supportchannel.remove(user)
-    await( supportchannela.delete())
-async def createticket(role,user,guild,category):
-  global supportticket
-  supportchannela=await guild.create_text_channel(f"{user.name}'s support-ticket",category=category)
+    overwritesa = {
+      user: discord.PermissionOverwrite(
+        view_channel=True,)}
+    await origchannel.edit(overwrites=overwritesa)
+    await( supportchannel.delete())
+
+async def createticket(user,guild,category,channelorig,role):
   overwriteperm = {
   guild.default_role: discord.PermissionOverwrite(
     view_channel=False,
@@ -1251,17 +1262,40 @@ async def createticket(role,user,guild,category):
     send_messages=True,
   )
 }
-  await supportchannela.edit(overwrites=overwriteperm)
+  supportchannel=await guild.create_text_channel(f"{user.name}'s support-ticket",category=category)
+  await supportchannel.edit(overwrites=overwriteperm)
   embedtwo = discord.Embed(title=f"{user.name}'s Support ticket", description=" Click on the following reactions to close/edit ticket", color=Color.green())
-  messagesent=await supportchannela.send(embed=embedtwo)
-  ghostping=await supportchannela.send(user.mention)
+  messagesent=await supportchannel.send(embed=embedtwo)
+  ghostping=await supportchannel.send(user.mention)
   await ghostping.delete()
   emojis=['🟥','🔒','🔓']
   for emoji in emojis:
     await messagesent.add_reaction(emoji)
-  supportticket.append(messagesent)
-  supportticket.append(user)
-  supportticket.append(role)
+  
+  def check(reaction, userone):
+      if userone==client.user:
+        return False
+      if userone==user:
+        return False
+      if not reaction.message==messagesent:
+        return False
+      client.loop.create_task(messagesent.remove_reaction(reaction,userone))
+      if str(reaction)=='🟥':
+        client.loop.create_task(deleteticket(user,userone,supportchannel,channelorig))
+        return False
+      if str(reaction)=='🔒':
+        client.loop.create_task(lockticket(user,userone,supportchannel))
+        return False
+      if str(reaction)=='🔓':
+        client.loop.create_task(unlockticket(user,userone,supportchannel))
+        return False
+      return False
+  try:
+      reaction, user = await client.wait_for('reaction_add',check=check)
+  except asyncio.TimeoutError:
+      await supportchannel.reply(' Please run the command again , this command has timed out .')
+  else:
+    pass
 def randStr(chars = string.ascii_uppercase + string.digits, N=4):
 	return ''.join(random.choice(chars) for _ in range(N))
 
@@ -3012,26 +3046,7 @@ class CustomCommands(commands.Cog):
         await ctx.send(f"Successfully removed a command called {name}")
   
 client.add_cog(CustomCommands(client))
-@client.event
-async def on_reaction_add(reaction,user):
-  global ticketmsg,supportticket
-  count=1
-  for msg in ticketmsg:
-    if msg.id==reaction.message.id:
-      if str(ticketmsg[count])==str(reaction):
-        createticket(ticketmsg[count+1],user,reaction.message.guild,reaction.message.channel.category)
 
-    count=count+1
-  for ticket in supportticket:
-      if reaction.message.id==ticket:
-        emojis=['🟥','🔒','🔓']
-        if str(reaction)==emojis[0]:
-            deleteticket(user,reaction.message.channel)
-        if str(reaction)==emojis[1]:
-            lockticket(user,reaction.message.channel)
-        if str(reaction)==emojis[2]:
-            unlockticket(user,reaction.message.channel)
-      
 @client.event
 async def on_guild_join(guild):
     global prefixlist
@@ -3074,7 +3089,7 @@ async def on_guild_join(guild):
 
 @client.event
 async def on_ready():
-    global prefixlist,channelone,backupserver,exemptspam,antilink,ticketmsg,supportticket
+    global prefixlist,channelone,backupserver,exemptspam,antilink
     print(f'{client.user.name} is ready for moderation! ')
     backupserver=client.get_guild(811864132470571038)
     channelone= client.get_channel(840193232885121094)
@@ -3085,17 +3100,6 @@ async def on_ready():
     prefixlist=[]
     exemptspam=[]
     antilink=[]
-    ticketmsg=[]
-    supportticket=[]
-    with open("ticketmsg.txt", "r") as f:
-      for link in f:
-        ticketmsg.append(link)
-    print(ticketmsg)
-
-    with open("supportticket.txt", "r") as f:
-      for link in f:
-        supportticket.append(link)
-    print(supportticket)
     with open("exemptspam.txt", "r") as f:
       for line in f:
         exemptspam.append(int(line))
@@ -3113,8 +3117,8 @@ async def on_ready():
     saveprefix.start()
     saveexemptspam.start()
     saveantilink.start()
-    saveticketmsg.start()
-    savesupportticket.start()
+
+        
 
 
 @client.event
@@ -3239,6 +3243,25 @@ async def on_message_edit(before, message):
       translatedmessage=(translator.translate(origmessage,dest="en").text)
     except:
       translatedmessage=origmessage
+    bucket = bot.cooldownvar.get_bucket(message)
+    retry_after = bucket.update_rate_limit()
+    if retry_after:
+        if not "spam" in message.channel.name and not message.channel.id in exemptspam :
+            messagesent=await message.channel.send(
+                f" {message.author.mention} is being rate - limited(blacklisted) for spamming message edits."
+            )
+            await asyncio.sleep(5)
+            await messagesent.delete()
+            try:
+                cmd = client.get_command("blacklist")
+                await cmd( await client.get_context(message),message.author,
+                      reason=f"spamming edits in {message.channel.name} ")
+                await message.delete()
+            except:
+                messagesent=await message.channel.send(f" I don't have enough permissions to mute {message.author} .")
+                await asyncio.sleep(5)
+                await messagesent.delete()
+
     if message.guild and not message.channel.is_nsfw(
     ) and "mod" in message.channel.name.lower():
         analyze_request = {
