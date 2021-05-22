@@ -1,2 +1,2 @@
-# VoithosHelper1
-VoithosHelper Discord bot
+#Grian Helper1
+Grian Helper Discord bot

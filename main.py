@@ -1155,6 +1155,7 @@ class Moderation(commands.Cog):
       ticketpanels.append(messagesent.id)
       ticketpanels.append(supportrole.id)
       ticketpanels.append(emoji)
+      await ctx.send(f"The channel ({channel.mention}) was successfully created as a ticket panel .")
       
       
 client.add_cog(Moderation(client))
@@ -2778,11 +2779,12 @@ class CustomCommands(commands.Cog):
   
 client.add_cog(CustomCommands(client))
 @client.event
-async def on_reaction_add(reaction, user):
-  if user==client.user:
+async def on_raw_reaction_add(payload):
+  if payload.user_id==client.user.id:
+    return
+  if payload.event_type=="REACTION_REMOVE":
     return
   global ticketpanels
-
   length=len(ticketpanels)
   for i in range(length):
     if i %3==0 or i==0:
@@ -2792,9 +2794,13 @@ async def on_reaction_add(reaction, user):
       #print(f" Support role id {supportroleid} .")
       reactionemoji=ticketpanels[i+2]
       #print(f" Support emoji {reactionemoji} .")
-      if supportmsgid==reaction.message.id and str(reactionemoji)==str(reaction):
-        await reaction.message.remove_reaction(reaction,user)
-        await createticket(user,reaction.message.guild,reaction.message.channel.category,reaction.message.channel,supportroleid)
+      if supportmsgid==payload.message_id and str(reactionemoji)==str(payload.emoji):
+        guild=client.get_guild(payload.guild_id)
+        channel=guild.get_channel(payload.channel_id)
+        message=channel.get_partial_message(payload.message_id)
+        user=guild.get_member(payload.user_id)
+        await message.remove_reaction(payload.emoji,user)
+        await createticket(user,guild,channel.category,channel,supportroleid)
 @client.event
 async def on_guild_join(guild):
     global prefixlist
@@ -2857,6 +2863,7 @@ async def on_ready():
         else:
           ticketpanels.append(line.replace("\n", ""))
         count=count+1
+    print(ticketpanels)      
     with open("exemptspam.txt", "r") as f:
       for line in f:
         exemptspam.append(int(line))
