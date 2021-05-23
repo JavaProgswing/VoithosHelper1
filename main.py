@@ -1,7 +1,7 @@
 
 from __future__ import unicode_literals
 from moviepy.editor import *
-from keep_alive import keep_alive
+import pyimgur
 import asyncio
 import typing
 from textwrap import wrap
@@ -38,7 +38,6 @@ from PIL import ImageFont
 from PIL import ImageDraw
 from io import BytesIO
 from youtubesearchpython import VideosSearch
-from imgurpython import ImgurClient
 from googletrans import Translator
 translator = Translator()
 # Suppress noise about console usage from errors
@@ -149,12 +148,10 @@ userprivilleged=[]
 botowners = ["488643992628494347", "625265223250608138"]
 bot.cooldownvar = commands.CooldownMapping.from_cooldown(
     2.0, 1.0, commands.BucketType.user)
-channelone = None
-channeljunk=None
-backupserver=None
+channelerrorlogging = None
 @client.event
 async def on_command_error(ctx, error):
-    global channelone
+    global channelerrorlogging
     errordata=error
     if isinstance(error, commands.CommandInvokeError):
       error = error.original
@@ -192,7 +189,7 @@ async def on_command_error(ctx, error):
         embedone.add_field(name=" Command error ",value= errordata,inline=False)
         
     if not isinstance(error, commands.errors.CommandError):
-      await channelone.send(embed=embederror)
+      await channelerrorlogging.send(embed=embederror)
     try:
       await ctx.channel.send(embed=embedone)
     except:
@@ -205,10 +202,6 @@ class TopGG(commands.Cog):
         self.bot = bot
         self.token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjgwNTAzMDY2MjE4Mzg0NTkxOSIsImJvdCI6dHJ1ZSwiaWF0IjoxNjE2NTEzMzI4fQ.2Ds8_hdV3b5wA8nTPIkNRDaCrH4T2pjupIZPvIMSNL0' # set this to your DBL token
         self.dblpy = dbl.DBLClient(self.bot, self.token, autopost=True) # Autopost will post your guild count every 30 minutes
-
-    async def on_guild_post():
-        #print("Server count posted successfully")
-        pass
 
 
 client.add_cog(TopGG(client))
@@ -734,12 +727,6 @@ class Moderation(commands.Cog):
         if not timenum==None:
           convertedtime = convert(timenum)
           if convertedtime == -1:
-              try:
-                  await ctx.channel.purge(limit=count)
-              except:
-                  await ctx.send(
-                      "I do not have `manage messages` permissions to delete messages ."
-                  )
                   
               raise commands.CommandError(
                   "You didn't answer with a proper unit. Use (s|m|h|d) next time!"
@@ -747,11 +734,6 @@ class Moderation(commands.Cog):
 
               return
           elif convertedtime == -2:
-              try:
-                  await ctx.channel.purge(limit=count)
-              except:
-                  await ctx.send("I do not have `manage messages` permissions to delete messages .")
-                  
               raise commands.CommandError(
                   "The time must be an integer. Please enter an integer next time."
               )
@@ -936,12 +918,6 @@ class Moderation(commands.Cog):
         if not timenum==None:
           convertedtime = convert(timenum)
           if convertedtime == -1:
-              try:
-                  await ctx.channel.purge(limit=count)
-              except:
-                  await ctx.send(
-                      "I do not have `manage messages` permissions to delete messages ."
-                  )
                   
               raise commands.CommandError(
                   "You didn't answer with a proper unit. Use (s|m|h|d) next time!"
@@ -949,11 +925,6 @@ class Moderation(commands.Cog):
 
               return
           elif convertedtime == -2:
-              try:
-                  await ctx.channel.purge(limit=count)
-              except:
-                  await ctx.send("I do not have `manage messages` permissions to delete messages .")
-                  
               raise commands.CommandError(
                   "The time must be an integer. Please enter an integer next time."
               )
@@ -2850,13 +2821,16 @@ class Music(commands.Cog):
         'keepvideo':True,
         'format': 'mp4',
       }
+
       with youtube_dl.YoutubeDL(ydl_opts_1) as ydl:
           ydl.download([url])
+      if os.path.exists("song.mp4"):
+        os.remove("song.mp4")
       for file in os.listdir("./"):
         if file.endswith(".mp4"):
           os.rename(file,"song.mp4")
-      loop = asyncio.get_event_loop()
-      loop.create_task(convertit(ctx,songname))
+     
+      await (convertit(ctx,songname))
     @commands.cooldown(1,45,BucketType.guild)
     @commands.command(brief='This command can be used to play a song.', description='This command can be used to play a song in a voice channel.',usage="songname")
     @commands.guild_only()
@@ -2993,8 +2967,7 @@ class Music(commands.Cog):
           await ctx.reply(f"The audio has been stopped by {ctx.author.mention}")
         except:
           raise commands.CommandError("I am not connected to any voice channels .")
-    
-    @playvid.before_invoke
+
     @stop.before_invoke       
     @loop.before_invoke
     @play.before_invoke
@@ -3048,56 +3021,23 @@ class Music(commands.Cog):
 
 
 client.add_cog(Music(client))
-def upload_kitten(imclient,image_path,title):
-	config = {
-		'album': None,
-		'name':  title+".",
-		'title': title+" Description",
-		'description': 'Hi '
-	}
 
-	print("Uploading image... ")
-	image = imclient.upload_from_path(image_path, config=config, anon=False)
-	print("Done")
-	print()
-
-	return image
-
-async def authenticate():
-  global channelone
-	# Get client ID and secret from auth.ini
-  client_id = os.environ.get("IMGUR_API_ID")
-  client_secret =os.environ.get("IMGUR_API_SECRET")
-  imclient = ImgurClient(client_id, client_secret)
-  authorization_url = imclient.get_auth_url('pin')
-  print("Go to the following URL: {0}".format(authorization_url))
-  await channelone.send("Go to the following URL: {0}".format(authorization_url))
-  await channelone.send("@here Enter your pin code: ")
-  pin=0
-  def check(message : discord.Message): 
-
-      return checkstaff(message.author)
-  try:
-      message = await client.wait_for('message', timeout=120, check = check)
-      pin=message.content
-  except asyncio.TimeoutError: 
-      await channelone.send("The author didn't respond") 
-  else: 
-      await channelone.send(f"The author responded with {message.content} .")
-  
-  credentials = imclient.authorize(pin, 'pin')
-  imclient.set_user_auth(credentials['access_token'], credentials['refresh_token'])
-  print("Authentication successful! Here are the details:")
-  print("   Access token:  {0}".format(credentials['access_token']))
-  print("   Refresh token: {0}".format(credentials['refresh_token']))
-  return imclient
 async def convertit(ctx,youtubetitle):
   clip = (VideoFileClip("song.mp4"))
-  clip.write_gif("output.gif",fps=5)
-  imclient = await authenticate()
-  image = upload_kitten(imclient,"output.gif",youtubetitle)
-  await ctx.send(image['link'])
-
+  initfps=1
+  clip.write_gif("output.gif",fps=initfps)
+  bytesize=os.path.getsize("output.gif")
+  await ctx.send(f"The size of the video is {bytesize/1000000} mb")
+  CLIENT_ID = os.environ.get("IMGUR_API_ID")
+  PATH = "output.gif"
+  im = pyimgur.Imgur(CLIENT_ID)
+  uploaded_image = im.upload_image(PATH, title="Uploaded with PyImgur")
+  print(uploaded_image.title)
+  print(uploaded_image.link)
+  print(uploaded_image.size)
+  print(uploaded_image.type)
+  await ctx.send(uploaded_image.link)
+  
 def guild_check(_custom_commands):
     async def predicate(ctx):
         return _custom_commands.get(ctx.command.qualified_name) and ctx.guild.id in _custom_commands.get(ctx.command.qualified_name)
@@ -3189,7 +3129,7 @@ async def on_guild_join(guild):
     for channel in guild.channels:
         if channel.type == discord.ChannelType.text and channel.permissions_for(
                 guild.me).send_messages:
-            embedOne.add_field(name=f" Invoke our bot by sending {prefixlist[prefixlist.index(guild.id)+1]}help in a channel in which bot has permissions to read . For moderating messages in a channel add (mod) to the name and to ignore spam in a channel add spam to channelname to ignore spamming .",value="\u200b"
+            embedOne.add_field(name=f" Invoke our bot by sending {prefixlist[prefixlist.index(guild.id)+1]}help in a channel in which bot has permissions to read .",value="\u200b"
                 ,inline=False)
 
             embedOne.add_field(name=" Thanks for inviting " + client.user.name +
@@ -3214,10 +3154,11 @@ async def on_guild_join(guild):
 
 @client.event
 async def on_ready():
-    global prefixlist,channelone,backupserver,exemptspam,antilink,ticketpanels,channeljunk
+    global prefixlist,channelerrorlogging,exemptspam,antilink,ticketpanels
     print(f'{client.user.name} is ready for moderation! ')
     #backupserver=client.get_guild(811864132470571038)
-    channelone= client.get_channel(840193232885121094)
+    channelerrorlogging= client.get_channel(840193232885121094)
+    print(f" The logging channel has been set to {channelerrorlogging} .")
     #channeljunk=client.get_channel(845546786000338954)
     activity = discord.Activity(
         name="!help for commands .",
@@ -3562,6 +3503,5 @@ async def on_message(message):
     await client.process_commands(message)
 
 
-keep_alive()
 token = os.environ.get("DISCORD_BOT_SECRET")
 client.run(token)

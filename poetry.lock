@@ -630,6 +630,17 @@ version = "2.20"
 
 [[package]]
 category = "main"
+description = "The easy way of using Imgur."
+name = "pyimgur"
+optional = false
+python-versions = "*"
+version = "0.6.0"
+
+[package.dependencies]
+requests = "*"
+
+[[package]]
+category = "main"
 description = "Python binding to the Networking and Cryptography (NaCl) library"
 name = "pynacl"
 optional = false
@@ -849,7 +860,7 @@ version = "0.4.1"
 requests = "*"
 
 [metadata]
-content-hash = "9fe546ce45ee62099f3fc3434da14f6f227794c54d3956433150d5f79a5a19d5"
+content-hash = "ef8e3af3c1ad96a9dd4f8d2a4b92e224166bfe196f8bdc22b8e803b402237b7c"
 python-versions = "^3.8"
 
 [metadata.files]
@@ -1335,6 +1346,10 @@ pyasn1-modules = [
 pycparser = [
     {file = "pycparser-2.20-py2.py3-none-any.whl", hash = "sha256:7582ad22678f0fcd81102833f60ef8d0e57288b6b5fb00323d101be910e35705"},
     {file = "pycparser-2.20.tar.gz", hash = "sha256:2d475327684562c3a96cc71adf7dc8c4f0565175cf86b6d7a404ff4c771f15f0"},
+]
+pyimgur = [
+    {file = "pyimgur-0.6.0-py2-none-any.whl", hash = "sha256:ad22deea062fe8e7412d0bdfc70cbf305a828c6390096d3523ed3d7dbeb2bdff"},
+    {file = "pyimgur-0.6.0.tar.gz", hash = "sha256:f776ca7f14663bd9ac14a1380db62c87ed32231d159d2d167ad1cb817dcb9144"},
 ]
 pynacl = [
     {file = "PyNaCl-1.4.0-cp27-cp27m-macosx_10_10_x86_64.whl", hash = "sha256:ea6841bc3a76fa4942ce00f3bda7d436fda21e2d91602b9e21b7ca9ecab8f3ff"},
