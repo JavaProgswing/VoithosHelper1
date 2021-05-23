@@ -1,4 +1,6 @@
+
 from __future__ import unicode_literals
+from moviepy.editor import *
 from keep_alive import keep_alive
 import asyncio
 import typing
@@ -36,6 +38,7 @@ from PIL import ImageFont
 from PIL import ImageDraw
 from io import BytesIO
 from youtubesearchpython import VideosSearch
+from imgurpython import ImgurClient
 from googletrans import Translator
 translator = Translator()
 # Suppress noise about console usage from errors
@@ -147,6 +150,7 @@ botowners = ["488643992628494347", "625265223250608138"]
 bot.cooldownvar = commands.CooldownMapping.from_cooldown(
     2.0, 1.0, commands.BucketType.user)
 channelone = None
+channeljunk=None
 backupserver=None
 @client.event
 async def on_command_error(ctx, error):
@@ -671,11 +675,11 @@ class Moderation(commands.Cog):
         raise commands.CommandError("This channel is already checked for further spamming .")
         return
       await ctx.send(f"{channel.name} will be checked for message spamming ." )
-    @commands.command(brief='This command clears given number of messages from the same channel.', description='This command clears given number of messages from the same channel and can be used by members having manage messages permission.',usage="number reason")
+    @commands.command(brief='This command clears given number of messages from the same channel.', description='This command clears given number of messages from the same channel and can be used by members having manage messages permission.',usage="number member reason")
     @commands.guild_only()
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_messages=True))
-    async def purge(self, ctx, numberstr,*, reason=None):
+    async def purge(self, ctx, numberstr,member=None,*, reason=None):
         if reason == None:
             reason = "no reason provided ."
         if numberstr =="all" or numberstr=="everything":
@@ -683,17 +687,33 @@ class Moderation(commands.Cog):
             await ctx.channel.delete(reason=reason)
             await textchannelcloned.send(f"""{ctx.author.mention} has purged all messages for {reason}""")
             return
-        try:
-            number=int(numberstr)
-        except:
-            raise commands.CommandError(" Enter a valid number to purge messages .")
-            return
-        try:
-            await ctx.channel.purge(limit=number)
-        except:
-            raise commands.CommandError("I do not have `manage messages` permissions to delete messages .")
-            return
-        await ctx.channel.send(f"""{ctx.author.mention} has purged {number} messages for {reason}""")
+        if member==None:
+          try:
+              number=int(numberstr)
+          except:
+              raise commands.CommandError(" Enter a valid number to purge messages .")
+              return
+          try:
+              await ctx.channel.purge(limit=number)
+          except:
+              raise commands.CommandError("I do not have `manage messages` permissions to delete messages .")
+              return
+          await ctx.channel.send(f"""{ctx.author.mention} has purged {number} messages for {reason}""")
+        else:
+          try:
+              number=int(numberstr)
+          except:
+              raise commands.CommandError(" Enter a valid number to purge messages .")
+              return
+          try:
+            def is_me(m):
+                return m.author == member
+
+            await ctx.channel.purge(limit=number, check=is_me)
+          except:
+              raise commands.CommandError("I do not have `manage messages` permissions to delete messages .")
+              return
+          await ctx.channel.send(f"""{ctx.author.mention} has purged {number} messages from {member.mention} for {reason}""")         
 
     @commands.command(brief='This command prevents users from viewing any channels on the server.', description='This command prevents users from viewing any channels on the server and can be used by members having manage roles permission.',usage="@member time reason")
     @commands.guild_only()
@@ -2800,7 +2820,43 @@ class Music(commands.Cog):
 
           if ctx.voice_client==None:
                 break
-                
+    @commands.cooldown(1,45,BucketType.guild)
+    @commands.command(brief='This command can be used to play a video.', description='This command can be used to play a video in a voice channel.',usage="songname")
+    @commands.guild_only()
+    @commands.check_any(is_bot_staff())
+    async def playvid(self, ctx, *, songname:str):
+      global channeljunk
+      videosSearch = VideosSearch(songname, limit = 1)
+      #print(videosSearch.result())
+      data=videosSearch.result()
+      videoexist=data['result']
+      boolvideoexist=not len(videoexist)==0
+      if boolvideoexist:
+        vidtitle=data['result'][0]['title']
+        try:
+          viddes=data['result'][0]['descriptionSnippet'][0]['text']
+        except:
+          viddes=" No description"
+        vidviews=data['result'][0]['viewCount']['text']
+        vidpublished=data['result'][0]['publishedTime']
+        url=data['result'][0]['link']
+      else:
+        vidtitle=""
+        viddes=""
+        vidviews=""
+        vidpublished=""
+        url=songname
+      ydl_opts_1 = {
+        'keepvideo':True,
+        'format': 'mp4',
+      }
+      with youtube_dl.YoutubeDL(ydl_opts_1) as ydl:
+          ydl.download([url])
+      for file in os.listdir("./"):
+        if file.endswith(".mp4"):
+          os.rename(file,"song.mp4")
+      loop = asyncio.get_event_loop()
+      loop.create_task(convertit(ctx,songname))
     @commands.cooldown(1,45,BucketType.guild)
     @commands.command(brief='This command can be used to play a song.', description='This command can be used to play a song in a voice channel.',usage="songname")
     @commands.guild_only()
@@ -2938,6 +2994,7 @@ class Music(commands.Cog):
         except:
           raise commands.CommandError("I am not connected to any voice channels .")
     
+    @playvid.before_invoke
     @stop.before_invoke       
     @loop.before_invoke
     @play.before_invoke
@@ -2991,6 +3048,56 @@ class Music(commands.Cog):
 
 
 client.add_cog(Music(client))
+def upload_kitten(imclient,image_path,title):
+	config = {
+		'album': None,
+		'name':  title+".",
+		'title': title+" Description",
+		'description': 'Hi '
+	}
+
+	print("Uploading image... ")
+	image = imclient.upload_from_path(image_path, config=config, anon=False)
+	print("Done")
+	print()
+
+	return image
+
+async def authenticate():
+  global channelone
+	# Get client ID and secret from auth.ini
+  client_id = os.environ.get("IMGUR_API_ID")
+  client_secret =os.environ.get("IMGUR_API_SECRET")
+  imclient = ImgurClient(client_id, client_secret)
+  authorization_url = imclient.get_auth_url('pin')
+  print("Go to the following URL: {0}".format(authorization_url))
+  await channelone.send("Go to the following URL: {0}".format(authorization_url))
+  await channelone.send("@here Enter your pin code: ")
+  pin=0
+  def check(message : discord.Message): 
+
+      return checkstaff(message.author)
+  try:
+      message = await client.wait_for('message', timeout=120, check = check)
+      pin=message.content
+  except asyncio.TimeoutError: 
+      await channelone.send("The author didn't respond") 
+  else: 
+      await channelone.send(f"The author responded with {message.content} .")
+  
+  credentials = imclient.authorize(pin, 'pin')
+  imclient.set_user_auth(credentials['access_token'], credentials['refresh_token'])
+  print("Authentication successful! Here are the details:")
+  print("   Access token:  {0}".format(credentials['access_token']))
+  print("   Refresh token: {0}".format(credentials['refresh_token']))
+  return imclient
+async def convertit(ctx,youtubetitle):
+  clip = (VideoFileClip("song.mp4"))
+  clip.write_gif("output.gif",fps=5)
+  imclient = await authenticate()
+  image = upload_kitten(imclient,"output.gif",youtubetitle)
+  await ctx.send(image['link'])
+
 def guild_check(_custom_commands):
     async def predicate(ctx):
         return _custom_commands.get(ctx.command.qualified_name) and ctx.guild.id in _custom_commands.get(ctx.command.qualified_name)
@@ -3107,10 +3214,11 @@ async def on_guild_join(guild):
 
 @client.event
 async def on_ready():
-    global prefixlist,channelone,backupserver,exemptspam,antilink,ticketpanels
+    global prefixlist,channelone,backupserver,exemptspam,antilink,ticketpanels,channeljunk
     print(f'{client.user.name} is ready for moderation! ')
-    backupserver=client.get_guild(811864132470571038)
+    #backupserver=client.get_guild(811864132470571038)
     channelone= client.get_channel(840193232885121094)
+    #channeljunk=client.get_channel(845546786000338954)
     activity = discord.Activity(
         name="!help for commands .",
         type=discord.ActivityType.watching)
