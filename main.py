@@ -442,8 +442,8 @@ class MyHelp(commands.HelpCommand):
                 elif commandname=="VoithosInfo":
                   commandname="📜 "+commandname 
                 embedone.add_field(name=commandname,value="\u200b",inline=False)
-                commandlist.append("\n".join(command_signatures))
-                titlelist.append(str(commandname))
+                commandlist.append("\n".join(command_signatures)+"\u200b")
+                titlelist.append(str(commandname)+"\u200b")
                 """embedone.add_field(name=commandname,
                                    value="\n".join(command_signatures),
                                    inline=False)"""
@@ -628,11 +628,11 @@ class Moderation(commands.Cog):
         raise commands.CommandError("This channel is already checked for further spamming .")
         return
       await ctx.send(f"{channel.name} will be checked for message spamming ." )
-    @commands.command(brief='This command clears given number of messages from the same channel.', description='This command clears given number of messages from the same channel and can be used by members having manage messages permission.',usage="number reason")
+    @commands.command(brief='This command clears given number of messages from the same channel.', description='This command clears given number of messages from the same channel and can be used by members having manage messages permission.',usage="number member reason")
     @commands.guild_only()
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_messages=True))
-    async def purge(self, ctx, numberstr,*, reason=None):
+    async def purge(self, ctx, numberstr,member: discord.Member=None,*, reason=None):
         if reason == None:
             reason = "no reason provided ."
         if numberstr =="all" or numberstr=="everything":
@@ -640,17 +640,33 @@ class Moderation(commands.Cog):
             await ctx.channel.delete(reason=reason)
             await textchannelcloned.send(f"""{ctx.author.mention} has purged all messages for {reason}""")
             return
-        try:
-            number=int(numberstr)
-        except:
-            raise commands.CommandError(" Enter a valid number to purge messages .")
-            return
-        try:
-            await ctx.channel.purge(limit=number)
-        except:
-            raise commands.CommandError("I do not have `manage messages` permissions to delete messages .")
-            return
-        await ctx.channel.send(f"""{ctx.author.mention} has purged {number} messages for {reason}""")
+        if member==None:
+          try:
+              number=int(numberstr)
+          except:
+              raise commands.CommandError(" Enter a valid number to purge messages .")
+              return
+          try:
+              await ctx.channel.purge(limit=number)
+          except:
+              raise commands.CommandError("I do not have `manage messages` permissions to delete messages .")
+              return
+          await ctx.channel.send(f"""{ctx.author.mention} has purged {number} messages for {reason}""")
+        else:
+          try:
+              number=int(numberstr)
+          except:
+              raise commands.CommandError(" Enter a valid number to purge messages .")
+              return
+          try:
+            def is_me(m):
+                return m.author.id == member.id
+
+            await ctx.channel.purge(limit=number, check=is_me)
+          except:
+              raise commands.CommandError("I do not have `manage messages` permissions to delete messages .")
+              return
+          await ctx.channel.send(f"""{ctx.author.mention} has purged {number} messages from {member.mention} for {reason}""")    
 
     @commands.command(brief='This command prevents users from viewing any channels on the server.', description='This command prevents users from viewing any channels on the server and can be used by members having manage roles permission.',usage="@member time reason")
     @commands.guild_only()
@@ -822,7 +838,7 @@ class Moderation(commands.Cog):
       warneduserreason = open(f"{ctx.guild.id}_{member.id}.txt", "a")  
       warneduserreason.write(reason+"\n")
       warneduserreason.close()
-    @commands.command(brief='This command warns users for a given reason provided.', description='This command warns users for a given reason provided and can be used by members having manage messages permission.')
+    @commands.command(brief='This command warns users for a given reason provided.', description='This command warns users for a given reason provided and can be used by members having manage roles permission.')
     @commands.guild_only()
     @commands.check_any(is_bot_staff(),
                         commands.has_permissions(manage_roles=True))
@@ -2472,6 +2488,46 @@ class Music(commands.Cog):
 
         await channel.connect()
         await ctx.reply(f"I have successfully connected to {channel}")
+    @commands.cooldown(1,45,BucketType.guild)
+    @commands.command(brief='This command can be used to play a song from url.', description='This command can be used to play a song from url in a voice channel.',usage="youtubeurl")
+    @commands.guild_only()
+    #@commands.check_any(is_bot_staff())
+    async def playurl(self, ctx, *, url):
+        if not uservoted(ctx.author) and not checkstaff(ctx.author) and not checkprivilleged(ctx.author):
+          cmd = client.get_command("vote")
+          await cmd(ctx)
+          raise commands.CommandError(" Vote for our bot on following websites for accessing this feature .")
+          return
+        """Streams from a url (same as yt, but doesn't predownload)"""
+        channel=ctx.author.voice.channel
+        if ctx.voice_client is not None:
+          await ctx.voice_client.move_to(channel)
+        else:
+          await channel.connect()
+        if ctx.author.voice.self_deaf:
+          raise commands.CommandError(" You are deafened in the voice channel , you won't be able to hear the playing audio .")
+
+        videosSearch = VideosSearch(url, limit = 1)
+        #print(videosSearch.result())
+        data=videosSearch.result()
+        vidtitle=data['result'][0]['title']
+        try:
+          viddes=data['result'][0]['descriptionSnippet'][0]['text']
+        except:
+          viddes=" No description"
+        vidviews=data['result'][0]['viewCount']['text']
+        vidpublished=data['result'][0]['publishedTime']
+        async with ctx.typing():
+            player = await YTDLSource.from_url(url, loop=self.bot.loop, stream=True)
+            ctx.voice_client.play(player, after=lambda e: print('Player error: %s' % e) if e else None)
+        await ctx.reply(f' Now playing: {player.title} requested by {ctx.author.mention} .')
+        embedVar = discord.Embed(title=f" {vidtitle}",
+                                  description=viddes,
+                                  color=0x00ff00)
+        embedVar.add_field(name=url,value=str(vidviews)+" | published "+str(vidpublished))
+        embedVar.set_footer(text=ctx.author.name, icon_url=ctx.author.avatar_url)
+        embedVar.set_author(name="Youtube", icon_url="https://cdn.discordapp.com/avatars/812967359312297994/2c234518e4889657d01fe7001cd52422.webp?size=128")
+        await ctx.send(embed=embedVar)
     @commands.cooldown(1,90,BucketType.guild)
     @commands.command(brief='This command can be used to loop a song.', description='This command can be used to loop a song in a voice channel.',usage="songname")
     @commands.guild_only()
@@ -2484,9 +2540,39 @@ class Music(commands.Cog):
         if ctx.author.voice.self_deaf:
           raise commands.CommandError(" You are deafened in the voice channel , you won't be able to hear the playing audio .")
         playingmusic=None
-        messages = await ctx.channel.history(limit=50).flatten()
+        messages = await ctx.channel.history(limit=100).flatten()
+        #print(messages)
         for message in messages:
+          if message.content.startswith("Now looping:") and message.content.endswith (f"{ctx.author.mention} .") and message.author==client.user:
+            messagefind=message.content
+            startingindex=messagefind.find(":")
+            #print(" Starting index")
+            #print(startingindex)
+            startingstring=messagefind[startingindex+1:]
+            #print(" Starting str")
+            #print(startingstring)
+            endingindex=startingstring.find("requested")
+            #print(" Ending index")
+            #print(endingindex)
+            authindex=messagefind.rindex("by")
+            messageauthor=messagefind[authindex+2:]
+            firstindex=messageauthor.find("<@!")
 
+            if firstindex==-1:
+              firstindex=messageauthor.find("<@")
+              idwithend=messageauthor[firstindex+2:]
+            else:
+              idwithend=messageauthor[firstindex+3:]
+            #print(f" The id with slash : {idwithend}")
+            realauthor=idwithend[:idwithend.rindex(">")]
+            #print(f" The id without slash : {realauthor}")
+            if not int(realauthor)==ctx.author.id:
+              continue
+
+            playingmusic=startingstring[:endingindex]
+            #print(" Music name ")
+            #print(playingmusic)
+            break
           if message.content.startswith("Now playing:") and message.content.endswith (f"{ctx.author.mention} .") and message.author==client.user:
             messagefind=message.content
             startingindex=messagefind.find(":")
@@ -2498,12 +2584,27 @@ class Music(commands.Cog):
             endingindex=startingstring.find("requested")
             #print(" Ending index")
             #print(endingindex)
+            authindex=messagefind.rindex("by")
+            messageauthor=messagefind[authindex+2:]
+            firstindex=messageauthor.find("<@!")
+
+            if firstindex==-1:
+              firstindex=messageauthor.find("<@")
+              idwithend=messageauthor[firstindex+2:]
+            else:
+              idwithend=messageauthor[firstindex+3:]
+            #print(f" The id with slash : {idwithend}")
+            realauthor=idwithend[:idwithend.rindex(">")]
+            #print(f" The id without slash : {realauthor}")
+            if not int(realauthor)==ctx.author.id:
+              continue
+
             playingmusic=startingstring[:endingindex]
             #print(" Music name ")
             #print(playingmusic)
             break
         if playingmusic==None:
-          await ctx.send(" I couldn't find the current playing song.")
+          raise commands.CommandError(" I could not find the song that was requested by you earlier in this channel .")
           return
         songname=playingmusic
         voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
@@ -2522,8 +2623,11 @@ class Music(commands.Cog):
           vidpublished=data['result'][0]['publishedTime']
           url=data['result'][0]['link']
           async with ctx.typing():
-              player = await YTDLSource.from_url(url, loop=self.bot.loop, stream=True)
+            player = await YTDLSource.from_url(url, loop=self.bot.loop, stream=True)
+            if not voice.is_paused():
               ctx.voice_client.play(player, after=lambda e: print('Player error: %s' % e) if e else None)
+            else:
+              await asyncio.sleep(1)
           await ctx.reply(f' Now looping: {player.title} requested by {ctx.author.mention} .')
           embedVar = discord.Embed(title=f" {vidtitle}",
                                   description=viddes,
@@ -2539,7 +2643,6 @@ class Music(commands.Cog):
 
           if ctx.voice_client==None:
                 break
-                
     @commands.cooldown(1,45,BucketType.guild)
     @commands.command(brief='This command can be used to play a song.', description='This command can be used to play a song in a voice channel.',usage="songname")
     @commands.guild_only()
@@ -2578,7 +2681,7 @@ class Music(commands.Cog):
             player = await YTDLSource.from_url(url, loop=self.bot.loop, stream=True)
             ctx.voice_client.play(player, after=lambda e: print('Player error: %s' % e) if e else None)
         vidtitle=player.title
-        await ctx.reply(f' Now playing: {player.title} requested by {ctx.author.mention} , Try out our music panel command !')
+        await ctx.reply(f' Now playing: {player.title} requested by {ctx.author.mention} .')
         if boolvideoexist:
           embedVar = discord.Embed(title=f" {vidtitle}",
                                   description=viddes,
@@ -2676,10 +2779,11 @@ class Music(commands.Cog):
           await ctx.reply(f"The audio has been stopped by {ctx.author.mention}")
         except:
           raise commands.CommandError("I am not connected to any voice channels .")
-    
+
     @stop.before_invoke       
     @loop.before_invoke
     @play.before_invoke
+    @playurl.before_invoke
     async def ensure_voice(self, ctx):
         if ctx.voice_client is None:
             if ctx.author.voice:
@@ -3011,7 +3115,7 @@ async def on_message(message):
           prefixlist.append("gn!")
           await message.reply(f" My {message.guild} prefix is {prefixlist[prefixlist.index(message.guild.id)+1]} , do {prefixlist[prefixlist.index(message.guild.id)+1]}setprefix to change prefixes .")
       else:
-        await message.reply(" My default dm prefix is ! .")
+        await message.reply(" My default dm prefix is gn! .")
     bucket = bot.cooldownvar.get_bucket(message)
     retry_after = bucket.update_rate_limit()
     if retry_after:
