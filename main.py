@@ -1,8 +1,14 @@
 
 from __future__ import unicode_literals
 from moviepy.editor import *
-import pyimgur
+import urllib.request
+import json
+from keep_alive import keep_alive
+from datetime import datetime
+import requests
 import asyncio
+import configparser
+from imgurpython import ImgurClient
 import typing
 from textwrap import wrap
 from googleapiclient import discovery
@@ -15,19 +21,17 @@ import os
 import re
 import psutil
 import discord
-import datetime
 import contextlib
 import io
 import pytz
-import requests
 from discord import Color,Webhook, AsyncWebhookAdapter
 import aiohttp
 from discord.ext import commands,tasks
 from discord.ext.commands import bot
 from discord.ext.commands import Greedy
+from discord.ext.commands import MemberConverter
 from googlesearch import search
 import logging
-import json
 #from discord.ext.commands.bot import when_mentioned_or
 from discord.ext.commands import BucketType
 import youtube_dl
@@ -40,6 +44,7 @@ from io import BytesIO
 from youtubesearchpython import VideosSearch
 from googletrans import Translator
 translator = Translator()
+
 # Suppress noise about console usage from errors
 maintenancemodestatus=False
 youtube_dl.utils.bug_reports_message = lambda: ''
@@ -149,6 +154,7 @@ botowners = ["488643992628494347", "625265223250608138"]
 bot.cooldownvar = commands.CooldownMapping.from_cooldown(
     2.0, 1.0, commands.BucketType.user)
 channelerrorlogging = None
+#Error handler here
 @client.event
 async def on_command_error(ctx, error):
     global channelerrorlogging
@@ -484,8 +490,8 @@ class MyHelp(commands.HelpCommand):
                 elif commandname=="VoithosInfo":
                   commandname="📜 "+commandname 
                 embedone.add_field(name=commandname,value="\u200b",inline=False)
-                commandlist.append("\n".join(command_signatures))
-                titlelist.append(str(commandname))
+                commandlist.append("\n".join(command_signatures)+"\u200b")
+                titlelist.append(str(commandname)+"\u200b")
                 """embedone.add_field(name=commandname,
                                    value="\n".join(command_signatures),
                                    inline=False)"""
@@ -672,7 +678,7 @@ class Moderation(commands.Cog):
     @commands.guild_only()
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_messages=True))
-    async def purge(self, ctx, numberstr,member=None,*, reason=None):
+    async def purge(self, ctx, numberstr,member:discord.Member=None,*, reason=None):
         if reason == None:
             reason = "no reason provided ."
         if numberstr =="all" or numberstr=="everything":
@@ -700,7 +706,7 @@ class Moderation(commands.Cog):
               return
           try:
             def is_me(m):
-                return m.author == member
+                return m.author.id == member.id
 
             await ctx.channel.purge(limit=number, check=is_me)
           except:
@@ -867,7 +873,7 @@ class Moderation(commands.Cog):
       warneduserreason = open(f"{ctx.guild.id}_{member.id}.txt", "a")  
       warneduserreason.write(reason+"\n")
       warneduserreason.close()
-    @commands.command(brief='This command warns users for a given reason provided.', description='This command warns users for a given reason provided and can be used by members having manage messages permission.')
+    @commands.command(brief='This command warns users for a given reason provided.', description='This command warns users for a given reason provided and can be used by members having manage roles permission.')
     @commands.guild_only()
     @commands.check_any(is_bot_staff(),
                         commands.has_permissions(manage_roles=True))
@@ -1133,7 +1139,7 @@ class Moderation(commands.Cog):
         try:
             await ctx.guild.kick(member, reason=reason)
         except:
-            raise commands.CommandError(f"I do not have ban members permissions or I am not high enough in role hierarchy to kick {member} .")
+            raise commands.CommandError(f"I do not have kick members permissions or I am not high enough in role hierarchy to kick {member} .")
         try:
             await member.send(message)
             ##print(f"Successfully dmed users!")
@@ -2473,14 +2479,40 @@ class Support(commands.Cog):
       await cmd(ctx)
     @commands.command(brief='This command can be used to send messages in a certain guild.', description='This command can be used to send messages in a certain guild.',usage="message guildid")
     @commands.check_any(is_bot_staff())
-    async def sendguild(self,ctx,message,guildid:int):
-      guildsent=client.get_guild(guildid)
+    async def sendguild(self,ctx,guildsent:discord.Guild):
+      #guildsent=client.get_guild(guildid)
       await ctx.send(str(guildsent))
+      count=5
+      def check(message):
+          nonlocal count
+          count=count+1
+          #print(f"{count} has been incremented .")
+          return message.author == ctx.author and message.channel == ctx.channel
+
+      await ctx.send('What is the title ?')
+      title = await client.wait_for('message', check=check)
+
+      await ctx.send('What is the description ?')
+      desc = await client.wait_for('message', check=check)
+      await ctx.send(' What is the footer ?')
+      footertxt=await client.wait_for('message', check=check)
+      await ctx.send(' What is the footer url ?')
+      footerurl=await client.wait_for('message', check=check)
+      #print(f"Total count : {count}")
+      try:
+          await ctx.channel.purge(limit=count)
+      except:
+          await ctx.reply("I do not have `manage messages` permissions to delete messages .")+"\u200b"
+          
+      embedone = discord.Embed(title=title.content, description=desc.content, color=Color.green())
+      embedone.set_footer(text=footertxt.content,icon_url=footerurl.content)
+      await ctx.send(embed=embedone)
       for channel in guildsent.channels:
           if channel.type == discord.ChannelType.text and channel.permissions_for(
-                  guildsent.me).send_messages:
+                  guildsent.me).send_messages and channel.permissions_for(
+                  guildsent.me).embed_links:
             try:
-              await channel.send(message)
+              await channel.send(embed=embedone)
             except:
                 await ctx.send(f" I cannot send messages in {channel.name}({guildsent}) .")
             break
@@ -2736,9 +2768,39 @@ class Music(commands.Cog):
         if ctx.author.voice.self_deaf:
           raise commands.CommandError(" You are deafened in the voice channel , you won't be able to hear the playing audio .")
         playingmusic=None
-        messages = await ctx.channel.history(limit=50).flatten()
+        messages = await ctx.channel.history(limit=100).flatten()
+        #print(messages)
         for message in messages:
+          if message.content.startswith("Now looping:") and message.content.endswith (f"{ctx.author.mention} .") and message.author==client.user:
+            messagefind=message.content
+            startingindex=messagefind.find(":")
+            #print(" Starting index")
+            #print(startingindex)
+            startingstring=messagefind[startingindex+1:]
+            #print(" Starting str")
+            #print(startingstring)
+            endingindex=startingstring.find("requested")
+            #print(" Ending index")
+            #print(endingindex)
+            authindex=messagefind.rindex("by")
+            messageauthor=messagefind[authindex+2:]
+            firstindex=messageauthor.find("<@!")
 
+            if firstindex==-1:
+              firstindex=messageauthor.find("<@")
+              idwithend=messageauthor[firstindex+2:]
+            else:
+              idwithend=messageauthor[firstindex+3:]
+            #print(f" The id with slash : {idwithend}")
+            realauthor=idwithend[:idwithend.rindex(">")]
+            #print(f" The id without slash : {realauthor}")
+            if not int(realauthor)==ctx.author.id:
+              continue
+
+            playingmusic=startingstring[:endingindex]
+            #print(" Music name ")
+            #print(playingmusic)
+            break
           if message.content.startswith("Now playing:") and message.content.endswith (f"{ctx.author.mention} .") and message.author==client.user:
             messagefind=message.content
             startingindex=messagefind.find(":")
@@ -2750,12 +2812,27 @@ class Music(commands.Cog):
             endingindex=startingstring.find("requested")
             #print(" Ending index")
             #print(endingindex)
+            authindex=messagefind.rindex("by")
+            messageauthor=messagefind[authindex+2:]
+            firstindex=messageauthor.find("<@!")
+
+            if firstindex==-1:
+              firstindex=messageauthor.find("<@")
+              idwithend=messageauthor[firstindex+2:]
+            else:
+              idwithend=messageauthor[firstindex+3:]
+            #print(f" The id with slash : {idwithend}")
+            realauthor=idwithend[:idwithend.rindex(">")]
+            #print(f" The id without slash : {realauthor}")
+            if not int(realauthor)==ctx.author.id:
+              continue
+
             playingmusic=startingstring[:endingindex]
             #print(" Music name ")
             #print(playingmusic)
             break
         if playingmusic==None:
-          await ctx.send(" I couldn't find the current playing song.")
+          raise commands.CommandError(" I could not find the song that was requested by you earlier in this channel .")
           return
         songname=playingmusic
         voice = discord.utils.get(client.voice_clients, guild=ctx.guild)
@@ -2774,8 +2851,11 @@ class Music(commands.Cog):
           vidpublished=data['result'][0]['publishedTime']
           url=data['result'][0]['link']
           async with ctx.typing():
-              player = await YTDLSource.from_url(url, loop=self.bot.loop, stream=True)
+            player = await YTDLSource.from_url(url, loop=self.bot.loop, stream=True)
+            if not voice.is_paused():
               ctx.voice_client.play(player, after=lambda e: print('Player error: %s' % e) if e else None)
+            else:
+              await asyncio.sleep(1)
           await ctx.reply(f' Now looping: {player.title} requested by {ctx.author.mention} .')
           embedVar = discord.Embed(title=f" {vidtitle}",
                                   description=viddes,
@@ -2796,7 +2876,6 @@ class Music(commands.Cog):
     @commands.guild_only()
     @commands.check_any(is_bot_staff())
     async def playvid(self, ctx, *, songname:str):
-      global channeljunk
       videosSearch = VideosSearch(songname, limit = 1)
       #print(videosSearch.result())
       data=videosSearch.result()
@@ -2823,7 +2902,8 @@ class Music(commands.Cog):
       }
 
       with youtube_dl.YoutubeDL(ydl_opts_1) as ydl:
-          ydl.download([url])
+        ydl.cache.remove()
+        ydl.download([url])
       if os.path.exists("song.mp4"):
         os.remove("song.mp4")
       for file in os.listdir("./"):
@@ -3021,23 +3101,63 @@ class Music(commands.Cog):
 
 
 client.add_cog(Music(client))
+def authenticate():
+  config = configparser.ConfigParser()
+  config.read('auth.ini')
 
+  client_id = config.get('credentials', 'client_id')
+  client_secret = config.get('credentials', 'client_secret')
+  imgur_username= config.get('credentials','imgur_username')
+  imgur_password= config.get('credentials','imgur_password')
+  imclient = ImgurClient(client_id, client_secret)
+  auth_url=imclient.get_auth_url('pin')
+  driver=webdriver.Chrome()
+  driver.get(auth_url)
+  username = driver.find_element_by_xpath('//*[@id="username"]')	
+  password = driver.find_element_by_xpath('//*[@id="password"]')
+  username.clear()
+  username.send_keys(imgur_username)
+  password.send_keys(imgur_password)	
+
+  driver.find_element_by_name("allow").click()
+  timeout = 5
+  try:
+    element_present = EC.presence_of_element_located((By.ID, 'pin'))
+    WebDriverWait(driver, timeout).until(element_present)
+    pin_element = driver.find_element_by_id('pin')
+    pin = pin_element.get_attribute("value")
+  except TimeoutException:
+	  print("Timed out waiting for page to load")
+  driver.close()
+  credentials = imclient.authorize(pin, 'pin')
+  imclient.set_user_auth(credentials['access_token'], credentials['refresh_token'])
+  print("Authentication successful!")
+
+
+  return imclient
 async def convertit(ctx,youtubetitle):
   clip = (VideoFileClip("song.mp4"))
   initfps=1
   clip.write_gif("output.gif",fps=initfps)
-  bytesize=os.path.getsize("output.gif")
-  await ctx.send(f"The size of the video is {bytesize/1000000} mb")
-  CLIENT_ID = os.environ.get("IMGUR_API_ID")
-  PATH = "output.gif"
-  im = pyimgur.Imgur(CLIENT_ID)
-  uploaded_image = im.upload_image(PATH, title="Uploaded with PyImgur")
-  print(uploaded_image.title)
-  print(uploaded_image.link)
-  print(uploaded_image.size)
-  print(uploaded_image.type)
-  await ctx.send(uploaded_image.link)
-  
+  with open("output.gif", "rb") as f:
+      raw = f.read()
+      dataB = ''.join(map(lambda x: '{:08b}'.format(x), raw))
+
+  url = "http://upload.giphy.com/v1/gifs"
+  values = {
+      "api_key": "I443Evvwa4IPiR8eR0dApUQgb0XjXTfW",
+      "username": "TheJavaProgrammers",
+      "file": str(dataB)
+  }
+  headers = {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+  }
+  data = json.dumps(values).encode("utf-8")
+  req = urllib.request.Request(url, data, headers)
+  with urllib.request.urlopen(req) as res:
+      print(res.read().decode())
+      await ctx.send(res.read().decode())
 def guild_check(_custom_commands):
     async def predicate(ctx):
         return _custom_commands.get(ctx.command.qualified_name) and ctx.guild.id in _custom_commands.get(ctx.command.qualified_name)
@@ -3061,7 +3181,6 @@ class CustomCommands(commands.Cog):
             @commands.command(name=name,brief='This command outputs your custom provided output.', description='This command outputs your custom provided output.',usage="")
             @guild_check(self._custom_commands)
             async def cmd(self, ctx):
-                global channelone
                 output=self._custom_commands[ctx.invoked_with][ctx.guild.id]
                 await ctx.send(output)
 
@@ -3194,7 +3313,7 @@ async def on_ready():
     saveexemptspam.start()
     saveantilink.start()
     saveticketpanels.start()
-        
+
 
 
 @client.event
@@ -3387,6 +3506,8 @@ async def on_message_edit(before, message):
 async def on_message(message):
     global maintenancemodestatus,exemptspam,antilink
     if maintenancemodestatus:
+      if ("<@!805030662183845919>" in message.content) or("<@805030662183845919>" in message.content):
+        await message.reply(" The bot is currently in maintainence , adding new commands !")
       if not checkstaff(message.author):
         return
     if message.guild:
@@ -3502,6 +3623,6 @@ async def on_message(message):
 
     await client.process_commands(message)
 
-
+keep_alive
 token = os.environ.get("DISCORD_BOT_SECRET")
 client.run(token)

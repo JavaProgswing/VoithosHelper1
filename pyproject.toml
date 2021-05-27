@@ -24,7 +24,9 @@ captcha = "^0.3"
 youtube-transcript-api = "^0.4.1"
 moviepy = "1.0.1"
 imgurpython = "^1.1.7"
-pyimgur = "^0.6.0"
+selenium = "^3.141.0"
+auth = "^0.5.3"
+
 
 
 
