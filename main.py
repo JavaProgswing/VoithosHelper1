@@ -158,14 +158,14 @@ channelerrorlogging = None
 @client.event
 async def on_command_error(ctx, error):
     global channelerrorlogging
-    errordata=error
+    errordata=" Oops something went wrong while executing the command , if this keeps happening frequently report this on our support server ."
     if isinstance(error, commands.CommandInvokeError):
       error = error.original
     if isinstance(error,commands.CommandNotFound):
       return
     if isinstance(error, commands.CheckAnyFailure):
       try:
-        errordata=error.errors[0]
+        errordata=errors[0]
       except:
         pass
     if isinstance(error, discord.Forbidden):
@@ -180,7 +180,7 @@ async def on_command_error(ctx, error):
         errordata=f" Oops looks like provided the wrong arguments in the {ctx.command} command ."     
     if isinstance(error,commands.CommandOnCooldown):
         errordata=f" Seems like you tried this {ctx.command} command recently , try again in {error.retry_after} seconds."     
-    embedone = discord.Embed(title=f"Error occured ",description=errordata,color=Color.dark_red())
+    embedone = discord.Embed(title=f"Something went wrong...  ",description=errordata,color=Color.dark_red())
     embederror = discord.Embed(title=f"Error occured {type(error)}",description=f"**{error}** in {ctx.command}",color=Color.dark_red())
     if ctx.guild:
         embederror.add_field(name=(f" Guild: {ctx.guild}"),value="\u200b",inline=False)
@@ -461,6 +461,7 @@ class MyHelp(commands.HelpCommand):
                                  color=Color.blue())
         commandlist=[]
         titlelist=[]
+        emojis=["📜"]
         for cog, commandloop in mapping.items():
             filtered = await self.filter_commands(commandloop, sort=True)
             command_signatures = [
@@ -471,21 +472,31 @@ class MyHelp(commands.HelpCommand):
                 cog_name = getattr(cog, "qualified_name", ":white_small_square: No Category")
 
                 commandname=cog_name
+                copyemojis=['📜','🔨','👾','<:grass:825355420604039219>','🏆', '🎰', '🛠️','🎵','✍️']
+                
                 if commandname=="Moderation":
+                  emojis.append("🔨")
                   commandname="🔨 "+commandname
                 elif commandname=="MinecraftFun":
+                  emojis.append("<:grass:825355420604039219>")
                   commandname="<:grass:825355420604039219> "+commandname
                 elif commandname=="Fun":
+                  emojis.append("🏆")
                   commandname="🏆 "+commandname
                 elif commandname=="Giveaways":
+                  emojis.append("🎰")
                   commandname="🎰 "+commandname
                 elif commandname=="Support":
+                  emojis.append("🛠️")
                   commandname="🛠️ "+commandname
                 elif commandname=="Music":
+                  emojis.append("🎵")
                   commandname="🎵 "+commandname
                 elif commandname=="CustomCommands":
+                  emojis.append("✍️")
                   commandname="✍️ "+commandname
                 elif commandname=="Captcha":
+                  emojis.append("👾")
                   commandname="👾 "+commandname
                 elif commandname=="VoithosInfo":
                   commandname="📜 "+commandname 
@@ -503,7 +514,7 @@ Please visit https://top.gg/bot/805030662183845919 to submit ideas or bugs.""")
         embedone.set_author(name="Commands help",icon_url="https://cdn.discordapp.com/avatars/805030662183845919/70fee8581891e9a810da60944dc486ba.webp?size=128")
         embedone.set_footer(text="Want support? Join here: https://discord.gg/TZDYSHSZgg",icon_url="https://cdn.discordapp.com/avatars/488643992628494347/e50ae57d9e8880e6acfbc2b444000fa1.webp?size=128")
         messagesent=await channel.send(embed=embedone)
-        emojis=['📜','🔨','👾','<:grass:825355420604039219>','🏆', '🎰', '🛠️','🎵','✍️']
+
         for emoji in emojis:
           await messagesent.add_reaction(emoji)
                     
@@ -513,10 +524,11 @@ Please visit https://top.gg/bot/805030662183845919 to submit ideas or bugs.""")
           if not reaction.message==messagesent:
             return False
           client.loop.create_task(messagesent.remove_reaction(reaction,user))
-          titlecommand=titlelist[emojis.index(str(reaction))]
-          descriptioncommand=commandlist[emojis.index(str(reaction))]
-          length=len(descriptioncommand)
-          strdes=str(descriptioncommand)
+          for title in titlelist:
+            if str(reaction) in title:
+              titlecommand=title
+              strdes=str(commandlist[titlelist.index(title)])
+              length=len(strdes)
           if length>=1800:
             listofembed=wrap(strdes, 1800)
           else:
