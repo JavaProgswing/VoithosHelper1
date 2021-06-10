@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 from keep_alive import keep_alive
+import traceback
 import asyncio
 import typing
 from textwrap import wrap
@@ -128,7 +129,7 @@ async def on_command_error(ctx, error):
       return
     if isinstance(error, commands.CheckAnyFailure):
       try:
-        errordata=errors[0]
+        errordata=error.errors[0]
       except:
         pass
     if isinstance(error, discord.Forbidden):
@@ -143,19 +144,25 @@ async def on_command_error(ctx, error):
         errordata=f" Oops looks like provided the wrong arguments in the {ctx.command} command ."     
     if isinstance(error,commands.CommandOnCooldown):
         errordata=f" Seems like you tried this {ctx.command} command recently , try again in {error.retry_after} seconds."     
+    if isinstance(error, commands.errors.CommandError):
+      errordata=error    
     embedone = discord.Embed(title=f"Something went wrong... ",description=errordata,color=Color.dark_red())
-    embederror = discord.Embed(title=f"Error occured {type(error)}",description=f"**{error}** in {ctx.command}",color=Color.dark_red())
+    etype = type(error)
+    trace = error.__traceback__
+    # 'traceback' is the stdlib module, `import traceback`.
+    lines = traceback.format_exception(etype, error, trace)
+    # format_exception returns a list with line breaks embedded in the lines, so let's just stitch the elements together
+    traceback_text = ''.join(lines)
+    embederror = discord.Embed(title=f"Error occured ({type(error)}) : **{error}**",description=f"Command : {ctx.command} , Traceback : {traceback_text} .",color=Color.dark_red())
     if ctx.guild:
-        embederror.add_field(name=(f" Guild: {ctx.guild}"),value="\u200b",inline=False)
-        embederror.add_field(name=(f" Channel: {ctx.channel.name}"),value="\u200b",inline=False)
-        embederror.add_field(name=(f" Member: {ctx.author.mention}"),value="\u200b",inline=False)
+        embederror.add_field(name=(f" Guild: {ctx.guild} ({ctx.guild.id})"),value="\u200b",inline=False)
+        embederror.add_field(name=(f" Channel: {ctx.channel.name} {ctx.channel.id}"),value="\u200b",inline=False)
+        embederror.add_field(name=(f" Member: {ctx.author.mention} ({ctx.author.name})"),value="\u200b",inline=False)
 
     else:
 
         embederror.add_field(name=(" DM Channel "),value="\u200b",inline=False)
-        embederror.add_field(name=(f" Member: {ctx.author.mention}"),value="\u200b",inline=False)
-        embedone = discord.Embed(title="",color=Color.dark_red())
-        embedone.add_field(name=" Command error ",value= errordata,inline=False)
+        embederror.add_field(name=(f" Member: {ctx.author.mention} ({ctx.author.name})"),value="\u200b",inline=False)
         
     if not isinstance(error, commands.errors.CommandError):
       await channelone.send(embed=embederror)
@@ -163,7 +170,7 @@ async def on_command_error(ctx, error):
       await ctx.channel.send(embed=embedone)
     except:
       await ctx.channel.send(" I do not have the embed links permission in this channel to send text in a embed . ")
-      await ctx.channel.send(f" Error : {errordata} ")
+      await ctx.channel.send(f" Something went wrong... : {errordata} ")
 class TopGG(commands.Cog):
     """Handles interactions with the top.gg API"""
 
@@ -2933,7 +2940,7 @@ async def on_guild_join(guild):
     for channel in guild.channels:
         if channel.type == discord.ChannelType.text and channel.permissions_for(
                 guild.me).send_messages:
-            embedOne.add_field(name=f" Invoke our bot by sending {prefixlist[prefixlist.index(guild.id)+1]}help in a channel in which bot has permissions to read or mentioning the bot to get prefixes .",value="\u200b"
+            embedOne.add_field(name=f" Invoke our bot by sending {prefixlist[prefixlist.index(guild.id)+1]}help in a channel in which bot has permissions to read or mentioning the bot to get prefixes . The bot will ignore links and nsfw messages from adminstrators.",value="\u200b"
                 ,inline=False)
 
             embedOne.add_field(name=" Thanks for inviting " + client.user.name +
@@ -2946,7 +2953,7 @@ async def on_guild_join(guild):
             except:
                 await channel.send(" I don't have `Embed Link` permission in this channel to send embed responses .")
                 await channel.send(
-                    f" Prefix {prefixlist[prefixlist.index(guild.id)+1]} Invoke our bot by sending {prefixlist[prefixlist.index(guild.id)+1]}help or mentioning the bot to get prefixes ."
+                    f" Prefix {prefixlist[prefixlist.index(guild.id)+1]} Invoke our bot by sending {prefixlist[prefixlist.index(guild.id)+1]}help or mentioning the bot to get prefixes . The bot will ignore links and nsfw messages from adminstrators."
                 )
                 await channel.send(" Thanks for inviting " + client.user.name +
                                   " to " + str(guild.name))
