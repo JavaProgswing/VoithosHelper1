@@ -4747,6 +4747,6 @@ async def on_message(message):
     await client.process_commands(message)
 
 
-keep_alive
+keep_alive()
 token = os.environ.get("DISCORD_BOT_SECRET")
 client.run(token)
