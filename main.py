@@ -1608,7 +1608,6 @@ class MinecraftFun(commands.Cog):
         for i in range(number):
             belowlist += belowblocks
         await ctx.send(belowlist)
-
     @commands.cooldown(1, 30, BucketType.user)
     @commands.command(
         brief=
@@ -1617,23 +1616,23 @@ class MinecraftFun(commands.Cog):
         'This command is used to fight other users (minecraft pvp mechanics).',
         usage="@member")
     @commands.guild_only()
-    async def pvp(self, ctx, member: discord.Member):
+    async def pvp(self, ctx, member: discord.Member=None):
         if member == ctx.author:
             await ctx.channel.send(
                 " Trying to battle yourself will only have major consequences !"
             )
             return
-
+        if member==None:
+          member=ctx.guild.me
+        selfCombat=False
+        if (client.user.id==member.id):
+          selfCombat=True
         orechoice = ["Netherite", "Diamond", "Iron", "Leather"]
         swordchoice = ["Netherite", "Diamond", "Iron", "Stone", "Gold", "Wood"]
         armorresist = [85.0, 75.0, 60.0, 28.0]
         swordattack = [12.0, 10.0, 9.0, 8.0, 6.0, 5.0]
         memberone = ctx.author
         membertwo = member
-        messagereact = await ctx.channel.send(
-            f'React with that 👍 reaction in 60 seconds, {member.mention} to start the pvp match !'
-        )
-        await messagereact.add_reaction("👍")
         escapelist = [
             "ran away like a coward .", "was scared of a terrible defeat .",
             "didn't know how to fight .",
@@ -1641,20 +1640,26 @@ class MinecraftFun(commands.Cog):
             f"was too weak for battling {ctx.author.mention} .",
             f"was scared of fighting {ctx.author.mention} ."
         ]
+        if not selfCombat:
+          messagereact = await ctx.channel.send(
+              f'React with that 👍 reaction in 60 seconds, {member.mention} to start the pvp match !'
+          )
+          await messagereact.add_reaction("👍")
+          def check(reaction, user):
+              return user == member and str(reaction.emoji) == '👍'
 
-        def check(reaction, user):
-            return user == member and str(reaction.emoji) == '👍'
+          try:
+              reaction, user = await client.wait_for('reaction_add',
+                                                    timeout=60.0,
+                                                    check=check)
 
-        try:
-            reaction, user = await client.wait_for('reaction_add',
-                                                   timeout=60.0,
-                                                   check=check)
-
-        except asyncio.TimeoutError:
-            await ctx.channel.send(f'{member} {random.choice(escapelist)}')
-            return
+          except asyncio.TimeoutError:
+              await ctx.channel.send(f'{member} {random.choice(escapelist)}')
+              return
+          else:
+              await ctx.reply('Let the battle preparations take place !')
         else:
-            await ctx.reply('Let the battle preparations take place !')
+          await ctx.reply('Let the battle preparations take place !')
         try:
             await ctx.channel.edit(slowmode_delay=1)
         except:
@@ -1695,11 +1700,13 @@ class MinecraftFun(commands.Cog):
         membertwo_critical = 0
         membertwo_strong = 0
         membertwo_weak = 0
-
+        autoFight=False
+        damagePending=False
         def check(m):
+
             user = m.author
             message = m.content
-            nonlocal memberone, membertwo, memberone_healthpoint, membertwo_healthpoint, memberone_armor_resist, memberone_sword_attack, membertwo_armor_resist, membertwo_sword_attack, memberone_resistance, membertwo_resistance, memberone_resistances, memberone_critical, memberone_strong, memberone_weak, membertwo_resistances, membertwo_critical, membertwo_strong, membertwo_weak
+            nonlocal memberone, membertwo, memberone_healthpoint, membertwo_healthpoint, memberone_armor_resist, memberone_sword_attack, membertwo_armor_resist, membertwo_sword_attack, memberone_resistance, membertwo_resistance, memberone_resistances, memberone_critical, memberone_strong, memberone_weak, membertwo_resistances, membertwo_critical, membertwo_strong, membertwo_weak,autoFight,damagePending,selfCombat
             if message == 'f' or message == 'd':
                 attack = ['weak', 'strong', 'critical']
                 attackdamage = [0.5, 1.5, 2.0]
@@ -1723,7 +1730,12 @@ class MinecraftFun(commands.Cog):
                     " was poked to death by a sweet berry bush whilst trying to escape ",
                     " withered away whilst fighting "
                 ]
+                autoFight=False
                 if user == memberone:
+                    
+                    if message=='f' or message=='d':
+                      if selfCombat:
+                        autoFight=True
                     if message == 'f':
 
                         attackchoice = random.choice(attack)
@@ -1750,6 +1762,8 @@ class MinecraftFun(commands.Cog):
                             ))
                         membertwo_healthpoint -= damagevalue
                         player_health = ""
+                        if (membertwo_healthpoint<1.0 and membertwo_healthpoint>0.0):
+                          player_health=":heart:"
                         for i in range(int(membertwo_healthpoint)):
                             player_health += ":heart:"
                         client.loop.create_task(
@@ -1770,7 +1784,17 @@ class MinecraftFun(commands.Cog):
                                 f" {memberone.mention} has equipped the shield ."
                             ))
                         memberone_resistance = True
-                if user == membertwo:
+                
+                if user == membertwo or autoFight:
+                    if damagePending:
+                      message='f'
+                      damagePending=False
+                    else:
+                      if membertwo_healthpoint<20:
+                        message='d'
+                        damagePending=True
+                      else:
+                        message='f'
                     if message == 'f':
                         attackchoice = random.choice(attack)
                         if attackchoice == "weak":
@@ -1797,6 +1821,8 @@ class MinecraftFun(commands.Cog):
 
                         memberone_healthpoint -= damagevalue
                         player_health = ""
+                        if (memberone_healthpoint<1.0 and memberone_healthpoint>0.0):
+                          player_health=":heart:"
                         for i in range(int(memberone_healthpoint)):
                             player_health += ":heart:"
                         client.loop.create_task(
@@ -1817,9 +1843,13 @@ class MinecraftFun(commands.Cog):
                                 f" {membertwo.mention} has equipped the shield ."
                             ))
                         membertwo_resistance = True
+            if user==memberone or user==membertwo:
+              client.loop.create_task(asyncio.sleep(0.5))
             return False
-
-        msg = await client.wait_for('message', check=check, timeout=120)
+        try:
+          msg = await client.wait_for('message', check=check, timeout=120)
+        except:
+          pass
         embedOne = discord.Embed(
             title="Battle results",
             description=f"{memberone.name} and {membertwo.name}",
@@ -1866,23 +1896,23 @@ class MinecraftFun(commands.Cog):
         'This command is used to fight other users with sound effects(minecraft pvp mechanics).',
         usage="@member")
     @commands.guild_only()
-    async def soundpvp(self, ctx, member: discord.Member):
+    async def soundpvp(self, ctx, member: discord.Member=None):
         if member == ctx.author:
             await ctx.channel.send(
                 " Trying to battle yourself will only have major consequences !"
             )
             return
-
+        if member==None:
+          member=ctx.guild.me
+        selfCombat=False
+        if (client.user.id==member.id):
+          selfCombat=True
         orechoice = ["Netherite", "Diamond", "Iron", "Leather"]
         swordchoice = ["Netherite", "Diamond", "Iron", "Stone", "Gold", "Wood"]
         armorresist = [85.0, 75.0, 60.0, 28.0]
         swordattack = [12.0, 10.0, 9.0, 8.0, 6.0, 5.0]
         memberone = ctx.author
         membertwo = member
-        messagereact = await ctx.send(
-            f'React with that 👍 reaction in 60 seconds, {member.mention} to start the pvp match !'
-        )
-        await messagereact.add_reaction("👍")
         escapelist = [
             "ran away like a coward .", "was scared of a terrible defeat .",
             "didn't know how to fight .",
@@ -1891,19 +1921,26 @@ class MinecraftFun(commands.Cog):
             f"was scared of fighting {ctx.author.mention} ."
         ]
 
-        def check(reaction, user):
-            return user == member and str(reaction.emoji) == '👍'
+        if not selfCombat:
+          messagereact = await ctx.send(
+              f'React with that 👍 reaction in 60 seconds, {member.mention} to start the pvp match !'
+          )
+          await messagereact.add_reaction("👍")
+          def check(reaction, user):
+              return user == member and str(reaction.emoji) == '👍'
 
-        try:
-            reaction, user = await client.wait_for('reaction_add',
-                                                   timeout=60.0,
-                                                   check=check)
+          try:
+              reaction, user = await client.wait_for('reaction_add',
+                                                    timeout=60.0,
+                                                    check=check)
 
-        except asyncio.TimeoutError:
-            await ctx.channel.send(f'{member} {random.choice(escapelist)}')
-            return
+          except asyncio.TimeoutError:
+              await ctx.channel.send(f'{member} {random.choice(escapelist)}')
+              return
+          else:
+              await ctx.reply('Let the battle preparations take place !')
         else:
-            await ctx.reply('Let the battle preparations take place !')
+          await ctx.reply('Let the battle preparations take place !')
         try:
             await ctx.channel.edit(slowmode_delay=1)
         except:
@@ -1912,12 +1949,14 @@ class MinecraftFun(commands.Cog):
             )
 
         memberone_healthpoint = 30 + random.randint(-10, 10)
+        memberone_healthpoint+=1
         memberone_armor = random.choice(orechoice)
         memberone_armor_resist = armorresist[orechoice.index(memberone_armor)]
         memberone_sword = random.choice(swordchoice)
         memberone_sword_attack = swordattack[swordchoice.index(
             memberone_sword)]
         membertwo_healthpoint = 30 + random.randint(-10, 10)
+        membertwo_healthpoint+=1
         membertwo_armor = random.choice(orechoice)
         membertwo_armor_resist = armorresist[orechoice.index(membertwo_armor)]
         membertwo_sword = random.choice(swordchoice)
@@ -1947,12 +1986,14 @@ class MinecraftFun(commands.Cog):
         membertwo_critical = 0
         membertwo_strong = 0
         membertwo_weak = 0
-
+        autoFight=False
+        damagePending=False
         def check(m):
             user = m.author
             message = m.content
-            nonlocal memberone, membertwo, memberone_healthpoint, membertwo_healthpoint, memberone_armor_resist, memberone_sword_attack, membertwo_armor_resist, membertwo_sword_attack, memberone_resistance, membertwo_resistance, voicechannel, memberone_resistances, memberone_critical, memberone_strong, memberone_weak, membertwo_resistances, membertwo_critical, membertwo_strong, membertwo_weak
+            nonlocal memberone, membertwo, memberone_healthpoint, membertwo_healthpoint, memberone_armor_resist, memberone_sword_attack, membertwo_armor_resist, membertwo_sword_attack, memberone_resistance, membertwo_resistance, voicechannel, memberone_resistances, memberone_critical, memberone_strong, memberone_weak, membertwo_resistances, membertwo_critical, membertwo_strong, membertwo_weak,autoFight,damagePending,selfCombat
             if message == 'f' or message == 'd':
+
                 attack = ['weak', 'strong', 'critical']
                 attackdamage = [0.5, 1.5, 2.0]
                 winmessage = [
@@ -1975,7 +2016,11 @@ class MinecraftFun(commands.Cog):
                     " was poked to death by a sweet berry bush whilst trying to escape ",
                     " withered away whilst fighting "
                 ]
+                autoFight=False
                 if user == memberone:
+                    if message=='f' or message=='d':
+                      if selfCombat:
+                        autoFight=True
                     if message == 'f':
 
                         attackchoice = random.choice(attack)
@@ -2010,6 +2055,8 @@ class MinecraftFun(commands.Cog):
                             ))
                         membertwo_healthpoint -= damagevalue
                         player_health = ""
+                        if (membertwo_healthpoint<1.0 and membertwo_healthpoint>0.0):
+                          player_health=":heart:"
                         for i in range(int(membertwo_healthpoint)):
                             player_health += ":heart:"
                         client.loop.create_task(
@@ -2038,7 +2085,16 @@ class MinecraftFun(commands.Cog):
                             voicechannel.stop()
                         voicechannel.play(
                             discord.FFmpegPCMAudio("Shield_block5.ogg"))
-                if user == membertwo:
+                if user == membertwo or autoFight:
+                    if damagePending:
+                      message='f'
+                      damagePending=False
+                    else:
+                      if membertwo_healthpoint<20:
+                        message='d'
+                        damagePending=True
+                      else:
+                        message='f'
                     if message == 'f':
                         attackchoice = random.choice(attack)
                         if voicechannel.is_playing():
@@ -2073,6 +2129,8 @@ class MinecraftFun(commands.Cog):
 
                         memberone_healthpoint -= damagevalue
                         player_health = ""
+                        if (memberone_healthpoint<1.0 and memberone_healthpoint>0.0):
+                          player_health=":heart:"
                         for i in range(int(memberone_healthpoint)):
                             player_health += ":heart:"
                         client.loop.create_task(
@@ -2100,9 +2158,13 @@ class MinecraftFun(commands.Cog):
                             voicechannel.stop()
                         voicechannel.play(
                             discord.FFmpegPCMAudio("Shield_block5.ogg"))
+            if user==memberone or user==membertwo:
+              client.loop.create_task(asyncio.sleep(0.5))
             return False
-
-        msg = await client.wait_for('message', check=check, timeout=120)
+        try:
+          msg = await client.wait_for('message', check=check, timeout=120)
+        except:
+          pass
         if voicechannel.is_playing():
             voicechannel.stop()
         embedOne = discord.Embed(
@@ -2155,6 +2217,68 @@ class MinecraftFun(commands.Cog):
         elif ctx.voice_client.is_playing():
             ctx.voice_client.stop()
 
+    @commands.cooldown(1, 120, BucketType.user)
+    @commands.command(
+        brief=
+        'This command is used to check the server status of a minecraft server ip.',
+        description=
+        'This command is used to check the server status of a minecraft server ip.',
+        usage="server-ip")
+    @commands.guild_only()
+    async def mcservercheck(self, ctx, ip: str):
+        server = MinecraftServer.lookup(ip)
+        try:
+            status = server.status()
+        except:
+            embedOne = discord.Embed(title=ip,
+                                     description="\u200b",
+                                     color=Color.red())
+            embedOne.add_field(name=" Server Status ",
+                               value="  Offline ",
+                               inline=True)
+            return 
+        servericon = f"https://{status.favicon}"
+        if servericon is None or servericon == "None":
+            servericon = ""
+        f = open("serverIcon.txt", "w")
+        f.write(servericon)
+        f.close()
+        try:
+          embedOne.set_thumbnail(url=servericon)
+        except:
+          pass
+        limit = 50
+        f = open("serverDescription.txt", "w")
+        f.write(str(status.description))
+        f.close()
+        try:
+          descriptiondict = status.description[0]
+        except:
+          try:
+            descriptiondict = status.description["extra"][0]["extra"][0]["text"]
+          except:
+            descriptiondict=" "
+        data=descriptiondict
+        info = data[:limit] + '..' 
+    
+        embedOne = discord.Embed(title=f"{ip}",
+                                 description=info,
+                                 color=Color.green())
+        embedOne.add_field(name=" Server Version ",
+                           value=f"{status.version.name}",
+                           inline=True)
+        try:
+          latency = server.ping()
+        except:
+          latency="Unknown ping"
+        embedOne.add_field(name=" Server Latency ",
+                          value=latency,
+                          inline=True)
+        embedOne.add_field(name=" Players Online ",
+                          value=status.players.online,
+                          inline=True)
+        ipmessagesent = await ctx.send(embed=embedOne)
+        
     @commands.cooldown(1, 120, BucketType.user)
     @commands.command(
         brief=
