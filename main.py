@@ -276,11 +276,13 @@ def checkEmoji(value):
   if value:
     return ":white_check_mark: "
   elif not value:
-    return ":green_square: "
+    return ":red_square: "
 async def checkPerm(ctx,author=None):
   myList=[]
   if author==None:
     author=ctx.guild.me
+  if isinstance(author, int):
+    author=ctx.guild.get_member(author)
   myPermsValue=author.guild_permissions.value
   myPerms=discord.Permissions(myPermsValue)
   if (myPerms.add_reactions ):
