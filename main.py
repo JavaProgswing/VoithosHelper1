@@ -95,7 +95,9 @@ logger.addHandler(handler)
 exemptspam=[]
 prefixlist=[]
 antilink=[]
+antifilter=[]
 ticketpanels=[]
+
 async def get_prefix(client, message):
   if message.guild:
     try:
@@ -165,12 +167,20 @@ async def on_command_error(ctx, error):
         embederror.add_field(name=(f" Member: {ctx.author.mention} ({ctx.author.name})"),value="\u200b",inline=False)
         
     if not isinstance(error, commands.errors.CommandError):
-      await channelone.send(embed=embederror)
+        await channelone.send(embed=embederror)
     try:
-      await ctx.channel.send(embed=embedone)
+        await ctx.channel.send(embed=embedone)
     except:
-      await ctx.channel.send(" I do not have the embed links permission in this channel to send text in a embed . ")
-      await ctx.channel.send(f" Something went wrong... : {errordata} ")
+        try:
+          await ctx.channel.send(
+              " I do not have the embed links permission in this channel to send text in a embed . "
+          )
+          await ctx.channel.send(f" Something went wrong... : {errordata} ")
+        except:
+          await ctx.command.author.send(
+              " I do not have the send messages permission in this channel to send text in a embed . "
+          )
+          await ctx.command.author.send(f" Something went wrong... : {errordata} ")
 class TopGG(commands.Cog):
     """Handles interactions with the top.gg API"""
 
@@ -201,6 +211,13 @@ async def saveantilink():
   with open("antilink.txt", "w") as f:
     for links in antilink:
         f.write(str(links) +"\n")
+
+@tasks.loop(seconds=30)
+async def saveprofanefilter():
+    global antifilter
+    with open("antifilter.txt", "w") as f:
+        for filters in antifilter:
+            f.write(str(filters) + "\n")
 
 @tasks.loop(seconds=30)
 async def saveexemptspam():
@@ -500,7 +517,7 @@ Please visit our support server to submit ideas or bugs.""")
             client.loop.create_task(channel.send(embed=embedtwo))
           return False
         try:
-            reaction, user = await client.wait_for('reaction_add', timeout=30,check=check)
+            reaction, user = await client.wait_for('reaction_add', timeout=120,check=check)
         except asyncio.TimeoutError:
           embedone.set_footer(text="This help command is outdated , invoke the help command again for getting reaction response.(Support server:https://discord.gg/TZDYSHSZgg)",icon_url="https://cdn.discordapp.com/avatars/488643992628494347/e50ae57d9e8880e6acfbc2b444000fa1.webp?size=128")
           await messagesent.edit(embed=embedone)
@@ -579,6 +596,45 @@ class Moderation(commands.Cog):
             elif copychannel.type==discord.ChannelType.voice:
               await copycategory.create_voice_channel(copychannel.name)          
         await ctx.channel.delete()
+    @commands.command(
+        brief='This command checks for profanity in certain channels.',
+        description=
+        'This command checks for profanity in certain channel and can be used by members having manage_messages permission.',
+        usage="#channel")
+    @commands.guild_only()
+    @commands.check_any(is_bot_staff(),
+                        commands.has_permissions(manage_messages=True))
+    async def enableprofanefilter(self, ctx, channel: discord.TextChannel = None):
+        global antifilter
+        if channel == None:
+            channel = ctx.channel
+        if channel.id in antifilter:
+            raise commands.CommandError(
+                "This channel is already being checked for profanity .")
+            return
+        else:
+            antifilter.append(channel.id)
+            await ctx.send("Successfully enabled profanity checks in this channel .")
+
+    @commands.command(
+        brief='This command disables checking for profanity in certain channels.',
+        description=
+        'This command disables checking for profanity in certain channel and can be used by members having manage_messages permission.',
+        usage="#channel")
+    @commands.guild_only()
+    @commands.check_any(is_bot_staff(),
+                        commands.has_permissions(manage_messages=True))
+    async def disableprofanefilter(self, ctx, channel: discord.TextChannel = None):
+        global antifilter
+        if channel == None:
+            channel = ctx.channel
+        if not channel.id in antifilter:
+            raise commands.CommandError(
+                "This channel is not being checked for profanity .")
+            return
+        else:
+            antifilter.remove(channel.id)
+            await ctx.send("Successfully disabled profanity checks in this channel .")
     @commands.command(brief='This command checks for links in certain channels.', description='This command checks for links in certain channel and can be used by members having manage_messages permission.',usage="#channel")
     @commands.guild_only()
     @commands.check_any(is_bot_staff(), 
@@ -1394,360 +1450,713 @@ targeted attacks using automated user accounts.""")
       
 client.add_cog(Captcha(client))
 class MinecraftFun(commands.Cog):
-    @commands.cooldown(1,30,BucketType.user)
-    @commands.command(brief='This command is used to generate terrain (similar to minecraft).', description='This command is used to generate terrain (similar to minecraft).',usage="number")
-    async def generateterrain(self,ctx,number=8):
-      blocks=["clay","coal","diamond","gold","gravel","ice","iron","sand","stone","dirt","grass","water","air"]
-      blockemojilist=["<:clay:825355418083655740>","<:coal:825355417802375188>","<:diamond:825355417717833729>","<:gold:825355419420983317>","<:gravel:825355419030781994>","<:ice:825355417621626890>","<:iron:825355419140227082>","<:sand:825355420080144406>","<:stone:825355417810632704>","<:dirt:825364586991583272>","<:grass:825355420604039219>","<:water:825366913966276618>","<:air:825368135863500822>"]
-      surfaceblocks=["water","grass","sand","air"]
-      surfacechance=[30,40,20,10]
-      chance = [13,15,5,13,11,0,9,0,19,15,0,0,0]
-      belowblocks="<:bedrock:825370647869259848>"
-      belowlist=""
-      results = random.choices(blocks,chance,k=number*number)
-      sumloop=0
-      for i in range(0,number): 
-        blockemojis=""
-        for j in range(number):
-          #print(sumloop)
-          chosenblock=results[sumloop]
-          if sumloop<=number:
-            chosenlist=random.choices(surfaceblocks,surfacechance,k=1)
-            chosenblock=chosenlist[0]
-          blockemojis+=f"{blockemojilist[blocks.index(chosenblock)]}"
-          #print(blockemojis)
-          sumloop+=1
-        await ctx.send(blockemojis)
-      for i in range(number):
-        belowlist+=belowblocks
-      await ctx.send(belowlist)
-        
-    @commands.cooldown(1,30,BucketType.user)
-    @commands.command(brief='This command is used to fight other users (minecraft pvp mechanics).', description='This command is used to fight other users (minecraft pvp mechanics).',usage="@member")
+    #cool
+    @commands.cooldown(1, 30, BucketType.user)
+    @commands.command(
+        brief='This command shows the mined inventory items.',
+        description='This command shows the mined inventory items of the user.',
+        usage="")
+    async def inventory(self, ctx):
+        file1 = open(f"{ctx.author.id}_mine.txt", "w")
+        file1.close()
+        inventory = open(f"{ctx.author.id}_mine.txt", "r")
+        invstring = inventory.read()
+        itemslist = invstring.split(",")
+        embedOne = discord.Embed(title=f"{ctx.author.name}",
+                                 description="Inventory",
+                                 color=Color.green())
+
+        for item in itemslist:
+            if item == '':
+                break
+            embedOne.add_field(name=item, value="\u200b", inline=False)
+        await ctx.send(embed=embedOne)
+
+    @commands.cooldown(1, 30, BucketType.user)
+    @commands.command(
+        brief='This command is used to mine items.',
+        description=
+        'This command is used to mine items and store it in inventory.',
+        usage="")
+    async def mine(self, ctx):
+        """
+      mobappearlist=["mine","mine","mine","mob"]
+      mobappearchances=[20,20,30,30]
+      mobappearlist=random.choices(mobappearlist,mobappearchances,k=1)
+      mobappearresult=mobappearlist[0]
+      if mobappearresult=="mob":
+        minecraftmobs=["Zombie","Skeleton","Creeper"]
+
+        creeperdamage=[10,15,0,5,0]
+        skeletondamage=[2,3,4,5,0]
+        zombiedamage=[2.5,3,4.5,0]
+        selectedmob=random.choice(minecraftmobs)
+        embedOne = discord.Embed(title=f"{ctx.author.name}",
+                            description=f"A wild {selectedmob} appeared !",           color=Color.red())
+        embedOne.add_field(name=f"Pvp the {selectedmob} by typing `f`.",value="\u200b",inline=False)
+        await ctx.send(embed=embedOne)
+        pvpmember_health=25
+        mob_health=20
+        pvpmember=ctx.author
+        def check(m):
+          nonlocal pvpmember,selectedmob,creeperdamage,zombiedamage,skeletondamage,pvpmember_health,mob_health
+          if pvpmember==m.author:
+            strengthlist=[1,2,3]
+            randomdamage=random.choice(strengthlist)
+            client.loop.create_task( ctx.channel.send(f"{pvpmember.mention} dealt {randomdamage} to {selectedmob} ."))
+            mob_health-=randomdamage
+            if mob_health<=0:
+              client.loop.create_task( ctx.channel.send(f"{pvpmember.mention} defeated the {selectedmob} "))
+              return True
+            if selectedmob=="Zombie":
+              damagedealt=random.choice(zombiedamage)
+            if selectedmob=="Creeper":
+              damagedealt=random.choice(creeperdamage)
+            if selectedmob=="Skeleton":
+              damagedealt=random.choice(skeletondamage)
+            pvpmember_health-=damagedealt
+            client.loop.create_task( ctx.channel.send(f" **{selectedmob}** dealt {damagedealt} to {pvpmember.mention} ."))
+            if pvpmember_health<=0:
+              client.loop.create_task( ctx.channel.send(f" **{pvpmember.mention}** was defeated by the mob {selectedmob} ."))
+              return True        
+            player_health=""
+            for i in range(int(pvpmember_health/2)):
+              player_health+=":heart:"
+            client.loop.create_task( ctx.channel.send(f" {pvpmember.mention} health : {player_health} "))
+            
+          return False
+        msg = await client.wait_for('message', check=check,timeout=120)
+        return
+      """
+
+        blocks = [
+            "Clay", "Coal", "Diamond", "Gold", "Gravel", "Ice", "Iron", "Sand",
+            "Stone", "Grass"
+        ]
+        blockemojilist = [
+            "<:clay:825355418083655740>", "<:coal:825355417802375188>",
+            "<:diamond:825355417717833729>", "<:gold:825355419420983317>",
+            "<:gravel:825355419030781994>", "<:ice:825355417621626890>",
+            "<:iron:825355419140227082>", "<:sand:825355420080144406>",
+            "<:stone:825355417810632704>", "<:grass:825355420604039219>"
+        ]
+        chance = [13, 8, 5, 8, 13, 10, 7, 7, 14, 15]
+
+        results = random.choices(blocks, chance, k=1)
+        embedOne = discord.Embed(title=f"Current mining results.",
+                                 description=f"\u200b",
+                                 color=Color.green())
+        embedOne.add_field(
+            name=
+            f"You mined up 1 {(blockemojilist[blocks.index(results[0])])} {results[0]}",
+            value="\u200b",
+            inline=False)
+        await ctx.send(embed=embedOne)
+        file1 = open(f"{ctx.author.id}_mine.txt", "w")
+        file1.close()
+        file1 = open(f"{ctx.author.id}_mine.txt", "a")
+        file1.write(results[0] + ",")
+        file1.close()
+
+    @commands.cooldown(1, 30, BucketType.user)
+    @commands.command(
+        brief=
+        'This command is used to generate terrain (similar to minecraft).',
+        description=
+        'This command is used to generate terrain (similar to minecraft).',
+        usage="number")
+    async def generateterrain(self, ctx, number=8):
+        blocks = [
+            "clay", "coal", "diamond", "gold", "gravel", "ice", "iron", "sand",
+            "stone", "dirt", "grass", "water", "air"
+        ]
+        blockemojilist = [
+            "<:clay:825355418083655740>", "<:coal:825355417802375188>",
+            "<:diamond:825355417717833729>", "<:gold:825355419420983317>",
+            "<:gravel:825355419030781994>", "<:ice:825355417621626890>",
+            "<:iron:825355419140227082>", "<:sand:825355420080144406>",
+            "<:stone:825355417810632704>", "<:dirt:825364586991583272>",
+            "<:grass:825355420604039219>", "<:water:825366913966276618>",
+            "<:air:825368135863500822>"
+        ]
+        surfaceblocks = ["water", "grass", "sand", "air"]
+        surfacechance = [30, 40, 20, 10]
+        chance = [13, 15, 5, 13, 11, 0, 9, 0, 19, 15, 0, 0, 0]
+        belowblocks = "<:bedrock:825370647869259848>"
+        belowlist = ""
+        results = random.choices(blocks, chance, k=number * number)
+        sumloop = 0
+        for i in range(0, number):
+            blockemojis = ""
+            for j in range(number):
+                #print(sumloop)
+                chosenblock = results[sumloop]
+                if sumloop <= number:
+                    chosenlist = random.choices(surfaceblocks,
+                                                surfacechance,
+                                                k=1)
+                    chosenblock = chosenlist[0]
+                blockemojis += f"{blockemojilist[blocks.index(chosenblock)]}"
+                #print(blockemojis)
+                sumloop += 1
+            await ctx.send(blockemojis)
+        for i in range(number):
+            belowlist += belowblocks
+        await ctx.send(belowlist)
+
+    @commands.cooldown(1, 30, BucketType.user)
+    @commands.command(
+        brief=
+        'This command is used to fight other users (minecraft pvp mechanics).',
+        description=
+        'This command is used to fight other users (minecraft pvp mechanics).',
+        usage="@member")
     @commands.guild_only()
-    async def pvp(self,ctx,member:discord.Member):
-      if member==ctx.author:
-        await ctx.channel.send(" Trying to battle yourself will only have major consequences !")
-        return
-        
-      orechoice=["Netherite","Diamond","Iron","Leather"]
-      swordchoice=["Netherite","Diamond","Iron","Stone","Gold","Wood"]
-      armorresist=[85.0,75.0,60.0,28.0]
-      swordattack=[12.0,10.0,9.0,8.0,6.0,5.0]
-      memberone=ctx.author
-      membertwo=member
-      messagereact=await ctx.channel.send(f'React with that 👍 reaction in 60 seconds, {member.mention} to start the pvp match !')
-      await messagereact.add_reaction("👍")
-      escapelist=["ran away like a coward .","was scared of a terrible defeat .","didn't know how to fight ."," escaped in the midst of a battle .",f"was too weak for battling {ctx.author.mention} .",f"was scared of fighting {ctx.author.mention} ."]
-      def check(reaction, user):
-        return user == member and str(reaction.emoji) == '👍'
+    async def pvp(self, ctx, member: discord.Member):
+        if member == ctx.author:
+            await ctx.channel.send(
+                " Trying to battle yourself will only have major consequences !"
+            )
+            return
 
-      try:
-        reaction, user = await client.wait_for('reaction_add', timeout=60.0, check=check)
+        orechoice = ["Netherite", "Diamond", "Iron", "Leather"]
+        swordchoice = ["Netherite", "Diamond", "Iron", "Stone", "Gold", "Wood"]
+        armorresist = [85.0, 75.0, 60.0, 28.0]
+        swordattack = [12.0, 10.0, 9.0, 8.0, 6.0, 5.0]
+        memberone = ctx.author
+        membertwo = member
+        messagereact = await ctx.channel.send(
+            f'React with that 👍 reaction in 60 seconds, {member.mention} to start the pvp match !'
+        )
+        await messagereact.add_reaction("👍")
+        escapelist = [
+            "ran away like a coward .", "was scared of a terrible defeat .",
+            "didn't know how to fight .",
+            " escaped in the midst of a battle .",
+            f"was too weak for battling {ctx.author.mention} .",
+            f"was scared of fighting {ctx.author.mention} ."
+        ]
 
-      except asyncio.TimeoutError:
-        await ctx.channel.send(f'{member} {random.choice(escapelist)}')
-        return
-      else:
-          await ctx.reply('Let the battle preparations take place !')
-      try:
-        await ctx.channel.edit(slowmode_delay=1)
-      except:
-        raise commands.CommandError(" I do not have `manage_channels` permission to set slowmode to this channel ")
-      memberone_healthpoint=30+random.randint(-10,10)
-      memberone_armor=random.choice(orechoice)
-      memberone_armor_resist=armorresist[orechoice.index(memberone_armor)]
-      memberone_sword=random.choice(swordchoice)
-      memberone_sword_attack=swordattack[swordchoice.index(memberone_sword)]
-      membertwo_healthpoint=30+random.randint(-10,10)
-      membertwo_armor=random.choice(orechoice)
-      membertwo_armor_resist=armorresist[orechoice.index(membertwo_armor)]
-      membertwo_sword=random.choice(swordchoice)
-      membertwo_sword_attack=swordattack[swordchoice.index(membertwo_sword)]
-      await ctx.channel.send(f" {ctx.author.mention}({memberone_healthpoint} Hitpoints) prepared a {memberone_armor} armor and a {memberone_sword} sword to obliterate {member} .")
-      await ctx.channel.send(f" {member.mention}({membertwo_healthpoint} Hitpoints) prepared a {membertwo_armor} armor and a {membertwo_sword} sword to obliterate {ctx.author.mention} .")
-      await ctx.channel.send(f'(No spamming)👍 Let the battle commence between {member.mention} and {ctx.author.mention} .') 
-      await ctx.channel.send(' Type `f` to fight with sword and `d` to defend . `(NOTE: This is instantaneous and the member to obliterate other wins !)`' )
-      memberone_resistance=False
-      membertwo_resistance=False
-      memberone_resistances=0
-      memberone_critical=0
-      memberone_strong=0
-      memberone_weak=0
-      membertwo_resistances=0
-      membertwo_critical=0
-      membertwo_strong=0
-      membertwo_weak=0      
-      def check(m):
-        user=m.author
-        message=m.content
-        nonlocal memberone,membertwo,memberone_healthpoint,membertwo_healthpoint,memberone_armor_resist,memberone_sword_attack,membertwo_armor_resist,membertwo_sword_attack,memberone_resistance,membertwo_resistance,memberone_resistances,memberone_critical,memberone_strong,memberone_weak,membertwo_resistances,membertwo_critical,membertwo_strong,membertwo_weak
-        if message=='f' or message=='d':
-          attack=['weak','strong','critical']
-          attackdamage=[0.5,1.5,2.0]
-          winmessage=[" was shot by "," was slain by "," was pummeled by "," drowned whilst trying to escape "," was blown up by "," hit the ground too hard whilst trying to escape "," was squashed by a falling anvil whilst fighting "," was squashed by a falling block whilst fighting "," was skewered by a falling stalactite whilst fighting "," walked into fire whilst fighting "," was burnt to a crisp whilst fighting "," went off with a bang due to a firework fired by "," tried to swim in lava to escape "," was struck by lightning whilst fighting ","walked into danger zone due to "," was killed by magic whilst trying to escape "," was frozen to death by "," was fireballed by "," didn't want to live in the same world as "," was impaled by "," was killed trying to hurt "," was poked to death by a sweet berry bush whilst trying to escape "," withered away whilst fighting "]
-          if user==memberone:
-            if message=='f':
+        def check(reaction, user):
+            return user == member and str(reaction.emoji) == '👍'
 
-              attackchoice=random.choice(attack)
-              if attackchoice=="weak":
-                memberone_weak+=1
-              if attackchoice=="strong":
-                memberone_strong+=1
-              if attackchoice=="critical":
-                memberone_critical+=1
-              attackvalue=attackdamage[attack.index(attackchoice)]
-              armorresistvalue=100.0-membertwo_armor_resist
-              damagevalue=(armorresistvalue/100.0)*(memberone_sword_attack*attackvalue)
-              if membertwo_resistance:
-                client.loop.create_task( ctx.channel.send(f" The shield protected {membertwo.mention} from {(0.4*damagevalue)} hitpoints ."))
-                damagevalue*=0.6
-                membertwo_resistance=False
-              client.loop.create_task( ctx.channel.send(f"{memberone.mention} dealt {damagevalue} to {membertwo.mention} with a {attackchoice} hit."))
-              membertwo_healthpoint-=damagevalue           
-              player_health=""
-              for i in range(int(membertwo_healthpoint)):
-                player_health+=":heart:"
-              client.loop.create_task( ctx.channel.send(f" {membertwo.mention} health : {player_health} ."))
-              
-              if membertwo_healthpoint<=0.0:
-                client.loop.create_task( ctx.channel.send(f" {membertwo.mention}{random.choice(winmessage)}{memberone.mention} ."))
-                return True
-            elif message=='d':
-              memberone_resistances+=1
-              client.loop.create_task( ctx.channel.send(f" {memberone.mention} has equipped the shield ."))
-              memberone_resistance=True
-          if user==membertwo:
-            if message=='f':
-              attackchoice=random.choice(attack)
-              if attackchoice=="weak":
-                membertwo_weak+=1
-              if attackchoice=="strong":
-                membertwo_strong+=1
-              if attackchoice=="critical":
-                membertwo_critical+=1
-              attackvalue=attackdamage[attack.index(attackchoice)]
-              armorresistvalue=100.0-memberone_armor_resist
-              damagevalue=(armorresistvalue/100)*(membertwo_sword_attack*attackvalue)
-              if memberone_resistance:
-                client.loop.create_task( ctx.channel.send(f" The shield protected {memberone.mention} from {(0.4*damagevalue)} hitpoints ."))
-                damagevalue*=0.6
-                memberone_resistance=False
-              client.loop.create_task( ctx.channel.send(f"{membertwo.mention} dealt {damagevalue} to {memberone.mention} with a {attackchoice} hit."))
+        try:
+            reaction, user = await client.wait_for('reaction_add',
+                                                   timeout=60.0,
+                                                   check=check)
 
-              memberone_healthpoint-=damagevalue
-              player_health=""
-              for i in range(int(memberone_healthpoint)):
-                player_health+=":heart:"
-              client.loop.create_task( ctx.channel.send(f" {memberone.mention} health : {player_health} ."))
-              
-              if memberone_healthpoint<=0.0:
-                client.loop.create_task( ctx.channel.send(f" {memberone.mention}{random.choice(winmessage)}{membertwo.mention} ."))
-                return True
-            elif message=='d':
-              memberone_resistances+=1
-              client.loop.create_task( ctx.channel.send(f" {membertwo.mention} has equipped the shield ."))      
-              membertwo_resistance=True
-        return False    
-                
-      msg = await client.wait_for('message', check=check,timeout=120)
-      embedOne = discord.Embed(title="Battle results",
-                            description=f"{memberone.name} and {membertwo.name}",
-                            color=Color.green())
-      embedOne.add_field(name=f"{memberone.name} ",value=f"{memberone_armor} Armor({memberone_armor_resist}% resistance) ,{memberone_sword} Sword({memberone_sword_attack} attack damage) .",inline=False)
-      embedOne.add_field(name=(f"{memberone.name} Battle Stats "),value=f"Shield used: {memberone_resistances} , Critical damage : {memberone_critical} , Strong damage : {memberone_strong} , Weak Damage : {memberone_weak} .",inline=False)
-      embedOne.add_field(name=f"{membertwo.name} ",value=f"{membertwo_armor} Armor({membertwo_armor_resist}% resistance) ,{membertwo_sword} Sword({membertwo_sword_attack} attack damage) .",inline=False)
-      embedOne.add_field(name=(f"{membertwo.name} Battle Stats "),value=f"Shield used: {membertwo_resistances} , Critical damage : {membertwo_critical} , Strong damage : {membertwo_strong} , Weak Damage : {membertwo_weak} .",inline=False)
-      if memberone_healthpoint<=0:
-        embedOne.add_field(name=f"Winner {membertwo.name}",value=f"Health: {membertwo_healthpoint}",inline=True)
-      elif membertwo_healthpoint<=0: 
-        embedOne.add_field(name=f"Winner {memberone.name}",value=f"Health: {memberone_healthpoint}",inline=True)
-      else:
-        embedOne.add_field(name=f"Match Tied",value=f"{memberone_healthpoint}",inline=True)
-      await ctx.send(embed=embedOne)
-    @commands.cooldown(1,30,BucketType.user)
-    @commands.command(brief='This command is used to fight other users with sound effects(minecraft pvp mechanics).', description='This command is used to fight other users with sound effects(minecraft pvp mechanics).',usage="@member")
+        except asyncio.TimeoutError:
+            await ctx.channel.send(f'{member} {random.choice(escapelist)}')
+            return
+        else:
+            await ctx.reply('Let the battle preparations take place !')
+        try:
+            await ctx.channel.edit(slowmode_delay=1)
+        except:
+            raise commands.CommandError(
+                " I do not have `manage_channels` permission to set slowmode to this channel "
+            )
+        memberone_healthpoint = 30 + random.randint(-10, 10)
+        memberone_armor = random.choice(orechoice)
+        memberone_armor_resist = armorresist[orechoice.index(memberone_armor)]
+        memberone_sword = random.choice(swordchoice)
+        memberone_sword_attack = swordattack[swordchoice.index(
+            memberone_sword)]
+        membertwo_healthpoint = 30 + random.randint(-10, 10)
+        membertwo_armor = random.choice(orechoice)
+        membertwo_armor_resist = armorresist[orechoice.index(membertwo_armor)]
+        membertwo_sword = random.choice(swordchoice)
+        membertwo_sword_attack = swordattack[swordchoice.index(
+            membertwo_sword)]
+        await ctx.channel.send(
+            f" {ctx.author.mention}({memberone_healthpoint} Hitpoints) prepared a {memberone_armor} armor and a {memberone_sword} sword to obliterate {member} ."
+        )
+        await ctx.channel.send(
+            f" {member.mention}({membertwo_healthpoint} Hitpoints) prepared a {membertwo_armor} armor and a {membertwo_sword} sword to obliterate {ctx.author.mention} ."
+        )
+        await ctx.channel.send(
+            f'(No spamming)👍 Let the battle commence between {member.mention} and {ctx.author.mention} .'
+        )
+        await ctx.channel.send(
+            ' Type `f` to fight with sword and `d` to defend . `(NOTE: This is instantaneous and the member to obliterate other wins !)`'
+        )
+        memberone_resistance = False
+        membertwo_resistance = False
+        memberone_resistances = 0
+        memberone_critical = 0
+        memberone_strong = 0
+        memberone_weak = 0
+        membertwo_resistances = 0
+        membertwo_critical = 0
+        membertwo_strong = 0
+        membertwo_weak = 0
+
+        def check(m):
+            user = m.author
+            message = m.content
+            nonlocal memberone, membertwo, memberone_healthpoint, membertwo_healthpoint, memberone_armor_resist, memberone_sword_attack, membertwo_armor_resist, membertwo_sword_attack, memberone_resistance, membertwo_resistance, memberone_resistances, memberone_critical, memberone_strong, memberone_weak, membertwo_resistances, membertwo_critical, membertwo_strong, membertwo_weak
+            if message == 'f' or message == 'd':
+                attack = ['weak', 'strong', 'critical']
+                attackdamage = [0.5, 1.5, 2.0]
+                winmessage = [
+                    " was shot by ", " was slain by ", " was pummeled by ",
+                    " drowned whilst trying to escape ", " was blown up by ",
+                    " hit the ground too hard whilst trying to escape ",
+                    " was squashed by a falling anvil whilst fighting ",
+                    " was squashed by a falling block whilst fighting ",
+                    " was skewered by a falling stalactite whilst fighting ",
+                    " walked into fire whilst fighting ",
+                    " was burnt to a crisp whilst fighting ",
+                    " went off with a bang due to a firework fired by ",
+                    " tried to swim in lava to escape ",
+                    " was struck by lightning whilst fighting ",
+                    "walked into danger zone due to ",
+                    " was killed by magic whilst trying to escape ",
+                    " was frozen to death by ", " was fireballed by ",
+                    " didn't want to live in the same world as ",
+                    " was impaled by ", " was killed trying to hurt ",
+                    " was poked to death by a sweet berry bush whilst trying to escape ",
+                    " withered away whilst fighting "
+                ]
+                if user == memberone:
+                    if message == 'f':
+
+                        attackchoice = random.choice(attack)
+                        if attackchoice == "weak":
+                            memberone_weak += 1
+                        if attackchoice == "strong":
+                            memberone_strong += 1
+                        if attackchoice == "critical":
+                            memberone_critical += 1
+                        attackvalue = attackdamage[attack.index(attackchoice)]
+                        armorresistvalue = 100.0 - membertwo_armor_resist
+                        damagevalue = (armorresistvalue / 100.0) * (
+                            memberone_sword_attack * attackvalue)
+                        if membertwo_resistance:
+                            client.loop.create_task(
+                                ctx.channel.send(
+                                    f" The shield protected {membertwo.mention} from {(0.4*damagevalue)} hitpoints ."
+                                ))
+                            damagevalue *= 0.6
+                            membertwo_resistance = False
+                        client.loop.create_task(
+                            ctx.channel.send(
+                                f"{memberone.mention} dealt {damagevalue} to {membertwo.mention} with a {attackchoice} hit."
+                            ))
+                        membertwo_healthpoint -= damagevalue
+                        player_health = ""
+                        for i in range(int(membertwo_healthpoint)):
+                            player_health += ":heart:"
+                        client.loop.create_task(
+                            ctx.channel.send(
+                                f" {membertwo.mention} health : {player_health} ."
+                            ))
+
+                        if membertwo_healthpoint <= 0.0:
+                            client.loop.create_task(
+                                ctx.channel.send(
+                                    f" {membertwo.mention}{random.choice(winmessage)}{memberone.mention} ."
+                                ))
+                            return True
+                    elif message == 'd':
+                        memberone_resistances += 1
+                        client.loop.create_task(
+                            ctx.channel.send(
+                                f" {memberone.mention} has equipped the shield ."
+                            ))
+                        memberone_resistance = True
+                if user == membertwo:
+                    if message == 'f':
+                        attackchoice = random.choice(attack)
+                        if attackchoice == "weak":
+                            membertwo_weak += 1
+                        if attackchoice == "strong":
+                            membertwo_strong += 1
+                        if attackchoice == "critical":
+                            membertwo_critical += 1
+                        attackvalue = attackdamage[attack.index(attackchoice)]
+                        armorresistvalue = 100.0 - memberone_armor_resist
+                        damagevalue = (armorresistvalue / 100) * (
+                            membertwo_sword_attack * attackvalue)
+                        if memberone_resistance:
+                            client.loop.create_task(
+                                ctx.channel.send(
+                                    f" The shield protected {memberone.mention} from {(0.4*damagevalue)} hitpoints ."
+                                ))
+                            damagevalue *= 0.6
+                            memberone_resistance = False
+                        client.loop.create_task(
+                            ctx.channel.send(
+                                f"{membertwo.mention} dealt {damagevalue} to {memberone.mention} with a {attackchoice} hit."
+                            ))
+
+                        memberone_healthpoint -= damagevalue
+                        player_health = ""
+                        for i in range(int(memberone_healthpoint)):
+                            player_health += ":heart:"
+                        client.loop.create_task(
+                            ctx.channel.send(
+                                f" {memberone.mention} health : {player_health} ."
+                            ))
+
+                        if memberone_healthpoint <= 0.0:
+                            client.loop.create_task(
+                                ctx.channel.send(
+                                    f" {memberone.mention}{random.choice(winmessage)}{membertwo.mention} ."
+                                ))
+                            return True
+                    elif message == 'd':
+                        memberone_resistances += 1
+                        client.loop.create_task(
+                            ctx.channel.send(
+                                f" {membertwo.mention} has equipped the shield ."
+                            ))
+                        membertwo_resistance = True
+            return False
+
+        msg = await client.wait_for('message', check=check, timeout=120)
+        embedOne = discord.Embed(
+            title="Battle results",
+            description=f"{memberone.name} and {membertwo.name}",
+            color=Color.green())
+        embedOne.add_field(
+            name=f"{memberone.name} ",
+            value=
+            f"{memberone_armor} Armor({memberone_armor_resist}% resistance) ,{memberone_sword} Sword({memberone_sword_attack} attack damage) .",
+            inline=False)
+        embedOne.add_field(
+            name=(f"{memberone.name} Battle Stats "),
+            value=
+            f"Shield used: {memberone_resistances} , Critical damage : {memberone_critical} , Strong damage : {memberone_strong} , Weak Damage : {memberone_weak} .",
+            inline=False)
+        embedOne.add_field(
+            name=f"{membertwo.name} ",
+            value=
+            f"{membertwo_armor} Armor({membertwo_armor_resist}% resistance) ,{membertwo_sword} Sword({membertwo_sword_attack} attack damage) .",
+            inline=False)
+        embedOne.add_field(
+            name=(f"{membertwo.name} Battle Stats "),
+            value=
+            f"Shield used: {membertwo_resistances} , Critical damage : {membertwo_critical} , Strong damage : {membertwo_strong} , Weak Damage : {membertwo_weak} .",
+            inline=False)
+        if memberone_healthpoint <= 0:
+            embedOne.add_field(name=f"Winner {membertwo.name}",
+                               value=f"Health: {membertwo_healthpoint}",
+                               inline=True)
+        elif membertwo_healthpoint <= 0:
+            embedOne.add_field(name=f"Winner {memberone.name}",
+                               value=f"Health: {memberone_healthpoint}",
+                               inline=True)
+        else:
+            embedOne.add_field(name=f"Match Tied",
+                               value=f"{memberone_healthpoint}",
+                               inline=True)
+        await ctx.send(embed=embedOne)
+
+    @commands.cooldown(1, 30, BucketType.user)
+    @commands.command(
+        brief=
+        'This command is used to fight other users with sound effects(minecraft pvp mechanics).',
+        description=
+        'This command is used to fight other users with sound effects(minecraft pvp mechanics).',
+        usage="@member")
     @commands.guild_only()
-    async def soundpvp(self,ctx,member:discord.Member):
-      if member==ctx.author:
-        await ctx.channel.send(" Trying to battle yourself will only have major consequences !")
-        return
-        
-      orechoice=["Netherite","Diamond","Iron","Leather"]
-      swordchoice=["Netherite","Diamond","Iron","Stone","Gold","Wood"]
-      armorresist=[85.0,75.0,60.0,28.0]
-      swordattack=[12.0,10.0,9.0,8.0,6.0,5.0]
-      memberone=ctx.author
-      membertwo=member
-      messagereact=await ctx.send(f'React with that 👍 reaction in 60 seconds, {member.mention} to start the pvp match !')
-      await messagereact.add_reaction("👍")
-      escapelist=["ran away like a coward .","was scared of a terrible defeat .","didn't know how to fight ."," escaped in the midst of a battle .",f"was too weak for battling {ctx.author.mention} .",f"was scared of fighting {ctx.author.mention} ."]
-      def check(reaction, user):
-        return user == member and str(reaction.emoji) == '👍'
+    async def soundpvp(self, ctx, member: discord.Member):
+        if member == ctx.author:
+            await ctx.channel.send(
+                " Trying to battle yourself will only have major consequences !"
+            )
+            return
 
-      try:
-        reaction, user = await client.wait_for('reaction_add', timeout=60.0, check=check)
+        orechoice = ["Netherite", "Diamond", "Iron", "Leather"]
+        swordchoice = ["Netherite", "Diamond", "Iron", "Stone", "Gold", "Wood"]
+        armorresist = [85.0, 75.0, 60.0, 28.0]
+        swordattack = [12.0, 10.0, 9.0, 8.0, 6.0, 5.0]
+        memberone = ctx.author
+        membertwo = member
+        messagereact = await ctx.send(
+            f'React with that 👍 reaction in 60 seconds, {member.mention} to start the pvp match !'
+        )
+        await messagereact.add_reaction("👍")
+        escapelist = [
+            "ran away like a coward .", "was scared of a terrible defeat .",
+            "didn't know how to fight .",
+            " escaped in the midst of a battle .",
+            f"was too weak for battling {ctx.author.mention} .",
+            f"was scared of fighting {ctx.author.mention} ."
+        ]
 
-      except asyncio.TimeoutError:
-        await ctx.channel.send(f'{member} {random.choice(escapelist)}')
-        return
-      else:
-          await ctx.reply('Let the battle preparations take place !')
-      try:
-        await ctx.channel.edit(slowmode_delay=1)
-      except:
-        raise commands.CommandError(" I do not have `manage_channels` permission to set slowmode to this channel ")
+        def check(reaction, user):
+            return user == member and str(reaction.emoji) == '👍'
 
-      memberone_healthpoint=30+random.randint(-10,10)
-      memberone_armor=random.choice(orechoice)
-      memberone_armor_resist=armorresist[orechoice.index(memberone_armor)]
-      memberone_sword=random.choice(swordchoice)
-      memberone_sword_attack=swordattack[swordchoice.index(memberone_sword)]
-      membertwo_healthpoint=30+random.randint(-10,10)
-      membertwo_armor=random.choice(orechoice)
-      membertwo_armor_resist=armorresist[orechoice.index(membertwo_armor)]
-      membertwo_sword=random.choice(swordchoice)
-      membertwo_sword_attack=swordattack[swordchoice.index(membertwo_sword)]
-      await ctx.channel.send(f" {ctx.author.mention}({memberone_healthpoint} Hitpoints) prepared a {memberone_armor} armor and a {memberone_sword} sword to obliterate {member} .")
-      await ctx.channel.send(f" {member.mention}({membertwo_healthpoint} Hitpoints) prepared a {membertwo_armor} armor and a {membertwo_sword} sword to obliterate {ctx.author.mention} .")
-      await ctx.channel.send(f'(No spamming)👍 Let the battle commence between {member.mention} and {ctx.author.mention} .') 
-      await ctx.channel.send(' Type `f` to fight with sword and `d` to defend . `(NOTE: This is instantaneous and the member to obliterate other wins !)`' )
-      voicechannel=ctx.voice_client
-      voicechannel.play(discord.FFmpegPCMAudio("Random_levelup.ogg"))
-      memberone_resistance=False
-      membertwo_resistance=False
-      memberone_resistances=0
-      memberone_critical=0
-      memberone_strong=0
-      memberone_weak=0
-      membertwo_resistances=0
-      membertwo_critical=0
-      membertwo_strong=0
-      membertwo_weak=0      
-      def check(m):
-        user=m.author
-        message=m.content
-        nonlocal memberone,membertwo,memberone_healthpoint,membertwo_healthpoint,memberone_armor_resist,memberone_sword_attack,membertwo_armor_resist,membertwo_sword_attack,memberone_resistance,membertwo_resistance,voicechannel,memberone_resistances,memberone_critical,memberone_strong,memberone_weak,membertwo_resistances,membertwo_critical,membertwo_strong,membertwo_weak
-        if message=='f' or message=='d':
-          attack=['weak','strong','critical']
-          attackdamage=[0.5,1.5,2.0]
-          winmessage=[" was shot by "," was slain by "," was pummeled by "," drowned whilst trying to escape "," was blown up by "," hit the ground too hard whilst trying to escape "," was squashed by a falling anvil whilst fighting "," was squashed by a falling block whilst fighting "," was skewered by a falling stalactite whilst fighting "," walked into fire whilst fighting "," was burnt to a crisp whilst fighting "," went off with a bang due to a firework fired by "," tried to swim in lava to escape "," was struck by lightning whilst fighting ","walked into danger zone due to "," was killed by magic whilst trying to escape "," was frozen to death by "," was fireballed by "," didn't want to live in the same world as "," was impaled by "," was killed trying to hurt "," was poked to death by a sweet berry bush whilst trying to escape "," withered away whilst fighting "]
-          if user==memberone:
-            if message=='f':
+        try:
+            reaction, user = await client.wait_for('reaction_add',
+                                                   timeout=60.0,
+                                                   check=check)
 
-              attackchoice=random.choice(attack)
-              if voicechannel.is_playing():
-                  voicechannel.stop()
-              if attackchoice=="weak":
-                memberone_weak+=1
-                voicechannel.play(discord.FFmpegPCMAudio("Weak_attack1.ogg"))
-              if attackchoice=="strong":
-                memberone_strong+=1
-                voicechannel.play(discord.FFmpegPCMAudio("Strong_attack1.ogg"))
-              if attackchoice=="critical":
-                memberone_critical+=1
-                voicechannel.play(discord.FFmpegPCMAudio("Critical_attack1.ogg"))
-              attackvalue=attackdamage[attack.index(attackchoice)]
-              armorresistvalue=100.0-membertwo_armor_resist
-              damagevalue=(armorresistvalue/100.0)*(memberone_sword_attack*attackvalue)
-              if membertwo_resistance:
-                client.loop.create_task( ctx.channel.send(f" The shield protected {membertwo.mention} from {(0.4*damagevalue)} hitpoints ."))
-                damagevalue*=0.6
-                membertwo_resistance=False
-              client.loop.create_task( ctx.channel.send(f"{memberone.mention} dealt {damagevalue} to {membertwo.mention} with a {attackchoice} hit."))
-              membertwo_healthpoint-=damagevalue  
-              player_health=""
-              for i in range(int(membertwo_healthpoint)):
-                player_health+=":heart:"
-              client.loop.create_task( ctx.channel.send(f" {membertwo.mention} health : {player_health} ."))         
-              
-              if membertwo_healthpoint<=0.0:
-                client.loop.create_task( ctx.channel.send(f" {membertwo.mention}{random.choice(winmessage)}{memberone.mention} ."))
-                if voicechannel.is_playing():
-                  voicechannel.stop()
-                voicechannel.play(discord.FFmpegPCMAudio("Player_hurt1.ogg"))
-                return True
-            elif message=='d':
-              memberone_resistances+=1
-              client.loop.create_task( ctx.channel.send(f" {memberone.mention} has equipped the shield ."))
-              memberone_resistance=True
-              if voicechannel.is_playing():
-                voicechannel.stop()
-              voicechannel.play(discord.FFmpegPCMAudio("Shield_block5.ogg"))
-          if user==membertwo:
-            if message=='f':
-              attackchoice=random.choice(attack)
-              if voicechannel.is_playing():
-                voicechannel.stop()
-              if attackchoice=="weak":
-                membertwo_weak+=1
-                voicechannel.play(discord.FFmpegPCMAudio("Weak_attack1.ogg"))
-              if attackchoice=="strong":
-                membertwo_strong+=1
-                voicechannel.play(discord.FFmpegPCMAudio("Strong_attack1.ogg"))
-              if attackchoice=="critical":
-                membertwo_critical+=1
-                voicechannel.play(discord.FFmpegPCMAudio("Critical_attack1.ogg"))
-              attackvalue=attackdamage[attack.index(attackchoice)]
-              armorresistvalue=100.0-memberone_armor_resist
-              damagevalue=(armorresistvalue/100)*(membertwo_sword_attack*attackvalue)
-              if memberone_resistance:
-                client.loop.create_task( ctx.channel.send(f" The shield protected {memberone.mention} from {(0.4*damagevalue)} hitpoints ."))
-                damagevalue*=0.6
-                memberone_resistance=False
-              client.loop.create_task( ctx.channel.send(f"{membertwo.mention} dealt {damagevalue} to {memberone.mention} with a {attackchoice} hit."))
+        except asyncio.TimeoutError:
+            await ctx.channel.send(f'{member} {random.choice(escapelist)}')
+            return
+        else:
+            await ctx.reply('Let the battle preparations take place !')
+        try:
+            await ctx.channel.edit(slowmode_delay=1)
+        except:
+            raise commands.CommandError(
+                " I do not have `manage_channels` permission to set slowmode to this channel "
+            )
 
-              memberone_healthpoint-=damagevalue
-              player_health=""
-              for i in range(int(memberone_healthpoint)):
-                player_health+=":heart:"
-              client.loop.create_task( ctx.channel.send(f" {memberone.mention} health : {player_health} ."))
-              if memberone_healthpoint<=0.0:
-                client.loop.create_task( ctx.channel.send(f" {memberone.mention}{random.choice(winmessage)}{membertwo.mention} ."))
-                if voicechannel.is_playing():
-                  voicechannel.stop()
-                voicechannel.play(discord.FFmpegPCMAudio("Player_hurt1.ogg"))
-                return True
-            elif message=='d':
-              memberone_resistances+=1
-              client.loop.create_task( ctx.channel.send(f" {membertwo.mention} has equipped the shield ."))      
-              membertwo_resistance=True
-              if voicechannel.is_playing():
-                voicechannel.stop()
-              voicechannel.play(discord.FFmpegPCMAudio("Shield_block5.ogg"))
-        return False    
-                
-      msg = await client.wait_for('message', check=check,timeout=120)
-      if voicechannel.is_playing():
-        voicechannel.stop()
-      embedOne = discord.Embed(title="Battle results",
-                            description=f"{memberone.name} and {membertwo.name}",
-                            color=Color.green())
-      embedOne.add_field(name=f"{memberone.name} ",value=f"{memberone_armor} Armor({memberone_armor_resist}% resistance) ,{memberone_sword} Sword({memberone_sword_attack} attack damage) .",inline=False)
-      embedOne.add_field(name=(f"{memberone.name} Battle Stats "),value=f"Shield used: {memberone_resistances} , Critical damage : {memberone_critical} , Strong damage : {memberone_strong} , Weak Damage : {memberone_weak} .",inline=False)
-      embedOne.add_field(name=f"{membertwo.name} ",value=f"{membertwo_armor} Armor({membertwo_armor_resist}% resistance) ,{membertwo_sword} Sword({membertwo_sword_attack} attack damage) .",inline=False)
-      embedOne.add_field(name=(f"{membertwo.name} Battle Stats "),value=f"Shield used: {membertwo_resistances} , Critical damage : {membertwo_critical} , Strong damage : {membertwo_strong} , Weak Damage : {membertwo_weak} .",inline=False)
-      if memberone_healthpoint<=0:
-        embedOne.add_field(name=f"Winner {membertwo.name}",value=f"Health: {membertwo_healthpoint}",inline=True)
-      elif membertwo_healthpoint<=0: 
-        embedOne.add_field(name=f"Winner {memberone.name}",value=f"Health: {memberone_healthpoint}",inline=True)
-      else:
-        embedOne.add_field(name=f"Match Tied",value=f"{memberone_healthpoint}",inline=True)
-      voicechannel.play(discord.FFmpegPCMAudio("Firework_twinkle_far.ogg"))
-      await ctx.send(embed=embedOne)
-        
-      
+        memberone_healthpoint = 30 + random.randint(-10, 10)
+        memberone_armor = random.choice(orechoice)
+        memberone_armor_resist = armorresist[orechoice.index(memberone_armor)]
+        memberone_sword = random.choice(swordchoice)
+        memberone_sword_attack = swordattack[swordchoice.index(
+            memberone_sword)]
+        membertwo_healthpoint = 30 + random.randint(-10, 10)
+        membertwo_armor = random.choice(orechoice)
+        membertwo_armor_resist = armorresist[orechoice.index(membertwo_armor)]
+        membertwo_sword = random.choice(swordchoice)
+        membertwo_sword_attack = swordattack[swordchoice.index(
+            membertwo_sword)]
+        await ctx.channel.send(
+            f" {ctx.author.mention}({memberone_healthpoint} Hitpoints) prepared a {memberone_armor} armor and a {memberone_sword} sword to obliterate {member} ."
+        )
+        await ctx.channel.send(
+            f" {member.mention}({membertwo_healthpoint} Hitpoints) prepared a {membertwo_armor} armor and a {membertwo_sword} sword to obliterate {ctx.author.mention} ."
+        )
+        await ctx.channel.send(
+            f'(No spamming)👍 Let the battle commence between {member.mention} and {ctx.author.mention} .'
+        )
+        await ctx.channel.send(
+            ' Type `f` to fight with sword and `d` to defend . `(NOTE: This is instantaneous and the member to obliterate other wins !)`'
+        )
+        voicechannel = ctx.voice_client
+        voicechannel.play(discord.FFmpegPCMAudio("Random_levelup.ogg"))
+        memberone_resistance = False
+        membertwo_resistance = False
+        memberone_resistances = 0
+        memberone_critical = 0
+        memberone_strong = 0
+        memberone_weak = 0
+        membertwo_resistances = 0
+        membertwo_critical = 0
+        membertwo_strong = 0
+        membertwo_weak = 0
+
+        def check(m):
+            user = m.author
+            message = m.content
+            nonlocal memberone, membertwo, memberone_healthpoint, membertwo_healthpoint, memberone_armor_resist, memberone_sword_attack, membertwo_armor_resist, membertwo_sword_attack, memberone_resistance, membertwo_resistance, voicechannel, memberone_resistances, memberone_critical, memberone_strong, memberone_weak, membertwo_resistances, membertwo_critical, membertwo_strong, membertwo_weak
+            if message == 'f' or message == 'd':
+                attack = ['weak', 'strong', 'critical']
+                attackdamage = [0.5, 1.5, 2.0]
+                winmessage = [
+                    " was shot by ", " was slain by ", " was pummeled by ",
+                    " drowned whilst trying to escape ", " was blown up by ",
+                    " hit the ground too hard whilst trying to escape ",
+                    " was squashed by a falling anvil whilst fighting ",
+                    " was squashed by a falling block whilst fighting ",
+                    " was skewered by a falling stalactite whilst fighting ",
+                    " walked into fire whilst fighting ",
+                    " was burnt to a crisp whilst fighting ",
+                    " went off with a bang due to a firework fired by ",
+                    " tried to swim in lava to escape ",
+                    " was struck by lightning whilst fighting ",
+                    "walked into danger zone due to ",
+                    " was killed by magic whilst trying to escape ",
+                    " was frozen to death by ", " was fireballed by ",
+                    " didn't want to live in the same world as ",
+                    " was impaled by ", " was killed trying to hurt ",
+                    " was poked to death by a sweet berry bush whilst trying to escape ",
+                    " withered away whilst fighting "
+                ]
+                if user == memberone:
+                    if message == 'f':
+
+                        attackchoice = random.choice(attack)
+                        if voicechannel.is_playing():
+                            voicechannel.stop()
+                        if attackchoice == "weak":
+                            memberone_weak += 1
+                            voicechannel.play(
+                                discord.FFmpegPCMAudio("Weak_attack1.ogg"))
+                        if attackchoice == "strong":
+                            memberone_strong += 1
+                            voicechannel.play(
+                                discord.FFmpegPCMAudio("Strong_attack1.ogg"))
+                        if attackchoice == "critical":
+                            memberone_critical += 1
+                            voicechannel.play(
+                                discord.FFmpegPCMAudio("Critical_attack1.ogg"))
+                        attackvalue = attackdamage[attack.index(attackchoice)]
+                        armorresistvalue = 100.0 - membertwo_armor_resist
+                        damagevalue = (armorresistvalue / 100.0) * (
+                            memberone_sword_attack * attackvalue)
+                        if membertwo_resistance:
+                            client.loop.create_task(
+                                ctx.channel.send(
+                                    f" The shield protected {membertwo.mention} from {(0.4*damagevalue)} hitpoints ."
+                                ))
+                            damagevalue *= 0.6
+                            membertwo_resistance = False
+                        client.loop.create_task(
+                            ctx.channel.send(
+                                f"{memberone.mention} dealt {damagevalue} to {membertwo.mention} with a {attackchoice} hit."
+                            ))
+                        membertwo_healthpoint -= damagevalue
+                        player_health = ""
+                        for i in range(int(membertwo_healthpoint)):
+                            player_health += ":heart:"
+                        client.loop.create_task(
+                            ctx.channel.send(
+                                f" {membertwo.mention} health : {player_health} ."
+                            ))
+
+                        if membertwo_healthpoint <= 0.0:
+                            client.loop.create_task(
+                                ctx.channel.send(
+                                    f" {membertwo.mention}{random.choice(winmessage)}{memberone.mention} ."
+                                ))
+                            if voicechannel.is_playing():
+                                voicechannel.stop()
+                            voicechannel.play(
+                                discord.FFmpegPCMAudio("Player_hurt1.ogg"))
+                            return True
+                    elif message == 'd':
+                        memberone_resistances += 1
+                        client.loop.create_task(
+                            ctx.channel.send(
+                                f" {memberone.mention} has equipped the shield ."
+                            ))
+                        memberone_resistance = True
+                        if voicechannel.is_playing():
+                            voicechannel.stop()
+                        voicechannel.play(
+                            discord.FFmpegPCMAudio("Shield_block5.ogg"))
+                if user == membertwo:
+                    if message == 'f':
+                        attackchoice = random.choice(attack)
+                        if voicechannel.is_playing():
+                            voicechannel.stop()
+                        if attackchoice == "weak":
+                            membertwo_weak += 1
+                            voicechannel.play(
+                                discord.FFmpegPCMAudio("Weak_attack1.ogg"))
+                        if attackchoice == "strong":
+                            membertwo_strong += 1
+                            voicechannel.play(
+                                discord.FFmpegPCMAudio("Strong_attack1.ogg"))
+                        if attackchoice == "critical":
+                            membertwo_critical += 1
+                            voicechannel.play(
+                                discord.FFmpegPCMAudio("Critical_attack1.ogg"))
+                        attackvalue = attackdamage[attack.index(attackchoice)]
+                        armorresistvalue = 100.0 - memberone_armor_resist
+                        damagevalue = (armorresistvalue / 100) * (
+                            membertwo_sword_attack * attackvalue)
+                        if memberone_resistance:
+                            client.loop.create_task(
+                                ctx.channel.send(
+                                    f" The shield protected {memberone.mention} from {(0.4*damagevalue)} hitpoints ."
+                                ))
+                            damagevalue *= 0.6
+                            memberone_resistance = False
+                        client.loop.create_task(
+                            ctx.channel.send(
+                                f"{membertwo.mention} dealt {damagevalue} to {memberone.mention} with a {attackchoice} hit."
+                            ))
+
+                        memberone_healthpoint -= damagevalue
+                        player_health = ""
+                        for i in range(int(memberone_healthpoint)):
+                            player_health += ":heart:"
+                        client.loop.create_task(
+                            ctx.channel.send(
+                                f" {memberone.mention} health : {player_health} ."
+                            ))
+                        if memberone_healthpoint <= 0.0:
+                            client.loop.create_task(
+                                ctx.channel.send(
+                                    f" {memberone.mention}{random.choice(winmessage)}{membertwo.mention} ."
+                                ))
+                            if voicechannel.is_playing():
+                                voicechannel.stop()
+                            voicechannel.play(
+                                discord.FFmpegPCMAudio("Player_hurt1.ogg"))
+                            return True
+                    elif message == 'd':
+                        memberone_resistances += 1
+                        client.loop.create_task(
+                            ctx.channel.send(
+                                f" {membertwo.mention} has equipped the shield ."
+                            ))
+                        membertwo_resistance = True
+                        if voicechannel.is_playing():
+                            voicechannel.stop()
+                        voicechannel.play(
+                            discord.FFmpegPCMAudio("Shield_block5.ogg"))
+            return False
+
+        msg = await client.wait_for('message', check=check, timeout=120)
+        if voicechannel.is_playing():
+            voicechannel.stop()
+        embedOne = discord.Embed(
+            title="Battle results",
+            description=f"{memberone.name} and {membertwo.name}",
+            color=Color.green())
+        embedOne.add_field(
+            name=f"{memberone.name} ",
+            value=
+            f"{memberone_armor} Armor({memberone_armor_resist}% resistance) ,{memberone_sword} Sword({memberone_sword_attack} attack damage) .",
+            inline=False)
+        embedOne.add_field(
+            name=(f"{memberone.name} Battle Stats "),
+            value=
+            f"Shield used: {memberone_resistances} , Critical damage : {memberone_critical} , Strong damage : {memberone_strong} , Weak Damage : {memberone_weak} .",
+            inline=False)
+        embedOne.add_field(
+            name=f"{membertwo.name} ",
+            value=
+            f"{membertwo_armor} Armor({membertwo_armor_resist}% resistance) ,{membertwo_sword} Sword({membertwo_sword_attack} attack damage) .",
+            inline=False)
+        embedOne.add_field(
+            name=(f"{membertwo.name} Battle Stats "),
+            value=
+            f"Shield used: {membertwo_resistances} , Critical damage : {membertwo_critical} , Strong damage : {membertwo_strong} , Weak Damage : {membertwo_weak} .",
+            inline=False)
+        if memberone_healthpoint <= 0:
+            embedOne.add_field(name=f"Winner {membertwo.name}",
+                               value=f"Health: {membertwo_healthpoint}",
+                               inline=True)
+        elif membertwo_healthpoint <= 0:
+            embedOne.add_field(name=f"Winner {memberone.name}",
+                               value=f"Health: {memberone_healthpoint}",
+                               inline=True)
+        else:
+            embedOne.add_field(name=f"Match Tied",
+                               value=f"{memberone_healthpoint}",
+                               inline=True)
+        voicechannel.play(discord.FFmpegPCMAudio("Firework_twinkle_far.ogg"))
+        await ctx.send(embed=embedOne)
+
     @soundpvp.before_invoke
     async def ensure_voice(self, ctx):
         if ctx.voice_client is None:
             if ctx.author.voice:
                 await ctx.author.voice.channel.connect()
             else:
-                raise commands.CommandError("You are not connected to a voice channel.")
+                raise commands.CommandError(
+                    "You are not connected to a voice channel.")
         elif ctx.voice_client.is_playing():
             ctx.voice_client.stop()
-    @commands.cooldown(1,120,BucketType.user)
-    @commands.command(brief='This command is used to check the server status of a minecraft server ip.', description='This command is used to check the server status of a minecraft server ip.',usage="server-ip")
+
+    @commands.cooldown(1, 120, BucketType.user)
+    @commands.command(
+        brief=
+        'This command is used to check the server status of a minecraft server ip.',
+        description=
+        'This command is used to check the server status of a minecraft server ip.',
+        usage="server-ip")
     @commands.guild_only()
     async def mcservercheck(self, ctx, ip: str):
         server = MinecraftServer.lookup(ip)
@@ -1755,30 +2164,54 @@ class MinecraftFun(commands.Cog):
             status = server.status()
         except:
             embedOne = discord.Embed(title=ip,
-                                  description="\u200b",
-                                  color=Color.red())
-            embedOne.add_field(name=" Server Status ",value="  Offline ",inline=False)
-            current_time = datetime.datetime.now(pytz.timezone('Asia/Kolkata'))
-            formatted_time=(str(current_time.hour)+":"+str(current_time.minute)+":"+str(current_time.second)+" Indian Standard Time .")
-            embedOne.add_field(name=f" Updated at {formatted_time}",value="\u200b",inline=True)
-            ipmessagesent=await ctx.send(embed=embedOne)
-            return ipmessagesent.id
-        servericon=f"{status.favicon}"
-        if servericon is None or servericon=="None":
-            servericon=""
-        descriptiondict=status.description
-        embedOne = discord.Embed(title=f"{ip} {servericon}",
-                                description=descriptiondict,
-                                color=Color.green())
-        embedOne.add_field(name=" Server Version ",value=f"{status.version.name}",inline=False)
-        latency = server.ping()
-        embedOne.add_field(name=" Server Latency ",value=latency,inline=False)
-        embedOne.add_field(name=" Players Online ",value=status.players.online,inline=False)
-        current_time = datetime.datetime.now(pytz.timezone('Asia/Kolkata'))
-        formatted_time=(str(current_time.hour)+":"+str(current_time.minute)+":"+str(current_time.second)+" Indian Standard Time .")
-        embedOne.add_field(name=f" Updated at {formatted_time}",value="\u200b",inline=True)
-        ipmessagesent=await ctx.send(embed=embedOne)
-        return ipmessagesent.id
+                                     description="\u200b",
+                                     color=Color.red())
+            embedOne.add_field(name=" Server Status ",
+                               value="  Offline ",
+                               inline=True)
+            return 
+        servericon = f"https://{status.favicon}"
+        if servericon is None or servericon == "None":
+            servericon = ""
+        f = open("serverIcon.txt", "w")
+        f.write(servericon)
+        f.close()
+        try:
+          embedOne.set_thumbnail(url=servericon)
+        except:
+          pass
+        limit = 50
+        f = open("serverDescription.txt", "w")
+        f.write(str(status.description))
+        f.close()
+        try:
+          descriptiondict = status.description[0]
+        except:
+          try:
+            descriptiondict = status.description["extra"][0]["extra"][0]["text"]
+          except:
+            descriptiondict=" "
+        data=descriptiondict
+        info = data[:limit] + '..' 
+    
+        embedOne = discord.Embed(title=f"{ip}",
+                                 description=info,
+                                 color=Color.green())
+        embedOne.add_field(name=" Server Version ",
+                           value=f"{status.version.name}",
+                           inline=True)
+        try:
+          latency = server.ping()
+        except:
+          latency="Unknown ping"
+        embedOne.add_field(name=" Server Latency ",
+                          value=latency,
+                          inline=True)
+        embedOne.add_field(name=" Players Online ",
+                          value=status.players.online,
+                          inline=True)
+        ipmessagesent = await ctx.send(embed=embedOne)
+        
 
 
 client.add_cog(MinecraftFun(client))
@@ -2965,7 +3398,7 @@ async def on_guild_join(guild):
 
 @client.event
 async def on_ready():
-    global prefixlist,channelone,backupserver,exemptspam,antilink,ticketpanels
+    global prefixlist,channelone,backupserver,exemptspam,antilink,ticketpanels,antifilter
     print(f'{client.user.name} is ready for moderation! ')
     backupserver=client.get_guild(811864132470571038)
     channelone= client.get_channel(840193232885121094)
@@ -2976,6 +3409,7 @@ async def on_ready():
     prefixlist=[]
     exemptspam=[]
     antilink=[]
+    antifilter=[]
     ticketpanels=[]
     count=1
     with open("ticketpanels.txt", "r") as f:
@@ -2992,6 +3426,9 @@ async def on_ready():
     with open("antilink.txt", "r") as f:
       for link in f:
         antilink.append(int(link))
+    with open("antifilter.txt", "r") as f:
+        for filters in f:
+            antilink.append(int(filters))
     count=1
     with open("prefixes.txt", "r") as f:
       for line in f:
@@ -3004,7 +3441,7 @@ async def on_ready():
     saveexemptspam.start()
     saveantilink.start()
     saveticketpanels.start()
-        
+    saveprofanefilter.start()
 
 
 @client.event
@@ -3078,10 +3515,102 @@ async def on_member_join(member):
         embed.set_image(url="attachment://backgroundone.jpg")
         await channelone.send(file=file, embed=embed)
 
+@client.event
+async def on_message_edit(before, message):
+    global maintenancemodestatus, exemptspam, antilink
+    if maintenancemodestatus:
+        if not checkstaff(message.author):
+            return
+    if message.guild:
+        postfix = f" in {message.guild}"
+    else:
+        postfix = " in DM ."
 
+    #embeds = message.embeds # return list of embeds
+    #for embed in embeds:
+    #print(f" {message.author} has edited an embed {postfix} containing :")
+    #print(embed.to_dict())
+    if (message.author.bot):
+        print(f" {message.author} has edited {message.content}{postfix}")
+        embeds = message.embeds  # return list of embeds
+        for embed in embeds:
+            print(
+                f" {message.author} has sent an embed {postfix} containing :")
+            print(embed.to_dict())
+        return
+
+    origmessage = message.content
+    if message.channel.id in antilink:
+        listofsentence = [origmessage]
+        listofwords = convertwords(listofsentence)
+        for word in listofwords:
+            if not word.startswith('http:') and not word.startswith('https:'):
+                wordone = "http:" + word
+                wordtwo = "https:" + word
+                if validurl(wordone) or validurl(wordtwo):
+                    await message.channel.send(
+                        f" Links are not allowed in this channel {message.author.mention} ."
+                    )
+                    await message.delete()
+                    return
+            else:
+                if validurl(word):
+                    await message.channel.send(
+                        f" Links are not allowed in this channel {message.author.mention} ."
+                    )
+                    await message.delete()
+                    return
+    try:
+        translatedmessage = (translator.translate(origmessage, dest="en").text)
+    except:
+        translatedmessage = origmessage
+
+    if message.guild and message.channel.id in antifilter:
+        analyze_request = {
+            'comment': {
+                'text': translatedmessage
+            },
+            'requestedAttributes': {
+                "PROFANITY": {},
+                "SPAM": {}
+            }
+        }
+    elif not message.guild:
+        analyze_request = {
+            'comment': {
+                'text': translatedmessage
+            },
+            'requestedAttributes': {
+                "PROFANITY": {},
+                "SPAM": {}
+            }
+        }
+
+    attributes = ["PROFANITY", "SPAM"]
+    try:
+        response = service.comments().analyze(body=analyze_request).execute()
+        #out=str(json.dumps(response, indent=2))
+        #channelone = client.get_channel(811947788647923753)
+        ##print(out)
+        for attribute in attributes:
+            attribute_dict = response['attributeScores'][attribute]
+            score_value = attribute_dict['spanScores'][0]['score']['value']
+            #print(" Probability of " + str(attribute) + " is " +
+            #str(score_value))
+
+            #print(emojis[count])
+            if score_value >= 0.6:
+                ##print(str(message.author)+" violated rules !")
+                await message.channel.send(
+                    " Kindly don't send these kind of messages " +
+                    str(message.author.mention))
+                await message.delete()
+    except:
+        pass
+        #print(" No language recognised .")
 @client.event
 async def on_message(message):
-    global maintenancemodestatus,exemptspam,antilink
+    global maintenancemodestatus,exemptspam,antilink,antifilter
     if maintenancemodestatus:
       if not checkstaff(message.author):
         return
@@ -3156,8 +3685,7 @@ async def on_message(message):
           )
               await asyncio.sleep(5)
               await messagesent.delete()
-    if message.guild and not message.channel.is_nsfw(
-    ) :
+    if message.guild and message.channel.id in antifilter:
         analyze_request = {
             'comment': {
                 'text': translatedmessage
