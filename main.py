@@ -17,6 +17,7 @@ import os
 import re
 import psutil
 import time
+import datetime
 import discord
 import contextlib
 import io
@@ -2091,12 +2092,6 @@ class MinecraftFun(commands.Cog):
               await ctx.reply('Let the battle preparations take place !')
         else:
           await ctx.reply('Let the battle preparations take place !')
-        try:
-            await ctx.channel.edit(slowmode_delay=1)
-        except:
-            raise commands.CommandError(
-                " I do not have `manage_channels` permission to set slowmode to this channel "
-            )
         memberone_healthpoint = 30 + random.randint(-10, 10)
         memberone_armor = random.choice(orechoice)
         memberone_armor_resist = armorresist[orechoice.index(memberone_armor)]
@@ -2110,7 +2105,7 @@ class MinecraftFun(commands.Cog):
         membertwo_sword_attack = swordattack[swordchoice.index(
             membertwo_sword)]
         await ctx.channel.send(
-            f" {ctx.author.mention}({memberone_healthpoint} Hitpoints) prepared a {memberone_armor} armor and a {memberone_sword} sword to obliterate {member} ."
+            f" {ctx.author.mention}({memberone_healthpoint} Hitpoints) prepared a {memberone_armor} armor and a {memberone_sword} sword to obliterate {member.mention} ."
         )
         await ctx.channel.send(
             f" {member.mention}({membertwo_healthpoint} Hitpoints) prepared a {membertwo_armor} armor and a {membertwo_sword} sword to obliterate {ctx.author.mention} ."
@@ -2220,7 +2215,7 @@ class MinecraftFun(commands.Cog):
                     if damagePending:
                       message='f'
                       damagePending=False
-                    else:
+                    elif autoFight:
                       if membertwo_healthpoint<20:
                         message='d'
                         damagePending=True
@@ -2372,12 +2367,6 @@ class MinecraftFun(commands.Cog):
               await ctx.reply('Let the battle preparations take place !')
         else:
           await ctx.reply('Let the battle preparations take place !')
-        try:
-            await ctx.channel.edit(slowmode_delay=1)
-        except:
-            raise commands.CommandError(
-                " I do not have `manage_channels` permission to set slowmode to this channel "
-            )
 
         memberone_healthpoint = 30 + random.randint(-10, 10)
         memberone_healthpoint+=1
@@ -2394,7 +2383,7 @@ class MinecraftFun(commands.Cog):
         membertwo_sword_attack = swordattack[swordchoice.index(
             membertwo_sword)]
         await ctx.channel.send(
-            f" {ctx.author.mention}({memberone_healthpoint} Hitpoints) prepared a {memberone_armor} armor and a {memberone_sword} sword to obliterate {member} ."
+            f" {ctx.author.mention}({memberone_healthpoint} Hitpoints) prepared a {memberone_armor} armor and a {memberone_sword} sword to obliterate {member.mention} ."
         )
         await ctx.channel.send(
             f" {member.mention}({membertwo_healthpoint} Hitpoints) prepared a {membertwo_armor} armor and a {membertwo_sword} sword to obliterate {ctx.author.mention} ."
@@ -2520,7 +2509,7 @@ class MinecraftFun(commands.Cog):
                     if damagePending:
                       message='f'
                       damagePending=False
-                    else:
+                    elif autoFight:
                       if membertwo_healthpoint<20:
                         message='d'
                         damagePending=True
