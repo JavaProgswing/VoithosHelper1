@@ -3419,7 +3419,7 @@ async def on_ready():
           ticketpanels.append(line.replace("\n", ""))
         count=count+1
     #print(ticketpanels)   
-    print(" The logging channel has been set to "+channelone)   
+    print(" The logging channel has been set to "+str(channelone))
     with open("exemptspam.txt", "r") as f:
       for line in f:
         exemptspam.append(int(line))
