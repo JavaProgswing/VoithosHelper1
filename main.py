@@ -504,7 +504,7 @@ async def checkPerm(ctx,author=None):
     index+=1
     if(index%15==0):
       await ctx.send(embed=embed)
-      embed = discord.Embed(title=f"{author} 's permissions",inline=True) 
+      embed = discord.Embed(title=f"{author} 's permissions",inline=False) 
   await ctx.send(embed=embed)
 def checkprivilleged(member):
     is_privilleged = False
