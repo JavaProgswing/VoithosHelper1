@@ -594,7 +594,12 @@ class Moderation(commands.Cog):
             if copychannel.type==discord.ChannelType.text:
               await copycategory.create_text_channel(copychannel.name,overwrites=copychannel.overwrites,nsfw=copychannel.nsfw,slowmode_delay=copychannel.slowmode_delay )
             elif copychannel.type==discord.ChannelType.voice:
-              await copycategory.create_voice_channel(copychannel.name)          
+              await copycategory.create_voice_channel(copychannel.name,overwrites=copychannel.overwrites,
+              )   
+            elif copychannel.type==discord.ChannelType.stage:
+              await copycategory.create_stage_channel(copychannel.name,overwrites=copychannel.overwrites,
+              )   
+       
         await ctx.channel.delete()
     @commands.command(
         brief='This command checks for profanity in certain channels.',
