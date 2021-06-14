@@ -3728,8 +3728,11 @@ async def on_message_edit(before, message):
             #str(score_value))
 
             #print(emojis[count])
-            if score_value >= 0.6:
+            if score_value >= 0.6 or message.content.isupper():
                 ##print(str(message.author)+" violated rules !")
+                if (checkstaff(message.author)):
+                  print(f" Your message {message.content} is detected as {score_value} profane ." )
+
                 await message.channel.send(
                     " Kindly don't send these kind of messages " +
                     str(message.author.mention))
@@ -3846,7 +3849,7 @@ async def on_message(message):
                   #str(score_value))
 
             #print(emojis[count])
-            if score_value >= 0.6:
+            if score_value >= 0.6 or message.content.isupper():
                 ##print(str(message.author)+" violated rules !")
                 await message.channel.send(
                     " Kindly don't send these kind of messages " +
