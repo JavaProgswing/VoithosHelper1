@@ -1640,11 +1640,6 @@ async def deleteticket(user, userone, supportchannel, origchannel):
 
 
 async def createticket(user, guild, category, channelorig, role: discord.Role):
-    print(user)
-    print(guild)
-    print(category)
-    print(channelorig)
-    print(role)
     if isinstance(role, int):
         role = guild.get_role(role)
     overwriteperm = {
@@ -2051,10 +2046,6 @@ class MinecraftFun(commands.Cog):
         swordattack = [12.0, 10.0, 9.0, 8.0, 6.0, 5.0]
         memberone = ctx.author
         membertwo = member
-        messagereact = await ctx.channel.send(
-            f'React with that 👍 reaction in 60 seconds, {member.mention} to start the pvp match !'
-        )
-        await messagereact.add_reaction("👍")
         escapelist = [
             "ran away like a coward .", "was scared of a terrible defeat .",
             "didn't know how to fight .",
@@ -2063,6 +2054,10 @@ class MinecraftFun(commands.Cog):
             f"was scared of fighting {ctx.author.mention} ."
         ]
         if not selfCombat:
+          messagereact = await ctx.channel.send(
+              f'React with that 👍 reaction in 60 seconds, {member.mention} to start the pvp match !'
+          )
+          await messagereact.add_reaction("👍")
           def check(reaction, user):
               return user == member and str(reaction.emoji) == '👍'
 
@@ -2310,7 +2305,7 @@ class MinecraftFun(commands.Cog):
             )
             return
         if member==None:
-          member=client.user
+          member=ctx.guild.me
         selfCombat=False
         if (client.user.id==member.id):
           selfCombat=True
@@ -2320,10 +2315,6 @@ class MinecraftFun(commands.Cog):
         swordattack = [12.0, 10.0, 9.0, 8.0, 6.0, 5.0]
         memberone = ctx.author
         membertwo = member
-        messagereact = await ctx.send(
-            f'React with that 👍 reaction in 60 seconds, {member.mention} to start the pvp match !'
-        )
-        await messagereact.add_reaction("👍")
         escapelist = [
             "ran away like a coward .", "was scared of a terrible defeat .",
             "didn't know how to fight .",
@@ -2333,6 +2324,10 @@ class MinecraftFun(commands.Cog):
         ]
 
         if not selfCombat:
+          messagereact = await ctx.send(
+              f'React with that 👍 reaction in 60 seconds, {member.mention} to start the pvp match !'
+          )
+          await messagereact.add_reaction("👍")
           def check(reaction, user):
               return user == member and str(reaction.emoji) == '👍'
 
@@ -2421,6 +2416,7 @@ class MinecraftFun(commands.Cog):
                     " was poked to death by a sweet berry bush whilst trying to escape ",
                     " withered away whilst fighting "
                 ]
+                autoFight=False
                 if user == memberone:
                     if message=='f' or message=='d':
                       if selfCombat:
