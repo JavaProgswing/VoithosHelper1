@@ -2041,7 +2041,7 @@ class MinecraftFun(commands.Cog):
             )
             return
         selfCombat=False
-        if (client.user.id==member.id)
+        if (client.user.id==member.id):
           selfCombat=True
         orechoice = ["Netherite", "Diamond", "Iron", "Leather"]
         swordchoice = ["Netherite", "Diamond", "Iron", "Stone", "Gold", "Wood"]
@@ -2119,7 +2119,7 @@ class MinecraftFun(commands.Cog):
         def check(m):
             user = m.author
             message = m.content
-            nonlocal memberone, membertwo, memberone_healthpoint, membertwo_healthpoint, memberone_armor_resist, memberone_sword_attack, membertwo_armor_resist, membertwo_sword_attack, memberone_resistance, membertwo_resistance, memberone_resistances, memberone_critical, memberone_strong, memberone_weak, membertwo_resistances, membertwo_critical, membertwo_strong, membertwo_weak,autoFight,damagePending
+            nonlocal memberone, membertwo, memberone_healthpoint, membertwo_healthpoint, memberone_armor_resist, memberone_sword_attack, membertwo_armor_resist, membertwo_sword_attack, memberone_resistance, membertwo_resistance, memberone_resistances, memberone_critical, memberone_strong, memberone_weak, membertwo_resistances, membertwo_critical, membertwo_strong, membertwo_weak,autoFight,damagePending,selfCombat
             if message == 'f' or message == 'd':
                 attack = ['weak', 'strong', 'critical']
                 attackdamage = [0.5, 1.5, 2.0]
