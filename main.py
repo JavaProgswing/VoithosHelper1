@@ -279,6 +279,17 @@ def checkstaff(member):
             is_staff = True
             break
     return is_staff
+def checkCaps(sentence):
+  origLength=len(sentence)
+  count=0
+  for element in sentence:
+    if element.isUpper():
+      count+=1
+  if(((count/origLength)*100)>=90):
+    return True
+  else:
+    return False
+
 
 def checkprivilleged(member):
     is_privilleged=False
@@ -3728,7 +3739,7 @@ async def on_message_edit(before, message):
             #str(score_value))
 
             #print(emojis[count])
-            if score_value >= 0.6 or message.content.isupper():
+            if score_value >= 0.6  or checkCaps(message.content):
                 ##print(str(message.author)+" violated rules !")
                 if (checkstaff(message.author)):
                   print(f" Your message {message.content} is detected as {score_value} profane ." )
@@ -3849,7 +3860,7 @@ async def on_message(message):
                   #str(score_value))
 
             #print(emojis[count])
-            if score_value >= 0.6 or message.content.isupper():
+            if score_value >= 0.6 or checkCaps(message.content):
                 ##print(str(message.author)+" violated rules !")
                 await message.channel.send(
                     " Kindly don't send these kind of messages " +
