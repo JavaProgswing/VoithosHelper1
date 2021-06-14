@@ -398,11 +398,11 @@ async def checkPerm(ctx,author=None):
     myList.append(" The user doesn't have any permissions in the guild .")
   embed = discord.Embed(title=f"{author} 's permissions") 
   for content in myList:
-    embed.add_field(name=f"{index}) ",value=f"{content}")
+    embed.add_field(name=f"{index}) ",value=f"{content}",inline=False)
     index+=1
     if(index%15==0):
       await ctx.send(embed=embed)
-      embed = discord.Embed(title=f"{author} 's permissions",inline=False) 
+      embed = discord.Embed(title=f"{author} 's permissions") 
   await ctx.send(embed=embed)
     
     
