@@ -2,7 +2,7 @@ from __future__ import unicode_literals
 import traceback
 import json
 from keep_alive import keep_alive
-from datetime import datetime
+import aiohttp        
 import requests
 import asyncio
 import typing
@@ -19,13 +19,10 @@ import psutil
 import discord
 import contextlib
 import io
-import pytz
 from discord import Color, Webhook, AsyncWebhookAdapter
-import aiohttp
 from discord.ext import commands, tasks
 from discord.ext.commands import bot
 from discord.ext.commands import Greedy
-from discord.ext.commands import MemberConverter
 from googlesearch import search
 import logging
 #from discord.ext.commands.bot import when_mentioned_or
@@ -102,7 +99,7 @@ exemptspam = []
 prefixlist = []
 antilink = []
 ticketpanels = []
-
+antifilter=[]
 
 async def get_prefix(client, message):
     if message.guild:
@@ -188,11 +185,9 @@ async def on_command_error(ctx, error):
         errordata = f" Oops looks like provided the wrong arguments in the {ctx.command} command ."
     if isinstance(error, commands.CommandOnCooldown):
         errordata = f" Seems like you tried this {ctx.command} command recently , try again in {error.retry_after} seconds."
-    if isinstance(error, commands.errors.CommandError): errordata = error
+    if isinstance(error, commands.errors.CommandError): 
+      errordata = error
     embedone = discord.Embed(title=f"Something went wrong...  ",
-                             description=errordata,
-                             color=Color.dark_red())
-    embedone = discord.Embed(title=f"Something went wrong... ",
                              description=errordata,
                              color=Color.dark_red())
     etype = type(error)
@@ -229,15 +224,21 @@ async def on_command_error(ctx, error):
             inline=False)
 
     if not isinstance(error, commands.errors.CommandError):
-
         await channelerrorlogging.send(embed=embederror)
     try:
         await ctx.channel.send(embed=embedone)
     except:
-        await ctx.channel.send(
-            " I do not have the embed links permission in this channel to send text in a embed . "
-        )
-        await ctx.channel.send(f" Something went wrong... : {errordata} ")
+        try:
+          await ctx.channel.send(
+              " I do not have the embed links permission in this channel to send text in a embed . "
+          )
+          await ctx.channel.send(f" Something went wrong... : {errordata} ")
+        except:
+          await ctx.command.author.send(
+              " I do not have the send messages permission in this channel to send text in a embed . "
+          )
+          await ctx.command.author.send(f" Something went wrong... : {errordata} ")
+
 
 
 class TopGG(commands.Cog):
@@ -256,32 +257,6 @@ client.add_cog(TopGG(client))
 def convertwords(lst):
     return ' '.join(lst).split()
 
-
-async def call_background_task(ctx, textchannel, message: str):
-    messagecontrol = await textchannel.send(
-        f" This is a message to inform that live status for ip {message} was added in this channel , delete this message to stop live server status (every 30 minutes) ."
-    )
-    controlid = messagecontrol.id
-    while True:
-        controlmsg = textchannel.get_partial_message(controlid)
-        if controlmsg == None:
-            await textchannel.send(
-                "The **control message** has been deleted , stopping live server status ."
-            )
-            break
-        cmd = client.get_command("mcservercheck")
-        prevmessageid = await cmd(ctx, message)
-        await asyncio.sleep(1800)
-        ipmsg = textchannel.get_partial_message(prevmessageid)
-        try:
-            await ipmsg.delete()
-        except:
-            await textchannel.send(
-                " I don't have `manage messages` permission to delete messages ."
-            )
-            return
-
-
 @tasks.loop(seconds=30)
 async def saveticketpanels():
     global ticketpanels
@@ -289,7 +264,13 @@ async def saveticketpanels():
         for links in ticketpanels:
             f.write(str(links) + "\n")
 
-
+@tasks.loop(seconds=30)
+async def saveprofanefilter():
+    global antifilter
+    with open("antifilter.txt", "w") as f:
+        for filters in antifilter:
+            f.write(str(filters) + "\n")
+  
 @tasks.loop(seconds=30)
 async def saveantilink():
     global antilink
@@ -667,7 +648,7 @@ Please visit https://top.gg/bot/805030662183845919 to submit ideas or bugs.""")
 
         try:
             reaction, user = await client.wait_for('reaction_add',
-                                                   timeout=30,
+                                                   timeout=120,
                                                    check=check)
         except asyncio.TimeoutError:
             embedone.set_footer(
@@ -795,7 +776,45 @@ class Moderation(commands.Cog):
                 elif copychannel.type == discord.ChannelType.voice:
                     await copycategory.create_voice_channel(copychannel.name)
         await ctx.channel.delete()
+    @commands.command(
+        brief='This command checks for profanity in certain channels.',
+        description=
+        'This command checks for profanity in certain channel and can be used by members having manage_messages permission.',
+        usage="#channel")
+    @commands.guild_only()
+    @commands.check_any(is_bot_staff(),
+                        commands.has_permissions(manage_messages=True))
+    async def enableprofanefilter(self, ctx, channel: discord.TextChannel = None):
+        global antifilter
+        if channel == None:
+            channel = ctx.channel
+        if channel.id in antifilter:
+            raise commands.CommandError(
+                "This channel is already being checked for profanity .")
+            return
+        else:
+            antifilter.append(channel.id)
+            await ctx.send("Successfully enabled profanity checks in this channel .")
 
+    @commands.command(
+        brief='This command disables checking for profanity in certain channels.',
+        description=
+        'This command disables checking for profanity in certain channel and can be used by members having manage_messages permission.',
+        usage="#channel")
+    @commands.guild_only()
+    @commands.check_any(is_bot_staff(),
+                        commands.has_permissions(manage_messages=True))
+    async def disableprofanefilter(self, ctx, channel: discord.TextChannel = None):
+        global antifilter
+        if channel == None:
+            channel = ctx.channel
+        if not channel.id in antifilter:
+            raise commands.CommandError(
+                "This channel is not being checked for profanity .")
+            return
+        else:
+            antifilter.remove(channel.id)
+            await ctx.send("Successfully disabled profanity checks in this channel .")
     @commands.command(
         brief='This command checks for links in certain channels.',
         description=
@@ -2567,64 +2586,50 @@ class MinecraftFun(commands.Cog):
                                      color=Color.red())
             embedOne.add_field(name=" Server Status ",
                                value="  Offline ",
-                               inline=False)
-            current_time = datetime.datetime.now(pytz.timezone('Asia/Kolkata'))
-            formatted_time = (str(current_time.hour) + ":" +
-                              str(current_time.minute) + ":" +
-                              str(current_time.second) +
-                              " Indian Standard Time .")
-            embedOne.add_field(name=f" Updated at {formatted_time}",
-                               value="\u200b",
                                inline=True)
-            ipmessagesent = await ctx.send(embed=embedOne)
-            return ipmessagesent.id
-        servericon = f"{status.favicon}"
+            return 
+        servericon = f"https://{status.favicon}"
         if servericon is None or servericon == "None":
             servericon = ""
-        descriptiondict = status.description
-        embedOne = discord.Embed(title=f"{ip} {servericon}",
-                                 description=descriptiondict,
+        f = open("serverIcon.txt", "w")
+        f.write(servericon)
+        f.close()
+        try:
+          embedOne.set_thumbnail(url=servericon)
+        except:
+          pass
+        limit = 50
+        f = open("serverDescription.txt", "w")
+        f.write(str(status.description))
+        f.close()
+        try:
+          descriptiondict = status.description[0]
+        except:
+          try:
+            descriptiondict = status.description["extra"][0]["extra"][0]["text"]
+          except:
+            descriptiondict=" "
+        data=descriptiondict
+        info = data[:limit] + '..' 
+    
+        embedOne = discord.Embed(title=f"{ip}",
+                                 description=info,
                                  color=Color.green())
         embedOne.add_field(name=" Server Version ",
                            value=f"{status.version.name}",
-                           inline=False)
-        latency = server.ping()
-        embedOne.add_field(name=" Server Latency ",
-                           value=latency,
-                           inline=False)
-        embedOne.add_field(name=" Players Online ",
-                           value=status.players.online,
-                           inline=False)
-        current_time = datetime.datetime.now(pytz.timezone('Asia/Kolkata'))
-        formatted_time = (str(current_time.hour) + ":" +
-                          str(current_time.minute) + ":" +
-                          str(current_time.second) + " Indian Standard Time .")
-        embedOne.add_field(name=f" Updated at {formatted_time}",
-                           value="\u200b",
                            inline=True)
+        try:
+          latency = server.ping()
+        except:
+          latency="Unknown ping"
+        embedOne.add_field(name=" Server Latency ",
+                          value=latency,
+                          inline=True)
+        embedOne.add_field(name=" Players Online ",
+                          value=status.players.online,
+                          inline=True)
         ipmessagesent = await ctx.send(embed=embedOne)
-        return ipmessagesent.id
-
-    @commands.cooldown(1, 3600, BucketType.guild)
-    @commands.command(
-        brief=
-        'This command is used to check the server status of a minecraft server ip after every 30 minutes.',
-        description=
-        'This command is used to check the server status of a minecraft server ip after every 30 minutes.',
-        usage="server-ip")
-    @commands.guild_only()
-    @commands.check_any(is_bot_staff(),
-                        commands.has_permissions(administrator=True))
-    async def mcserverlive(self, ctx, ip):
-        if not uservoted(ctx.author) and not checkstaff(
-                ctx.author) and not checkprivilleged(ctx.author):
-            cmd = client.get_command("vote")
-            await cmd(ctx)
-            raise commands.CommandError(
-                " Vote for our bot on following websites for accessing this feature ."
-            )
-            return
-        asyncio.ensure_future(call_background_task(ctx, ctx.channel, ip))
+        
 
 
 client.add_cog(MinecraftFun(client))
@@ -3602,7 +3607,7 @@ class Support(commands.Cog):
         description='This command can be used to execute code in python.',
         usage="Your expression")
     @commands.check_any(is_bot_staff())
-    async def execcode(self, ctx, *, code: str):
+    async def execcode(self, ctx,*, code: str):
         str_obj = io.StringIO()  #Retrieves a stream of data
         try:
             with contextlib.redirect_stdout(str_obj):
@@ -4318,7 +4323,7 @@ async def on_guild_join(guild):
                 guild.me).send_messages:
             embedOne.add_field(
                 name=
-                f" Invoke our bot by sending {prefixlist[prefixlist.index(guild.id)+1]}help in a channel in which bot has permissions to read . The bot will ignore links and nsfw messages from adminstrators.",
+                f" Invoke our bot by sending {prefixlist[prefixlist.index(guild.id)+1]}help in a channel in which bot has permissions to read ..",
                 value="\u200b",
                 inline=False)
 
@@ -4356,7 +4361,7 @@ async def on_guild_join(guild):
 
 @client.event
 async def on_ready():
-    global prefixlist, channelerrorlogging, exemptspam, antilink, ticketpanels
+    global prefixlist, channelerrorlogging, exemptspam, antilink, ticketpanels,antifilter
     print(f'{client.user.name} is ready for moderation! ')
     #backupserver=client.get_guild(811864132470571038)
     channelerrorlogging = client.get_channel(840193232885121094)
@@ -4369,6 +4374,7 @@ async def on_ready():
     exemptspam = []
     antilink = []
     ticketpanels = []
+    antifilter=[]
     count = 1
     with open("ticketpanels.txt", "r") as f:
         for line in f:
@@ -4383,6 +4389,9 @@ async def on_ready():
     with open("antilink.txt", "r") as f:
         for link in f:
             antilink.append(int(link))
+    with open("antifilter.txt", "r") as f:
+        for filters in f:
+            antilink.append(int(filters))
     count = 1
     with open("prefixes.txt", "r") as f:
         for line in f:
@@ -4395,7 +4404,7 @@ async def on_ready():
     saveexemptspam.start()
     saveantilink.start()
     saveticketpanels.start()
-
+    saveprofanefilter.start()
 
 @client.event
 async def on_member_join(member):
@@ -4533,29 +4542,8 @@ async def on_message_edit(before, message):
         translatedmessage = (translator.translate(origmessage, dest="en").text)
     except:
         translatedmessage = origmessage
-    bucket = bot.cooldownvar.get_bucket(message)
-    retry_after = bucket.update_rate_limit()
-    if retry_after:
-        if not "spam" in message.channel.name and not message.channel.id in exemptspam:
-            messagesent = await message.channel.send(
-                f" {message.author.mention} is being rate - limited(blacklisted) for spamming message edits."
-            )
-            await asyncio.sleep(5)
-            await messagesent.delete()
-            try:
-                cmd = client.get_command("blacklist")
-                await cmd(await client.get_context(message),
-                          message.author,
-                          reason=f"spamming edits in {message.channel.name} ")
-                await message.delete()
-            except:
-                messagesent = await message.channel.send(
-                    f" I don't have enough permissions to mute {message.author} ."
-                )
-                await asyncio.sleep(5)
-                await messagesent.delete()
 
-    if message.guild and not message.channel.is_nsfw():
+    if message.guild and message.channel.id in antifilter:
         analyze_request = {
             'comment': {
                 'text': translatedmessage
@@ -4602,7 +4590,7 @@ async def on_message_edit(before, message):
 
 @client.event
 async def on_message(message):
-    global maintenancemodestatus, exemptspam, antilink
+    global maintenancemodestatus, exemptspam, antilink,antifilter
     if maintenancemodestatus:
         if ("<@!805030662183845919>"
                 in message.content) or ("<@805030662183845919>"
@@ -4681,7 +4669,7 @@ async def on_message(message):
     bucket = bot.cooldownvar.get_bucket(message)
     retry_after = bucket.update_rate_limit()
     if retry_after:
-        if not "spam" in message.channel.name and not message.channel.id in exemptspam:
+        if not message.channel.id in exemptspam:
 
             cmd = client.get_command("mute")
             await cmd(await client.get_context(message),
@@ -4701,7 +4689,7 @@ async def on_message(message):
                 )
                 await asyncio.sleep(5)
                 await messagesent.delete()
-    if message.guild and not message.channel.is_nsfw():
+    if message.guild and message.channel.id in antifilter:
         analyze_request = {
             'comment': {
                 'text': translatedmessage
