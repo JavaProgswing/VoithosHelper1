@@ -277,9 +277,11 @@ def checkEmoji(value):
     return ":white_check_mark: "
   elif not value:
     return ":green_square: "
-def checkPerm(ctx):
+async def checkPerm(ctx,author=None):
   myList=[]
-  myPermsValue=ctx.guild.me.guild_permissions.value
+  if author==None:
+    author=ctx.guild.me
+  myPermsValue=author.guild_permissions.value
   myPerms=discord.Permissions(myPermsValue)
   if (myPerms.add_reactions ):
     message=(" Can user add reactions to messages **:**")
@@ -392,10 +394,14 @@ def checkPerm(ctx):
   index=1
   if len(myList)==0:
     myList.append(" The user doesn't have any permissions in the guild .")
+  embed = discord.Embed(title=f"{author} 's permissions") 
   for content in myList:
-    await ctx.send(f"{index}) {content}")
+    embed.add_field(name=f"{index}) ",value=f"{content}")
     index+=1
-  return myList
+    if(index%15==0):
+      await ctx.send(embed=embed)
+      embed = discord.Embed(title=f"{author} 's permissions",inline=True) 
+  await ctx.send(embed=embed)
     
     
 def checkstaff(member):
