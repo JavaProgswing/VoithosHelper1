@@ -773,8 +773,12 @@ class Moderation(commands.Cog):
                         overwrites=copychannel.overwrites,
                         nsfw=copychannel.nsfw,
                         slowmode_delay=copychannel.slowmode_delay)
-                elif copychannel.type == discord.ChannelType.voice:
-                    await copycategory.create_voice_channel(copychannel.name)
+                elif copychannel.type==discord.ChannelType.voice:
+                  await copycategory.create_voice_channel(copychannel.name,overwrites=copychannel.overwrites,
+                  )   
+                elif copychannel.type==discord.ChannelType.stage:
+                  await copycategory.create_stage_channel(copychannel.name,overwrites=copychannel.overwrites,
+                  )   
         await ctx.channel.delete()
     @commands.command(
         brief='This command checks for profanity in certain channels.',
@@ -4287,11 +4291,14 @@ async def on_raw_reaction_add(payload):
     for i in range(length):
         if i % 3 == 0 or i == 0:
             supportmsgid = ticketpanels[i]
-            print(f" Support message {supportmsgid} .")
+            
+            #print(f" Support message {supportmsgid} .")
             supportroleid = ticketpanels[i + 1]
-            print(f" Support role id {supportroleid} .")
+            
+            #print(f" Support role id {supportroleid} .")
             reactionemoji = ticketpanels[i + 2]
-            print(f" Support emoji {reactionemoji} .")
+            
+            #print(f" Support emoji {reactionemoji} .")
             if supportmsgid == payload.message_id and str(
                     reactionemoji) == str(payload.emoji):
                 guild = client.get_guild(payload.guild_id)
