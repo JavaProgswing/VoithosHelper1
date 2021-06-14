@@ -2176,6 +2176,8 @@ class MinecraftFun(commands.Cog):
                             ))
                         membertwo_healthpoint -= damagevalue
                         player_health = ""
+                        if (membertwo_healthpoint<1.0 and membertwo_healthpoint>0.0)
+                          player_health=":heart:"
                         for i in range(int(membertwo_healthpoint)):
                             player_health += ":heart:"
                         client.loop.create_task(
@@ -2233,6 +2235,8 @@ class MinecraftFun(commands.Cog):
 
                         memberone_healthpoint -= damagevalue
                         player_health = ""
+                        if (memberone_healthpoint<1.0 and memberone_healthpoint>0.0)
+                          player_health=":heart:"
                         for i in range(int(memberone_healthpoint)):
                             player_health += ":heart:"
                         client.loop.create_task(
@@ -2357,12 +2361,14 @@ class MinecraftFun(commands.Cog):
             )
 
         memberone_healthpoint = 30 + random.randint(-10, 10)
+        memberone_healthpoint+=1
         memberone_armor = random.choice(orechoice)
         memberone_armor_resist = armorresist[orechoice.index(memberone_armor)]
         memberone_sword = random.choice(swordchoice)
         memberone_sword_attack = swordattack[swordchoice.index(
             memberone_sword)]
         membertwo_healthpoint = 30 + random.randint(-10, 10)
+        membertwo_healthpoint+=1
         membertwo_armor = random.choice(orechoice)
         membertwo_armor_resist = armorresist[orechoice.index(membertwo_armor)]
         membertwo_sword = random.choice(swordchoice)
@@ -2461,6 +2467,8 @@ class MinecraftFun(commands.Cog):
                             ))
                         membertwo_healthpoint -= damagevalue
                         player_health = ""
+                        if (membertwo_healthpoint<1.0 and membertwo_healthpoint>0.0)
+                          player_health=":heart:"
                         for i in range(int(membertwo_healthpoint)):
                             player_health += ":heart:"
                         client.loop.create_task(
@@ -2533,6 +2541,8 @@ class MinecraftFun(commands.Cog):
 
                         memberone_healthpoint -= damagevalue
                         player_health = ""
+                        if (memberone_healthpoint<1.0 and memberone_healthpoint>0.0)
+                          player_health=":heart:"
                         for i in range(int(memberone_healthpoint)):
                             player_health += ":heart:"
                         client.loop.create_task(
