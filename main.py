@@ -2034,12 +2034,14 @@ class MinecraftFun(commands.Cog):
         'This command is used to fight other users (minecraft pvp mechanics).',
         usage="@member")
     @commands.guild_only()
-    async def pvp(self, ctx, member: discord.Member):
+    async def pvp(self, ctx, member: discord.Member=None):
         if member == ctx.author:
             await ctx.channel.send(
                 " Trying to battle yourself will only have major consequences !"
             )
             return
+        if member==None:
+          member=client.user
         selfCombat=False
         if (client.user.id==member.id):
           selfCombat=True
@@ -2060,20 +2062,22 @@ class MinecraftFun(commands.Cog):
             f"was too weak for battling {ctx.author.mention} .",
             f"was scared of fighting {ctx.author.mention} ."
         ]
+        if not selfCombat:
+          def check(reaction, user):
+              return user == member and str(reaction.emoji) == '👍'
 
-        def check(reaction, user):
-            return user == member and str(reaction.emoji) == '👍'
+          try:
+              reaction, user = await client.wait_for('reaction_add',
+                                                    timeout=60.0,
+                                                    check=check)
 
-        try:
-            reaction, user = await client.wait_for('reaction_add',
-                                                   timeout=60.0,
-                                                   check=check)
-
-        except asyncio.TimeoutError:
-            await ctx.channel.send(f'{member} {random.choice(escapelist)}')
-            return
+          except asyncio.TimeoutError:
+              await ctx.channel.send(f'{member} {random.choice(escapelist)}')
+              return
+          else:
+              await ctx.reply('Let the battle preparations take place !')
         else:
-            await ctx.reply('Let the battle preparations take place !')
+          await ctx.reply('Let the battle preparations take place !')
         try:
             await ctx.channel.edit(slowmode_delay=1)
         except:
