@@ -2203,7 +2203,7 @@ class MinecraftFun(commands.Cog):
                       message='f'
                       damagePending=False
                     else:
-                      if membertwo_healthpoint<=15:
+                      if membertwo_healthpoint<20:
                         message='d'
                         damagePending=True
                       else:
@@ -2303,13 +2303,17 @@ class MinecraftFun(commands.Cog):
         'This command is used to fight other users with sound effects(minecraft pvp mechanics).',
         usage="@member")
     @commands.guild_only()
-    async def soundpvp(self, ctx, member: discord.Member):
+    async def soundpvp(self, ctx, member: discord.Member=None):
         if member == ctx.author:
             await ctx.channel.send(
                 " Trying to battle yourself will only have major consequences !"
             )
             return
-
+        if member==None:
+          member=client.user
+        selfCombat=False
+        if (client.user.id==member.id):
+          selfCombat=True
         orechoice = ["Netherite", "Diamond", "Iron", "Leather"]
         swordchoice = ["Netherite", "Diamond", "Iron", "Stone", "Gold", "Wood"]
         armorresist = [85.0, 75.0, 60.0, 28.0]
@@ -2328,19 +2332,22 @@ class MinecraftFun(commands.Cog):
             f"was scared of fighting {ctx.author.mention} ."
         ]
 
-        def check(reaction, user):
-            return user == member and str(reaction.emoji) == '👍'
+        if not selfCombat:
+          def check(reaction, user):
+              return user == member and str(reaction.emoji) == '👍'
 
-        try:
-            reaction, user = await client.wait_for('reaction_add',
-                                                   timeout=60.0,
-                                                   check=check)
+          try:
+              reaction, user = await client.wait_for('reaction_add',
+                                                    timeout=60.0,
+                                                    check=check)
 
-        except asyncio.TimeoutError:
-            await ctx.channel.send(f'{member} {random.choice(escapelist)}')
-            return
+          except asyncio.TimeoutError:
+              await ctx.channel.send(f'{member} {random.choice(escapelist)}')
+              return
+          else:
+              await ctx.reply('Let the battle preparations take place !')
         else:
-            await ctx.reply('Let the battle preparations take place !')
+          await ctx.reply('Let the battle preparations take place !')
         try:
             await ctx.channel.edit(slowmode_delay=1)
         except:
@@ -2384,12 +2391,14 @@ class MinecraftFun(commands.Cog):
         membertwo_critical = 0
         membertwo_strong = 0
         membertwo_weak = 0
-
+        autoFight=False
+        damagePending=False
         def check(m):
             user = m.author
             message = m.content
-            nonlocal memberone, membertwo, memberone_healthpoint, membertwo_healthpoint, memberone_armor_resist, memberone_sword_attack, membertwo_armor_resist, membertwo_sword_attack, memberone_resistance, membertwo_resistance, voicechannel, memberone_resistances, memberone_critical, memberone_strong, memberone_weak, membertwo_resistances, membertwo_critical, membertwo_strong, membertwo_weak
+            nonlocal memberone, membertwo, memberone_healthpoint, membertwo_healthpoint, memberone_armor_resist, memberone_sword_attack, membertwo_armor_resist, membertwo_sword_attack, memberone_resistance, membertwo_resistance, voicechannel, memberone_resistances, memberone_critical, memberone_strong, memberone_weak, membertwo_resistances, membertwo_critical, membertwo_strong, membertwo_weak,autoFight,damagePending,selfCombat
             if message == 'f' or message == 'd':
+
                 attack = ['weak', 'strong', 'critical']
                 attackdamage = [0.5, 1.5, 2.0]
                 winmessage = [
@@ -2413,6 +2422,9 @@ class MinecraftFun(commands.Cog):
                     " withered away whilst fighting "
                 ]
                 if user == memberone:
+                    if message=='f' or message=='d':
+                      if selfCombat:
+                        autoFight=True
                     if message == 'f':
 
                         attackchoice = random.choice(attack)
@@ -2476,6 +2488,15 @@ class MinecraftFun(commands.Cog):
                         voicechannel.play(
                             discord.FFmpegPCMAudio("Shield_block5.ogg"))
                 if user == membertwo:
+                    if damagePending:
+                      message='f'
+                      damagePending=False
+                    else:
+                      if membertwo_healthpoint<20:
+                        message='d'
+                        damagePending=True
+                      else:
+                        message='f'
                     if message == 'f':
                         attackchoice = random.choice(attack)
                         if voicechannel.is_playing():
