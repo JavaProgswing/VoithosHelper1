@@ -2577,7 +2577,9 @@ class MinecraftFun(commands.Cog):
             return False
         try:
           msg = await client.wait_for('message', check=check, timeout=120)
-            if voicechannel.is_playing():
+        except:
+          pass
+        if voicechannel.is_playing():
             voicechannel.stop()
         embedOne = discord.Embed(
             title="Battle results",
