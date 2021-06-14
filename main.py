@@ -384,116 +384,116 @@ async def checkPerm(ctx,author=None):
   if author==None:
     author=ctx.guild.me
   if isinstance(author, int):
-    author=ctx.guild.get_member(author)
+    author=ctx.guild.get_member(int(author))
   myPermsValue=author.guild_permissions.value
   myPerms=discord.Permissions(myPermsValue)
-  if (myPerms.add_reactions ):
-    message=(" Can user add reactions to messages **:**")
+  #if (myPerms.add_reactions ):
+  message=(" Can user add reactions to messages **:**")
   myList.append(message+checkEmoji(myPerms.add_reactions))
-  if (myPerms.administrator ):
-    message=(" Does user have administrator privilleges **:**")
+  #if (myPerms.administrator ):
+  message=(" Does user have administrator privilleges **:**")
   myList.append(message+checkEmoji(myPerms.administrator))
-  if (myPerms.attach_files ):
-    message=(" Can user send file attachements in messages **:**")
+  #if (myPerms.attach_files ):
+  message=(" Can user send file attachements in messages **:**")
   myList.append(message+checkEmoji(myPerms.attach_files))
-  if (myPerms.ban_members ):
-    message=(" Can user ban other members from the guild **:**")
+  #if (myPerms.ban_members ):
+  message=(" Can user ban other members from the guild **:**")
   myList.append(message+checkEmoji(myPerms.ban_members))
-  if (myPerms.change_nickname ):
-    message=(" Can user change their nicknames in the guild **:**")
+  #if (myPerms.change_nickname ):
+  message=(" Can user change their nicknames in the guild **:**")
   myList.append(message+checkEmoji(myPerms.change_nickname))
-  if (myPerms.connect ):
-    message=(" Can user connect to any voice channels **:**")
+  #if (myPerms.connect ):
+  message=(" Can user connect to any voice channels **:**")
   myList.append(message+checkEmoji(myPerms.connect))
-  if (myPerms.create_instant_invite ):
-    message=(" Can user invite other members by generating an invite link **:**")
+  #if (myPerms.create_instant_invite ):
+  message=(" Can user invite other members by generating an invite link **:**")
   myList.append(message+checkEmoji(myPerms.create_instant_invite))
-  if (myPerms.deafen_members ):
-    message=(" Can user server deafen other members in a voice channel **:**")
+  #if (myPerms.deafen_members ):
+  message=(" Can user server deafen other members in a voice channel **:**")
   myList.append(message+checkEmoji(myPerms.deafen_members))
-  if (myPerms.embed_links ):
-    message=(" Can user send embedded content in a channel **:**")
+  #if (myPerms.embed_links ):
+  message=(" Can user send embedded content in a channel **:**")
   myList.append(message+checkEmoji(myPerms.embed_links))
-  if (myPerms.external_emojis ):
-    message=(" Can user send emojis created in other guilds **:**")
+  #if (myPerms.external_emojis ):
+  message=(" Can user send emojis created in other guilds **:**")
   myList.append(message+checkEmoji(myPerms.external_emojis))
-  if (myPerms.kick_members ):
-    message=(" Can user kick other members from the guild **:**")
+  #if (myPerms.kick_members ):
+  message=(" Can user kick other members from the guild **:**")
   myList.append(message+checkEmoji(myPerms.kick_members))
-  if (myPerms.manage_channels ):
-    message=(" Can user edit , create or delete any channels **:**")
+  #if (myPerms.manage_channels ):
+  message=(" Can user edit , create or delete any channels **:**")
   myList.append(message+checkEmoji(myPerms.manage_channels))
-  if (myPerms.manage_emojis ):
-    message=(" Can user edit , create or delete any emojis **:**")
+  #if (myPerms.manage_emojis ):
+  message=(" Can user edit , create or delete any emojis **:**")
   myList.append(message+checkEmoji(myPerms.manage_emojis))
-  if (myPerms.manage_guild ):
-    message=(" Can user edit guild settings and invite bots **:**")
+  #if (myPerms.manage_guild ):
+  message=(" Can user edit guild settings and invite bots **:**")
   myList.append(message+checkEmoji(myPerms.manage_guild))
-  if (myPerms.manage_messages ):
-    message=(" Can user delete messages sent by other members in a channel **:**")
+  #if (myPerms.manage_messages ):
+  message=(" Can user delete messages sent by other members in a channel **:**")
   myList.append(message+checkEmoji(myPerms.manage_messages))
-  if (myPerms.manage_nicknames):
-    message=(" Can user change other member's nicknames **:**")
+  #if (myPerms.manage_nicknames):
+  message=(" Can user change other member's nicknames **:**")
   myList.append(message+checkEmoji(myPerms.manage_nicknames))
-  if (myPerms.manage_permissions ):
-    message=(" Can user edit , create or delete role's permissions below their highest role **:**")
+  #if (myPerms.manage_permissions ):
+  message=(" Can user edit , create or delete role's permissions below their highest role **:**")
   myList.append(message+checkEmoji(myPerms.manage_permissions ))
-  if (myPerms.manage_roles ):
-    message=(" Can user edit , create or delete roles below their highest role **:**")
+  #if (myPerms.manage_roles ):
+  message=(" Can user edit , create or delete roles below their highest role **:**")
   myList.append(message+checkEmoji(myPerms.manage_roles))
-  if (myPerms.manage_webhooks ):
-    message=(" Can user  edit , create or delete webhooks of a channel **:**")
+  #if (myPerms.manage_webhooks ):
+  message=(" Can user  edit , create or delete webhooks of a channel **:**")
   myList.append(message+checkEmoji(myPerms.manage_webhooks))
-  if (myPerms.mention_everyone ):
-    message=(" Can user mention everyone in a channel **:**")
+  #if (myPerms.mention_everyone ):
+  message=(" Can user mention everyone in a channel **:**")
   myList.append(message+checkEmoji(myPerms.mention_everyone))
-  if (myPerms.move_members ):
-    message=(" Can user move other members to other voice channels **:**")
+  #if (myPerms.move_members ):
+  message=(" Can user move other members to other voice channels **:**")
   myList.append(message+checkEmoji(myPerms.move_members))
-  if (myPerms.mute_members ):
-    message=(" Can user can server mute other members in a voice channel **:**")
+  #if (myPerms.mute_members ):
+  message=(" Can user can server mute other members in a voice channel **:**")
   myList.append(message+checkEmoji(myPerms.mute_members))
-  if (myPerms.priority_speaker ):
-    message=(" Will user be given priority when speaking in a voice channel **:**")
+  #if (myPerms.priority_speaker ):
+  message=(" Will user be given priority when speaking in a voice channel **:**")
   myList.append(message+checkEmoji(myPerms.priority_speaker))
-  if (myPerms.read_message_history ):
-    message=(" Can user read messages channel's previous messages **:**")
+  #if (myPerms.read_message_history ):
+  message=(" Can user read messages channel's previous messages **:**")
   myList.append(message+checkEmoji(myPerms.read_message_history))
-  if (myPerms.read_messages ):
-    message=(" Can user read messages from all or any channel **:**")
+  #if (myPerms.read_messages ):
+  message=(" Can user read messages from all or any channel **:**")
   myList.append(message+checkEmoji(myPerms.read_messages))
-  if (myPerms.request_to_speak ):
-    message=(" Can user request to speak in a stage channel **:**")
+  #if (myPerms.request_to_speak ):
+  message=(" Can user request to speak in a stage channel **:**")
   myList.append(message+checkEmoji(myPerms.request_to_speak))
-  if (myPerms.send_messages ):
-    message=(" Can user can send messages from all or specific text channels **:**")
+  #if (myPerms.send_messages ):
+  message=(" Can user can send messages from all or specific text channels **:**")
   myList.append(message+checkEmoji(myPerms.add_reactions))
-  if (myPerms.send_tts_messages ):
-    message=(" Can user can send messages TTS(which get converted to speech) from all or specific text channels **:**")
+  #if (myPerms.send_tts_messages ):
+  message=(" Can user can send messages TTS(which get converted to speech) from all or specific text channels **:**")
   myList.append(message+checkEmoji(myPerms.add_reactions))
-  if (myPerms.speak ):
-    message=(" Can user can unmute and speak in a voice channel **:**")
+  #if (myPerms.speak ):
+  message=(" Can user can unmute and speak in a voice channel **:**")
   myList.append(message+checkEmoji(myPerms.speak))
-  if (myPerms.stream ):
-    message=(" Can user can share their computer screen in a voice channel **:**")
+  #if (myPerms.stream ):
+  message=(" Can user can share their computer screen in a voice channel **:**")
   myList.append(message+checkEmoji(myPerms.stream))
-  if (myPerms.use_external_emojis ):
-    message=(" Can user send emojis created in other guilds **:**")
+  #if (myPerms.use_external_emojis ):
+  message=(" Can user send emojis created in other guilds **:**")
   myList.append(message+checkEmoji(myPerms.use_external_emojis))
-  if (myPerms.use_slash_commands ):
-    message=(" Can user use slash commands in a channel **:**")
+  #if (myPerms.use_slash_commands ):
+  message=(" Can user use slash commands in a channel **:**")
   myList.append(message+checkEmoji(myPerms.use_slash_commands))
-  if (myPerms.use_voice_activation ):
-    message=(" Can user use voice activation in a voice channel **:**")
+  #if (myPerms.use_voice_activation ):
+  message=(" Can user use voice activation in a voice channel **:**")
   myList.append(message+checkEmoji(myPerms.use_voice_activation))
-  if (myPerms.view_audit_log ):
-    message=(" Can user view guild's audit log **:**")
+  #if (myPerms.view_audit_log ):
+  message=(" Can user view guild's audit log **:**")
   myList.append(message+checkEmoji(myPerms.view_audit_log))
-  if (myPerms.view_channel ):
-    message=(" Can user view all or specific channels **:**")
+  #if (myPerms.view_channel ):
+  message=(" Can user view all or specific channels **:**")
   myList.append(message+checkEmoji(myPerms.view_channel ))
-  if (myPerms.view_guild_insights ):
-    message=(" Can user view the guild insights **:**")
+  #if (myPerms.view_guild_insights ):
+  message=(" Can user view the guild insights **:**")
   myList.append(message+checkEmoji(myPerms.view_guild_insights ))
   index=1
   if len(myList)==0:
