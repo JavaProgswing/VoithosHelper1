@@ -2036,7 +2036,7 @@ class MinecraftFun(commands.Cog):
             )
             return
         if member==None:
-          member=client.user
+          member=ctx.guild.me
         selfCombat=False
         if (client.user.id==member.id):
           selfCombat=True
@@ -2483,7 +2483,7 @@ class MinecraftFun(commands.Cog):
                             voicechannel.stop()
                         voicechannel.play(
                             discord.FFmpegPCMAudio("Shield_block5.ogg"))
-                if user == membertwo:
+                if user == membertwo or autoFight:
                     if damagePending:
                       message='f'
                       damagePending=False
