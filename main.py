@@ -2298,7 +2298,7 @@ class MinecraftFun(commands.Cog):
                                inline=True)
         else:
             embedOne.add_field(name=f"Match Tied",
-                               value=f"{memberone_healthpoint}",
+                               value=f"\u200b",
                                inline=True)
         await ctx.send(embed=embedOne)
 
@@ -2615,7 +2615,7 @@ class MinecraftFun(commands.Cog):
                                inline=True)
         else:
             embedOne.add_field(name=f"Match Tied",
-                               value=f"{memberone_healthpoint}",
+                               value=f"\u200b",
                                inline=True)
         voicechannel.play(discord.FFmpegPCMAudio("Firework_twinkle_far.ogg"))
         await ctx.send(embed=embedOne)
