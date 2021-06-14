@@ -2040,7 +2040,9 @@ class MinecraftFun(commands.Cog):
                 " Trying to battle yourself will only have major consequences !"
             )
             return
-
+        selfCombat=False
+        if (client.user.id==member.id)
+          selfCombat=True
         orechoice = ["Netherite", "Diamond", "Iron", "Leather"]
         swordchoice = ["Netherite", "Diamond", "Iron", "Stone", "Gold", "Wood"]
         armorresist = [85.0, 75.0, 60.0, 28.0]
@@ -2112,11 +2114,12 @@ class MinecraftFun(commands.Cog):
         membertwo_critical = 0
         membertwo_strong = 0
         membertwo_weak = 0
-
+        autoFight=False
+        damagePending=False
         def check(m):
             user = m.author
             message = m.content
-            nonlocal memberone, membertwo, memberone_healthpoint, membertwo_healthpoint, memberone_armor_resist, memberone_sword_attack, membertwo_armor_resist, membertwo_sword_attack, memberone_resistance, membertwo_resistance, memberone_resistances, memberone_critical, memberone_strong, memberone_weak, membertwo_resistances, membertwo_critical, membertwo_strong, membertwo_weak
+            nonlocal memberone, membertwo, memberone_healthpoint, membertwo_healthpoint, memberone_armor_resist, memberone_sword_attack, membertwo_armor_resist, membertwo_sword_attack, memberone_resistance, membertwo_resistance, memberone_resistances, memberone_critical, memberone_strong, memberone_weak, membertwo_resistances, membertwo_critical, membertwo_strong, membertwo_weak,autoFight,damagePending
             if message == 'f' or message == 'd':
                 attack = ['weak', 'strong', 'critical']
                 attackdamage = [0.5, 1.5, 2.0]
@@ -2140,7 +2143,11 @@ class MinecraftFun(commands.Cog):
                     " was poked to death by a sweet berry bush whilst trying to escape ",
                     " withered away whilst fighting "
                 ]
+                autoFight=False
                 if user == memberone:
+                    if message=='f' or message=='d':
+                      if selfCombat:
+                        autoFight=True
                     if message == 'f':
 
                         attackchoice = random.choice(attack)
@@ -2187,7 +2194,16 @@ class MinecraftFun(commands.Cog):
                                 f" {memberone.mention} has equipped the shield ."
                             ))
                         memberone_resistance = True
-                if user == membertwo:
+                if user == membertwo or autoFight:
+                    if damagePending:
+                      message='f'
+                      damagePending=False
+                    else:
+                      if membertwo_healthpoint<=15:
+                        message='d'
+                        damagePending=True
+                      else:
+                        message='f'
                     if message == 'f':
                         attackchoice = random.choice(attack)
                         if attackchoice == "weak":
