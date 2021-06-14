@@ -355,17 +355,24 @@ def checkstaff(member):
             is_staff = True
             break
     return is_staff
-    
+def checkCapsNum(sentence):
+  origLength=len(sentence)
+  count=0
+  for element in sentence:
+    if element==" ":
+      count+=1
+    if element.isupper():
+      count+=1
+  return(((count/origLength)*100))
 def checkCaps(sentence):
   origLength=len(sentence)
   count=0
   for element in sentence:
-    if element.isUpper():
+    if element==" ":
       count+=1
-  if(((count/origLength)*100)>=90):
-    return True
-  else:
-    return False
+    if element.isupper():
+      count+=1
+  return(((count/origLength)*100)>=90)
 
 def checkprivilleged(member):
     is_privilleged = False
