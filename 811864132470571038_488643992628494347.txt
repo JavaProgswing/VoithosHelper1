@@ -7,3 +7,7 @@ no reason provided .
 spamming in <#826327822787412048> by <@625265223250608138>
  <@488643992628494347> was successfully muted by <@625265223250608138> for no reason provided . 
  <@488643992628494347> was successfully unmuted by <@625265223250608138> for no reason provided . 
+ <@488643992628494347> was successfully muted by <@488643992628494347> for spamming in dev-testing-channel  
+ <@488643992628494347> was successfully muted by <@488643992628494347> for spamming in dev-testing-channel  
+ <@488643992628494347> was successfully unmuted by <@488643992628494347> for no reason provided . 
+ <@488643992628494347> was successfully unmuted by <@488643992628494347> for no reason provided . 

@@ -2260,8 +2260,10 @@ class MinecraftFun(commands.Cog):
             if user==memberone or user==membertwo:
               client.loop.create_task(asyncio.sleep(0.5))
             return False
-
-        msg = await client.wait_for('message', check=check, timeout=120)
+        try:
+          msg = await client.wait_for('message', check=check, timeout=120)
+        except:
+          pass
         embedOne = discord.Embed(
             title="Battle results",
             description=f"{memberone.name} and {membertwo.name}",
@@ -2573,9 +2575,9 @@ class MinecraftFun(commands.Cog):
             if user==memberone or user==membertwo:
               client.loop.create_task(asyncio.sleep(0.5))
             return False
-
-        msg = await client.wait_for('message', check=check, timeout=120)
-        if voicechannel.is_playing():
+        try:
+          msg = await client.wait_for('message', check=check, timeout=120)
+            if voicechannel.is_playing():
             voicechannel.stop()
         embedOne = discord.Embed(
             title="Battle results",
