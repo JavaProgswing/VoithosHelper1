@@ -16,6 +16,7 @@ import random
 import os
 import re
 import psutil
+import time
 import discord
 import contextlib
 import io
@@ -2116,6 +2117,7 @@ class MinecraftFun(commands.Cog):
         autoFight=False
         damagePending=False
         def check(m):
+
             user = m.author
             message = m.content
             nonlocal memberone, membertwo, memberone_healthpoint, membertwo_healthpoint, memberone_armor_resist, memberone_sword_attack, membertwo_armor_resist, membertwo_sword_attack, memberone_resistance, membertwo_resistance, memberone_resistances, memberone_critical, memberone_strong, memberone_weak, membertwo_resistances, membertwo_critical, membertwo_strong, membertwo_weak,autoFight,damagePending,selfCombat
@@ -2144,6 +2146,7 @@ class MinecraftFun(commands.Cog):
                 ]
                 autoFight=False
                 if user == memberone:
+                    
                     if message=='f' or message=='d':
                       if selfCombat:
                         autoFight=True
@@ -2193,6 +2196,7 @@ class MinecraftFun(commands.Cog):
                                 f" {memberone.mention} has equipped the shield ."
                             ))
                         memberone_resistance = True
+                
                 if user == membertwo or autoFight:
                     if damagePending:
                       message='f'
@@ -2249,6 +2253,8 @@ class MinecraftFun(commands.Cog):
                                 f" {membertwo.mention} has equipped the shield ."
                             ))
                         membertwo_resistance = True
+            if user==memberone or user==membertwo:
+              client.loop.create_task(asyncio.sleep(0.5))
             return False
 
         msg = await client.wait_for('message', check=check, timeout=120)
@@ -2554,6 +2560,8 @@ class MinecraftFun(commands.Cog):
                             voicechannel.stop()
                         voicechannel.play(
                             discord.FFmpegPCMAudio("Shield_block5.ogg"))
+            if user==memberone or user==membertwo:
+              client.loop.create_task(asyncio.sleep(0.5))
             return False
 
         msg = await client.wait_for('message', check=check, timeout=120)
