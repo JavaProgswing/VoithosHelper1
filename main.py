@@ -394,7 +394,7 @@ async def checkPerm(ctx,author=None):
   message=(" Does user have administrator privilleges **:**")
   myList.append(message+checkEmoji(myPerms.administrator))
   #if (myPerms.attach_files ):
-  message=(" Can user send file attachements in messages **:**")
+  message=(" Can user send file attachments in messages **:**")
   myList.append(message+checkEmoji(myPerms.attach_files))
   #if (myPerms.ban_members ):
   message=(" Can user ban other members from the guild **:**")
