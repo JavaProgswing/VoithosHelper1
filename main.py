@@ -3400,7 +3400,6 @@ async def on_guild_join(guild):
 async def on_ready():
     global prefixlist,channelone,backupserver,exemptspam,antilink,ticketpanels,antifilter
     print(f'{client.user.name} is ready for moderation! ')
-    backupserver=client.get_guild(811864132470571038)
     channelone= client.get_channel(840193232885121094)
     activity = discord.Activity(
         name="gn!help for commands .",
@@ -3419,7 +3418,8 @@ async def on_ready():
         else:
           ticketpanels.append(line.replace("\n", ""))
         count=count+1
-    print(ticketpanels)      
+    #print(ticketpanels)   
+    print(" The logging channel has been set to "+channelone)   
     with open("exemptspam.txt", "r") as f:
       for line in f:
         exemptspam.append(int(line))
