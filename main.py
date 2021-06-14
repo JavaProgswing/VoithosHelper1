@@ -2176,7 +2176,7 @@ class MinecraftFun(commands.Cog):
                             ))
                         membertwo_healthpoint -= damagevalue
                         player_health = ""
-                        if (membertwo_healthpoint<1.0 and membertwo_healthpoint>0.0)
+                        if (membertwo_healthpoint<1.0 and membertwo_healthpoint>0.0):
                           player_health=":heart:"
                         for i in range(int(membertwo_healthpoint)):
                             player_health += ":heart:"
@@ -2235,7 +2235,7 @@ class MinecraftFun(commands.Cog):
 
                         memberone_healthpoint -= damagevalue
                         player_health = ""
-                        if (memberone_healthpoint<1.0 and memberone_healthpoint>0.0)
+                        if (memberone_healthpoint<1.0 and memberone_healthpoint>0.0):
                           player_health=":heart:"
                         for i in range(int(memberone_healthpoint)):
                             player_health += ":heart:"
@@ -2467,7 +2467,7 @@ class MinecraftFun(commands.Cog):
                             ))
                         membertwo_healthpoint -= damagevalue
                         player_health = ""
-                        if (membertwo_healthpoint<1.0 and membertwo_healthpoint>0.0)
+                        if (membertwo_healthpoint<1.0 and membertwo_healthpoint>0.0):
                           player_health=":heart:"
                         for i in range(int(membertwo_healthpoint)):
                             player_health += ":heart:"
@@ -2541,7 +2541,7 @@ class MinecraftFun(commands.Cog):
 
                         memberone_healthpoint -= damagevalue
                         player_health = ""
-                        if (memberone_healthpoint<1.0 and memberone_healthpoint>0.0)
+                        if (memberone_healthpoint<1.0 and memberone_healthpoint>0.0):
                           player_health=":heart:"
                         for i in range(int(memberone_healthpoint)):
                             player_health += ":heart:"
