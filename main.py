@@ -379,9 +379,11 @@ def checkEmoji(value):
     return ":white_check_mark: "
   elif not value:
     return ":green_square: "
-def checkPerm(ctx):
+async def checkPerm(ctx,author=None):
   myList=[]
-  myPermsValue=ctx.guild.me.guild_permissions.value
+  if author==None:
+    author=ctx.guild.me
+  myPermsValue=author.guild_permissions.value
   myPerms=discord.Permissions(myPermsValue)
   if (myPerms.add_reactions ):
     message=(" Can user add reactions to messages **:**")
@@ -474,24 +476,34 @@ def checkPerm(ctx):
     message=(" Can user can share their computer screen in a voice channel **:**")
   myList.append(message+checkEmoji(myPerms.stream))
   if (myPerms.use_external_emojis ):
-    message=(" Can user add reactions to messages.  **:**")
+    message=(" Can user send emojis created in other guilds **:**")
   myList.append(message+checkEmoji(myPerms.use_external_emojis))
   if (myPerms.use_slash_commands ):
-    message=(" Can user add reactions to messages.  **:**")
+    message=(" Can user use slash commands in a channel **:**")
   myList.append(message+checkEmoji(myPerms.use_slash_commands))
   if (myPerms.use_voice_activation ):
-    message=(" Can user add reactions to messages.  **:**")
+    message=(" Can user use voice activation in a voice channel **:**")
   myList.append(message+checkEmoji(myPerms.use_voice_activation))
   if (myPerms.view_audit_log ):
-    message=(" Can user add reactions to messages.  **:**")
+    message=(" Can user view guild's audit log **:**")
   myList.append(message+checkEmoji(myPerms.view_audit_log))
   if (myPerms.view_channel ):
-    message=(" Can user add reactions to messages.  **:**")
+    message=(" Can user view all or specific channels **:**")
   myList.append(message+checkEmoji(myPerms.view_channel ))
   if (myPerms.view_guild_insights ):
-    message=(" Can user add reactions to messages.  **:**")
+    message=(" Can user view the guild insights **:**")
   myList.append(message+checkEmoji(myPerms.view_guild_insights ))
-
+  index=1
+  if len(myList)==0:
+    myList.append(" The user doesn't have any permissions in the guild .")
+  embed = discord.Embed(title=f"{author} 's permissions") 
+  for content in myList:
+    embed.add_field(name=f"{index}) ",value=f"{content}")
+    index+=1
+    if(index%15==0):
+      await ctx.send(embed=embed)
+      embed = discord.Embed(title=f"{author} 's permissions",inline=True) 
+  await ctx.send(embed=embed)
 def checkprivilleged(member):
     is_privilleged = False
     for i in userprivilleged:
