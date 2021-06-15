@@ -1807,7 +1807,7 @@ class MinecraftFun(commands.Cog):
                                                     check=check)
 
           except asyncio.TimeoutError:
-              await ctx.channel.send(f'{member} {random.choice(escapelist)}')
+              await ctx.channel.send(f'{member.mention} {random.choice(escapelist)}')
               return
           else:
               await ctx.reply('Let the battle preparations take place !')
@@ -1984,7 +1984,7 @@ class MinecraftFun(commands.Cog):
                                 ))
                             return True
                     elif message == 'd':
-                        memberone_resistances += 1
+                        membertwo_resistances += 1
                         client.loop.create_task(
                             ctx.channel.send(
                                 f" {membertwo.mention} has equipped the shield ."
@@ -2082,7 +2082,7 @@ class MinecraftFun(commands.Cog):
                                                     check=check)
 
           except asyncio.TimeoutError:
-              await ctx.channel.send(f'{member} {random.choice(escapelist)}')
+              await ctx.channel.send(f'{member.mention} {random.choice(escapelist)}')
               return
           else:
               await ctx.reply('Let the battle preparations take place !')
@@ -2289,7 +2289,7 @@ class MinecraftFun(commands.Cog):
                                 discord.FFmpegPCMAudio("Player_hurt1.ogg"))
                             return True
                     elif message == 'd':
-                        memberone_resistances += 1
+                        membertwo_resistances += 1
                         client.loop.create_task(
                             ctx.channel.send(
                                 f" {membertwo.mention} has equipped the shield ."
