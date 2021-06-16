@@ -2585,6 +2585,7 @@ class MinecraftFun(commands.Cog):
         damagePending=False
         copyleaderBoard=leaderBoard
         matchCancelled=False
+        await asyncio.sleep(1)
         def check(m):
             user = m.author
             message = m.content
