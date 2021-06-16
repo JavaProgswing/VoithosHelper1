@@ -2455,7 +2455,7 @@ class MinecraftFun(commands.Cog):
             embedOne.add_field(name=f"Match Cancelled",
                                value=f"\u200b",
                                inline=True)
-        if memberone_healthpoint <= 0:
+        elif memberone_healthpoint <= 0:
             embedOne.add_field(name=f"Winner {membertwo.name}",
                                value=f"Health: {membertwo_healthpoint}",
                                inline=True)
