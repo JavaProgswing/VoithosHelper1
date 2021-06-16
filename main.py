@@ -12,6 +12,7 @@ import validators
 import random
 import os
 import re
+import time
 import psutil
 import discord
 import datetime
@@ -905,7 +906,7 @@ class Moderation(commands.Cog):
     @commands.check_any(is_bot_staff(), commands.has_permissions(manage_roles=True))
     async def blacklist(self, ctx, member: discord.Member,timenum=None,*, reason=None):
         if reason == None:
-            reason = "no reason provided ."
+            reason = "no reason provided "
         if timenum==None:
           timelength=""
         else:
@@ -951,9 +952,13 @@ class Moderation(commands.Cog):
         blacklistedusers = open("blacklisted.txt", "a")  # append mode
         for role in member.roles:
             if role != ctx.guild.default_role:
+              try:
+                await member.remove_roles(role)
                 blacklistedusers.write(
                     f"{ctx.guild.id},{member.id},{role.id}.")
-                await member.remove_roles(role)
+              except:
+                pass
+              
 
         blacklistrole = discord.utils.get(ctx.guild.roles, name='blacklisted')
         if blacklistrole == None:
@@ -1107,7 +1112,7 @@ class Moderation(commands.Cog):
                         commands.has_permissions(manage_roles=True))
     async def mute(self, ctx, member: discord.Member,timenum=None,*, reason=None):
         if reason == None:
-            reason = "no reason provided ."
+            reason = "no reason provided "
         if timenum==None:
           timelength=""
         else:
@@ -1178,8 +1183,11 @@ class Moderation(commands.Cog):
         mutedusers = open("muted.txt", "a")  # append mode
         for role in member.roles:
             if role != ctx.guild.default_role:
+              try:
                 await member.remove_roles(role)
                 mutedusers.write(f"{ctx.guild.id},{member.id},{role.id}.")
+              except:
+                pass
 
 
         await member.add_roles(muterole)
@@ -1849,11 +1857,19 @@ class MinecraftFun(commands.Cog):
         membertwo_weak = 0
         autoFight=False
         damagePending=False
+        matchCancelled=False
         def check(m):
 
             user = m.author
             message = m.content
-            nonlocal memberone, membertwo, memberone_healthpoint, membertwo_healthpoint, memberone_armor_resist, memberone_sword_attack, membertwo_armor_resist, membertwo_sword_attack, memberone_resistance, membertwo_resistance, memberone_resistances, memberone_critical, memberone_strong, memberone_weak, membertwo_resistances, membertwo_critical, membertwo_strong, membertwo_weak,autoFight,damagePending,selfCombat
+            nonlocal memberone, membertwo, memberone_healthpoint, membertwo_healthpoint, memberone_armor_resist, memberone_sword_attack, membertwo_armor_resist, membertwo_sword_attack, memberone_resistance, membertwo_resistance, memberone_resistances, memberone_critical, memberone_strong, memberone_weak, membertwo_resistances, membertwo_critical, membertwo_strong, membertwo_weak,autoFight,damagePending,selfCombat,matchCancelled
+            if user==memberone or user==membertwo and user != ctx.guild.me:
+              bucket = bot.cooldownvar.get_bucket(m)
+              retry_after = bucket.update_rate_limit()
+              if retry_after:
+                client.loop.create_task(ctx.channel.send(f" {user.mention} You were spamming messages in the pvp command as a penalty , your score has been reduced and this match has been cancelled ."))
+                matchCancelled=True
+                return True
             if message == 'f' or message == 'd':
                 attack = ['weak', 'strong', 'critical']
                 attackdamage = [0.5, 1.5, 2.0]
@@ -2021,7 +2037,11 @@ class MinecraftFun(commands.Cog):
             value=
             f"Shield used: {membertwo_resistances} , Critical damage : {membertwo_critical} , Strong damage : {membertwo_strong} , Weak Damage : {membertwo_weak} .",
             inline=False)
-        if memberone_healthpoint <= 0:
+        if matchCancelled:
+            embedOne.add_field(name=f"Match Cancelled",
+                               value=f"\u200b",
+                               inline=True)
+        elif memberone_healthpoint <= 0:
             embedOne.add_field(name=f"Winner {membertwo.name}",
                                value=f"Health: {membertwo_healthpoint}",
                                inline=True)
@@ -2129,10 +2149,19 @@ class MinecraftFun(commands.Cog):
         membertwo_weak = 0
         autoFight=False
         damagePending=False
+        matchCancelled=False
+        await asyncio.sleep(1)
         def check(m):
             user = m.author
             message = m.content
-            nonlocal memberone, membertwo, memberone_healthpoint, membertwo_healthpoint, memberone_armor_resist, memberone_sword_attack, membertwo_armor_resist, membertwo_sword_attack, memberone_resistance, membertwo_resistance, voicechannel, memberone_resistances, memberone_critical, memberone_strong, memberone_weak, membertwo_resistances, membertwo_critical, membertwo_strong, membertwo_weak,autoFight,damagePending,selfCombat
+            nonlocal memberone, membertwo, memberone_healthpoint, membertwo_healthpoint, memberone_armor_resist, memberone_sword_attack, membertwo_armor_resist, membertwo_sword_attack, memberone_resistance, membertwo_resistance, voicechannel, memberone_resistances, memberone_critical, memberone_strong, memberone_weak, membertwo_resistances, membertwo_critical, membertwo_strong, membertwo_weak,autoFight,damagePending,selfCombat,matchCancelled
+            if user==memberone or user==membertwo and user != ctx.guild.me:
+              bucket = bot.cooldownvar.get_bucket(m)
+              retry_after = bucket.update_rate_limit()
+              if retry_after:
+                client.loop.create_task(ctx.channel.send(f" {user.mention} You were spamming messages in the pvp command as a penalty , your score has been reduced and this match has been cancelled ."))
+                matchCancelled=True
+                return True
             if message == 'f' or message == 'd':
 
                 attack = ['weak', 'strong', 'critical']
@@ -2332,7 +2361,11 @@ class MinecraftFun(commands.Cog):
             value=
             f"Shield used: {membertwo_resistances} , Critical damage : {membertwo_critical} , Strong damage : {membertwo_strong} , Weak Damage : {membertwo_weak} .",
             inline=False)
-        if memberone_healthpoint <= 0:
+        if matchCancelled:
+            embedOne.add_field(name=f"Match Cancelled",
+                               value=f"\u200b",
+                               inline=True)
+        elif memberone_healthpoint <= 0:
             embedOne.add_field(name=f"Winner {membertwo.name}",
                                value=f"Health: {membertwo_healthpoint}",
                                inline=True)
