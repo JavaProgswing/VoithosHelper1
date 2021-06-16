@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 import traceback
+from collections import Counter
 import json
 from keep_alive import keep_alive
 import aiohttp        
@@ -102,7 +103,7 @@ prefixlist = []
 antilink = []
 ticketpanels = []
 antifilter=[]
-
+leaderBoard=[]
 async def get_prefix(client, message):
     if message.guild:
         try:
@@ -288,6 +289,12 @@ async def saveexemptspam():
         for channelid in exemptspam:
             f.write(str(channelid) + "\n")
 
+@tasks.loop(seconds=120)
+async def saveleaderBoard():
+    global leaderBoard
+    with open("leaderBoard.txt", "w") as f:
+        for member in leaderBoard:
+            f.write(str(member) + "\n")
 
 @tasks.loop(seconds=120)
 async def saveprefix():
@@ -2180,6 +2187,7 @@ class MinecraftFun(commands.Cog):
         usage="@member")
     @commands.guild_only()
     async def pvp(self, ctx, member: discord.Member=None):
+        global leaderBoard
         if member == ctx.author:
             await ctx.channel.send(
                 " Trying to battle yourself will only have major consequences !"
@@ -2208,10 +2216,12 @@ class MinecraftFun(commands.Cog):
               f'React with that 👍 reaction in 60 seconds, {member.mention} to start the pvp match !'
           )
           await messagereact.add_reaction("👍")
+          
           def check(reaction, user):
               return user == member and str(reaction.emoji) == '👍'
 
           try:
+              
               reaction, user = await client.wait_for('reaction_add',
                                                     timeout=60.0,
                                                     check=check)
@@ -2259,8 +2269,13 @@ class MinecraftFun(commands.Cog):
         membertwo_weak = 0
         autoFight=False
         damagePending=False
+        start = time.time()
         def check(m):
-
+            current=time.time()
+            print(f" Starting time {start} ")
+            print(f" Current time {current} ")
+            if current.start<1:
+              return
             user = m.author
             message = m.content
             nonlocal memberone, membertwo, memberone_healthpoint, membertwo_healthpoint, memberone_armor_resist, memberone_sword_attack, membertwo_armor_resist, membertwo_sword_attack, memberone_resistance, membertwo_resistance, memberone_resistances, memberone_critical, memberone_strong, memberone_weak, membertwo_resistances, membertwo_critical, membertwo_strong, membertwo_weak,autoFight,damagePending,selfCombat
@@ -2435,10 +2450,21 @@ class MinecraftFun(commands.Cog):
             embedOne.add_field(name=f"Winner {membertwo.name}",
                                value=f"Health: {membertwo_healthpoint}",
                                inline=True)
+            if not membertwo==ctx.guild.me:
+              leaderBoard.append(str(membertwo.mention))
+            try:
+              leaderBoard.remove(str(memberone.mention))
+            except:
+              pass
         elif membertwo_healthpoint <= 0:
             embedOne.add_field(name=f"Winner {memberone.name}",
                                value=f"Health: {memberone_healthpoint}",
                                inline=True)
+            leaderBoard.append(str(memberone.mention))
+            try:
+              leaderBoard.remove(str(membertwo.mention))
+            except:
+              pass
         else:
             embedOne.add_field(name=f"Match Tied",
                                value=f"\u200b",
@@ -2454,6 +2480,7 @@ class MinecraftFun(commands.Cog):
         usage="@member")
     @commands.guild_only()
     async def soundpvp(self, ctx, member: discord.Member=None):
+        global leaderBoard
         if member == ctx.author:
             await ctx.channel.send(
                 " Trying to battle yourself will only have major consequences !"
@@ -2710,7 +2737,7 @@ class MinecraftFun(commands.Cog):
                         voicechannel.play(
                             discord.FFmpegPCMAudio("Shield_block5.ogg"))
             if user==memberone or user==membertwo:
-              client.loop.create_task(asyncio.sleep(0.5))
+              client.loop.create_task(asyncio.sleep())
             return False
         try:
           msg = await client.wait_for('message', check=check, timeout=120)
@@ -2746,10 +2773,21 @@ class MinecraftFun(commands.Cog):
             embedOne.add_field(name=f"Winner {membertwo.name}",
                                value=f"Health: {membertwo_healthpoint}",
                                inline=True)
+            if not membertwo==ctx.guild.me:
+              leaderBoard.append(str(membertwo.mention))
+            try:
+              leaderBoard.remove(str(memberone.mention))
+            except:
+              pass
         elif membertwo_healthpoint <= 0:
             embedOne.add_field(name=f"Winner {memberone.name}",
                                value=f"Health: {memberone_healthpoint}",
                                inline=True)
+            leaderBoard.append(str(memberone.mention))
+            try:
+              leaderBoard.remove(str(membertwo.mention))
+            except:
+              pass
         else:
             embedOne.add_field(name=f"Match Tied",
                                value=f"\u200b",
@@ -2767,6 +2805,47 @@ class MinecraftFun(commands.Cog):
                     "You are not connected to a voice channel.")
         elif ctx.voice_client.is_playing():
             ctx.voice_client.stop()
+    @commands.cooldown(1, 30, BucketType.user)
+    @commands.command(
+        brief=
+        'This command is used to check the leaderboard of the pvp and soundpvp command.',
+        description=
+        'This command is used to check the leaderboard of the pvp and soundpvp command.',
+        usage="")
+    @commands.guild_only()
+    async def pvpleaderboard(self, ctx):
+        global leaderBoard
+        #print(leaderBoard)
+        countPoint=[]
+        countNames=[]
+        countDictionary= Counter(leaderBoard)
+        print(countDictionary)
+        for member in leaderBoard:
+          if not member in countNames:
+            countNames.append(member)
+            countPoint.append(int(countDictionary[member]))
+        sortedPoint=sorted(countPoint,reverse = True)
+        sortedNames=[]
+        for point in sortedPoint:
+          indexName=countPoint.index(point)
+          #print(indexName)
+          countPoint[indexName]=-1
+          #print(countPoint)
+          sortedNames.append(countNames[indexName])
+
+        #print(sortedNames)
+        embedOne = discord.Embed(
+            title="Battle leaderboard",
+            description=f"Season one",
+            color=Color.green())
+        postfix=["st","nd","rd","th","th","th","th","th","th","th"]
+        for i in range(10):
+          try:
+            name=sortedNames[i]
+          except:
+            name="Unassigned"
+          embedOne.add_field(name=str(i+1)+f"{postfix[i]} member",value=name,inline=False)
+        await ctx.send(embed=embedOne)
 
     @commands.cooldown(1, 120, BucketType.user)
     @commands.command(
@@ -3029,29 +3108,33 @@ class Fun(commands.Cog):
         usage="")
     async def ping(self, ctx):
         #f"Pong: **`{round(duration)}ms`** | Websocket: **`{format(round(ctx.bot.latency*1000))}ms`**"
-        if round(client.latency * 1000) <= 50:
+        start = time.perf_counter()
+        message = await ctx.send("Pinging...")
+        end = time.perf_counter()
+        duration = (end - start) * 1000
+        if round(duration) <= 50:
             embed = discord.Embed(
                 title="PING",
                 description=
-                f":ping_pong: Ping! The ping is **{round(client.latency *1000)} and websocket ping is {format(round(ctx.bot.latency*1000))}** milliseconds!",
+                f":ping_pong: Ping! The ping is **{round(duration)} and websocket ping is {format(round(ctx.bot.latency*1000))}** milliseconds!",
                 color=0x44ff44)
-        elif round(client.latency * 1000) <= 100:
+        elif round(duration) <= 100:
             embed = discord.Embed(
                 title="PING",
                 description=
-                f":ping_pong: Ping! The ping is **{round(client.latency *1000)} and websocket ping is {format(round(ctx.bot.latency*1000))}** milliseconds!",
+                f":ping_pong: Ping! The ping is **{round(duration)} and websocket ping is {format(round(ctx.bot.latency*1000))}** milliseconds!",
                 color=0xffd000)
-        elif round(client.latency * 1000) <= 200:
+        elif round(duration) <= 200:
             embed = discord.Embed(
                 title="PING",
                 description=
-                f":ping_pong: Ping! The ping is **{round(client.latency *1000)} and websocket ping is {format(round(ctx.bot.latency*1000))}** milliseconds!",
+                f":ping_pong: Ping! The ping is **{round(duration)} and websocket ping is {format(round(ctx.bot.latency*1000))}** milliseconds!",
                 color=0xff6600)
         else:
             embed = discord.Embed(
                 title="PING",
                 description=
-                f":ping_pong: Ping! The ping is **{round(client.latency *1000)} and websocket ping is {format(round(ctx.bot.latency*1000))}** milliseconds!",
+                f":ping_pong: Ping! The ping is **{round(duration)} and websocket ping is {format(round(ctx.bot.latency*1000))}** milliseconds!",
                 color=0x990000)
         await ctx.reply(embed=embed)
 
@@ -4564,7 +4647,7 @@ async def on_guild_join(guild):
 
 @client.event
 async def on_ready():
-    global prefixlist, channelerrorlogging, exemptspam, antilink, ticketpanels,antifilter
+    global prefixlist, channelerrorlogging, exemptspam, antilink, ticketpanels,antifilter,leaderBoard
     print(f'{client.user.name} is ready for moderation! ')
     #backupserver=client.get_guild(811864132470571038)
     channelerrorlogging = client.get_channel(840193232885121094)
@@ -4578,6 +4661,7 @@ async def on_ready():
     antilink = []
     ticketpanels = []
     antifilter=[]
+    leaderBoard=[]
     count = 1
     with open("ticketpanels.txt", "r") as f:
         for line in f:
@@ -4595,6 +4679,9 @@ async def on_ready():
     with open("antifilter.txt", "r") as f:
         for filters in f:
             antilink.append(int(filters))
+    with open("leaderBoard.txt", "r") as f:
+        for line in f:
+                leaderBoard.append(line.replace("\n", ""))
     count = 1
     with open("prefixes.txt", "r") as f:
         for line in f:
@@ -4608,7 +4695,7 @@ async def on_ready():
     saveantilink.start()
     saveticketpanels.start()
     saveprofanefilter.start()
-
+    saveleaderBoard.start()
 @client.event
 async def on_member_join(member):
     sendfailed = False
