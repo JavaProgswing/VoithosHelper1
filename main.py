@@ -2646,33 +2646,42 @@ class Fun(commands.Cog):
 
 
         await ctx.reply(embed=embedVar)
-    @commands.cooldown(1,60,BucketType.user)
-    @commands.command(brief='This command can be used to get current user response time(ping).', description='This command can be used to get current user response time(ping) in milliseconds.',usage="")
+    @commands.cooldown(1, 60, BucketType.user)
+    @commands.command(
+        brief=
+        'This command can be used to get current user response time(ping).',
+        description=
+        'This command can be used to get current user response time(ping) in milliseconds.',
+        usage="")
     async def ping(self, ctx):
-      #f"Pong: **`{round(duration)}ms`** | Websocket: **`{format(round(ctx.bot.latency*1000))}ms`**"
-        if round(client.latency * 1000) <= 50:
+        #f"Pong: **`{round(duration)}ms`** | Websocket: **`{format(round(ctx.bot.latency*1000))}ms`**"
+        start = time.perf_counter()
+        message = await ctx.send("Pinging...")
+        end = time.perf_counter()
+        duration = (end - start) * 1000
+        if round(duration) <= 50:
             embed = discord.Embed(
                 title="PING",
                 description=
-                f":ping_pong: Ping! The ping is **{round(client.latency *1000)} and websocket ping is {format(round(ctx.bot.latency*1000))}** milliseconds!",
+                f":ping_pong: Ping! The ping is **{round(duration)} and websocket ping is {format(round(ctx.bot.latency*1000))}** milliseconds!",
                 color=0x44ff44)
-        elif round(client.latency * 1000) <= 100:
+        elif round(duration) <= 100:
             embed = discord.Embed(
                 title="PING",
                 description=
-                f":ping_pong: Ping! The ping is **{round(client.latency *1000)} and websocket ping is {format(round(ctx.bot.latency*1000))}** milliseconds!",
+                f":ping_pong: Ping! The ping is **{round(duration)} and websocket ping is {format(round(ctx.bot.latency*1000))}** milliseconds!",
                 color=0xffd000)
-        elif round(client.latency * 1000) <= 200:
+        elif round(duration) <= 200:
             embed = discord.Embed(
                 title="PING",
                 description=
-               f":ping_pong: Ping! The ping is **{round(client.latency *1000)} and websocket ping is {format(round(ctx.bot.latency*1000))}** milliseconds!",
+                f":ping_pong: Ping! The ping is **{round(duration)} and websocket ping is {format(round(ctx.bot.latency*1000))}** milliseconds!",
                 color=0xff6600)
         else:
             embed = discord.Embed(
                 title="PING",
                 description=
-               f":ping_pong: Ping! The ping is **{round(client.latency *1000)} and websocket ping is {format(round(ctx.bot.latency*1000))}** milliseconds!",
+                f":ping_pong: Ping! The ping is **{round(duration)} and websocket ping is {format(round(ctx.bot.latency*1000))}** milliseconds!",
                 color=0x990000)
         await ctx.reply(embed=embed)
 
