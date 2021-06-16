@@ -2593,6 +2593,7 @@ class MinecraftFun(commands.Cog):
             if user==memberone or user==membertwo and user != ctx.guild.me:
               bucket = bot.cooldownvar.get_bucket(m)
               retry_after = bucket.update_rate_limit()
+              client.loop.create_task( asyncio.sleep(0.25))
               if retry_after:
                 client.loop.create_task(ctx.channel.send(f" {user.mention} You were spamming messages in the pvp command as a penalty , your score has been reduced and this match has been cancelled ."))
                 try:
