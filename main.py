@@ -1192,9 +1192,13 @@ class Moderation(commands.Cog):
         blacklistedusers = open("blacklisted.txt", "a")  # append mode
         for role in member.roles:
             if role != ctx.guild.default_role:
+              try:
+                await member.remove_roles(role)
                 blacklistedusers.write(
                     f"{ctx.guild.id},{member.id},{role.id}.")
-                await member.remove_roles(role)
+              except:
+                pass
+               
 
         blacklistrole = discord.utils.get(ctx.guild.roles, name='blacklisted')
         if blacklistrole == None:
@@ -1285,7 +1289,7 @@ class Moderation(commands.Cog):
         blacklistrole = discord.utils.get(ctx.guild.roles, name='blacklisted')
         await blacklistedmember.remove_roles(blacklistrole)
         if reason == None:
-            reason = "no reason provided ."
+            reason = "no reason provided "
         blacklistdusers = open("blacklisted.txt", "r")
         userstring = blacklistdusers.read()
         userlist = userstring.split(".")
@@ -1399,7 +1403,7 @@ class Moderation(commands.Cog):
                    *,
                    reason=None):
         if reason == None:
-            reason = "no reason provided ."
+            reason = "no reason provided "
         if timenum == None:
             timelength = ""
         else:
@@ -1465,8 +1469,11 @@ class Moderation(commands.Cog):
         mutedusers = open("muted.txt", "a")  # append mode
         for role in member.roles:
             if role != ctx.guild.default_role:
-                await member.remove_roles(role)
-                mutedusers.write(f"{ctx.guild.id},{member.id},{role.id}.")
+                try:
+                  await member.remove_roles(role)
+                  mutedusers.write(f"{ctx.guild.id},{member.id},{role.id}.")
+                except:
+                  pass
 
         await member.add_roles(muterole)
         try:
@@ -2275,13 +2282,13 @@ class MinecraftFun(commands.Cog):
             user = m.author
             message = m.content
             nonlocal memberone, membertwo, memberone_healthpoint, membertwo_healthpoint, memberone_armor_resist, memberone_sword_attack, membertwo_armor_resist, membertwo_sword_attack, memberone_resistance, membertwo_resistance, memberone_resistances, memberone_critical, memberone_strong, memberone_weak, membertwo_resistances, membertwo_critical, membertwo_strong, membertwo_weak,autoFight,damagePending,selfCombat,copyleaderBoard,matchCancelled
-            if user==memberone or user==membertwo:
+            if user==memberone or user==membertwo and user != ctx.guild.me:
               bucket = bot.cooldownvar.get_bucket(m)
               retry_after = bucket.update_rate_limit()
               if retry_after:
                 client.loop.create_task(ctx.channel.send(f" {user.mention} You were spamming messages in the pvp command as a penalty , your score has been reduced and this match has been cancelled ."))
                 try:
-                  copyleaderBoard.remove(str(membertwo.mention))
+                  copyleaderBoard.remove(str(user.mention))
                 except:
                   pass
                 matchCancelled=True
@@ -2427,6 +2434,7 @@ class MinecraftFun(commands.Cog):
           msg = await client.wait_for('message', check=check, timeout=120)
         except:
           pass
+        leaderBoard=copyleaderBoard
         embedOne = discord.Embed(
             title="Battle results",
             description=f"{memberone.name} and {membertwo.name}",
@@ -2581,13 +2589,13 @@ class MinecraftFun(commands.Cog):
             user = m.author
             message = m.content
             nonlocal memberone, membertwo, memberone_healthpoint, membertwo_healthpoint, memberone_armor_resist, memberone_sword_attack, membertwo_armor_resist, membertwo_sword_attack, memberone_resistance, membertwo_resistance, voicechannel, memberone_resistances, memberone_critical, memberone_strong, memberone_weak, membertwo_resistances, membertwo_critical, membertwo_strong, membertwo_weak,autoFight,damagePending,copyleaderBoard,matchCancelled
-            if user==memberone or user==membertwo:
+            if user==memberone or user==membertwo and user != ctx.guild.me:
               bucket = bot.cooldownvar.get_bucket(m)
               retry_after = bucket.update_rate_limit()
               if retry_after:
                 client.loop.create_task(ctx.channel.send(f" {user.mention} You were spamming messages in the pvp command as a penalty , your score has been reduced and this match has been cancelled ."))
                 try:
-                  copyleaderBoard.remove(str(membertwo.mention))
+                  copyleaderBoard.remove(str(user.mention))
                 except:
                   pass
                 matchCancelled=True
@@ -2763,6 +2771,7 @@ class MinecraftFun(commands.Cog):
           msg = await client.wait_for('message', check=check, timeout=120)
         except:
           pass
+        leaderBoard=copyleaderBoard
         if voicechannel.is_playing():
             voicechannel.stop()
         embedOne = discord.Embed(
