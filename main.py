@@ -208,11 +208,15 @@ async def on_command_error(ctx, error):
                              value="\u200b",
                              inline=False)
         embederror.add_field(
-            name=(f" Channel: {ctx.channel.name} {ctx.channel.id}"),
+            name=(f" Channel: {ctx.channel.name} ({ctx.channel.id})"),
             value="\u200b",
             inline=False)
         embederror.add_field(
             name=(f" Member: {ctx.author.mention} ({ctx.author.name})"),
+            value="\u200b",
+            inline=False)
+        embederror.add_field(
+            name=(f" Message: ({ctx.message.id})"),
             value="\u200b",
             inline=False)
 
@@ -768,7 +772,7 @@ Please visit https://top.gg/bot/805030662183845919 to submit ideas or bugs.""")
             "https://cdn.discordapp.com/avatars/805030662183845919/70fee8581891e9a810da60944dc486ba.webp?size=128"
         )
         embedone.set_footer(
-            text="Want support? Join here: https://discord.gg/TZDYSHSZgg",
+            text="Grant our bot updated permissions by re-inviting the bot by the invite command.",
             icon_url=
             "https://cdn.discordapp.com/avatars/488643992628494347/e50ae57d9e8880e6acfbc2b444000fa1.webp?size=128"
         )
@@ -3709,50 +3713,52 @@ class Support(commands.Cog):
         'This command can be used to send messages in a certain guild.',
         usage="message guildid")
     @commands.check_any(is_bot_staff())
-    async def sendguild(self, ctx, guildsent: discord.Guild):
+    async def sendguild(self, ctx, guilds: commands.Greedy[discord.Guild]):
         #guildsent=client.get_guild(guildid)
-        await ctx.send(str(guildsent))
-        count = 5
+        for guildsent in guilds:
+          await ctx.send(str(guildsent))
+          count = 5
 
-        def check(message):
-            nonlocal count
-            count = count + 1
-            #print(f"{count} has been incremented .")
-            return message.author == ctx.author and message.channel == ctx.channel
+          def check(message):
+              nonlocal count
+              count = count + 1
+              #print(f"{count} has been incremented .")
+              return message.author == ctx.author and message.channel == ctx.channel
 
-        await ctx.send('What is the title ?')
-        title = await client.wait_for('message', check=check)
+          await ctx.send('What is the title ?')
+          title = await client.wait_for('message', check=check)
 
-        await ctx.send('What is the description ?')
-        desc = await client.wait_for('message', check=check)
-        await ctx.send(' What is the footer ?')
-        footertxt = await client.wait_for('message', check=check)
-        await ctx.send(' What is the footer url ?')
-        footerurl = await client.wait_for('message', check=check)
-        #print(f"Total count : {count}")
-        try:
-            await ctx.channel.purge(limit=count)
-        except:
-            await ctx.reply(
-                "I do not have `manage messages` permissions to delete messages ."
-            ) + "\u200b"
+          await ctx.send('What is the description ?')
+          desc = await client.wait_for('message', check=check)
+          await ctx.send(' What is the footer ?')
+          footertxt = await client.wait_for('message', check=check)
+          await ctx.send(' What is the footer url ?')
+          footerurl = await client.wait_for('message', check=check)
+          #print(f"Total count : {count}")
+          try:
+              await ctx.channel.purge(limit=count)
+          except:
+              await ctx.reply(
+                  "I do not have `manage messages` permissions to delete messages ."
+              ) + "\u200b"
 
-        embedone = discord.Embed(title=title.content,
-                                 description=desc.content,
-                                 color=Color.green())
-        embedone.set_footer(text=footertxt.content, icon_url=footerurl.content)
-        await ctx.send(embed=embedone)
-        for channel in guildsent.channels:
-            if channel.type == discord.ChannelType.text and channel.permissions_for(
-                    guildsent.me).send_messages and channel.permissions_for(
-                        guildsent.me).embed_links:
-                try:
-                    await channel.send(embed=embedone)
-                except:
-                    await ctx.send(
-                        f" I cannot send messages in {channel.name}({guildsent}) ."
-                    )
-                break
+          embedone = discord.Embed(title=title.content,
+                                  description=desc.content,
+                                  color=Color.green())
+          embedone.set_footer(text=footertxt.content, icon_url=footerurl.content)
+          await ctx.send(embed=embedone)
+          for channel in guildsent.channels:
+              if channel.type == discord.ChannelType.text and channel.permissions_for(
+                      guildsent.me).send_messages and channel.permissions_for(
+                          guildsent.me).embed_links:
+                  try:
+                      messageSent=await channel.send(embed=embedone)
+                      await ctx.send(f" Successfully sent message with id : {messageSent.id} ")
+                  except:
+                      await ctx.send(
+                          f" I cannot send messages in {channel.name}({guildsent}) ."
+                      )
+                  break
 
     @commands.command(
         aliases=['maintanance', 'maintenance', 'togglem'],
@@ -3849,7 +3855,7 @@ class Support(commands.Cog):
         await ctx.channel.send(
             f" Invite {client.user.name} by using the link provided below :")
         await ctx.channel.send(
-            "https://discord.com/oauth2/authorize?client_id=805030662183845919&permissions=2416012310&scope=bot"
+            "https://discord.com/api/oauth2/authorize?client_id=805030662183845919&permissions=2419453014&scope=bot"
         )
 
     @commands.cooldown(1, 30, BucketType.user)
@@ -3875,22 +3881,6 @@ class Support(commands.Cog):
             await ctx.send(
                 "https://discordbotlist.com/bots/voithos-helper/upvote")
             await ctx.send("https://top.gg/bot/805030662183845919/vote")
-
-    @commands.cooldown(1, 30, BucketType.user)
-    @commands.command(
-        brief=
-        'This command can be used to grant bot permissions to add slash-commands.',
-        description=
-        'This command can be used to grant bot permissions to add slash-commands.',
-        usage="")
-    @commands.guild_only()
-    async def enableslashcommand(self, ctx):
-        await ctx.channel.send(
-            " Want slash commands to work ? , grant our bot permissions by this link ."
-        )
-        await ctx.channel.send(
-            "https://discord.com/api/oauth2/authorize?client_id=805030662183845919&permissions=0&scope=applications.commands%20bot"
-        )
 
     @commands.command(
         brief='This command can be used to see bot joined servers.',
@@ -3947,6 +3937,23 @@ class Support(commands.Cog):
                 (f'{client.user.name} could not execute an invalid command --> {code}'
                  ),
                 color=Color.red())
+        length=len(str(output))
+        if length >= 1200:
+            listofembed = wrap(str(output), 1200)
+        else:
+            listofembed = [str(output)]
+        embedtwo = discord.Embed(title="",
+                                      description=(f"{client.user.name} executed your command --> {code}"),
+                                      color=Color.green())
+        for i in listofembed:
+            #i = i.replace(".", ".\n\n")
+            embedtwo = discord.Embed(title="",
+                                      description=("\u200b"),
+                                      color=Color.green())
+            embedtwo.add_field(name="Output :",
+                                   value=i+ "\u200b",
+                                   inline=False)
+            await (ctx.send(embed=embedtwo))
         await ctx.reply(embed=embedone)
 
     @commands.command(
