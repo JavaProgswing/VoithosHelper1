@@ -117,9 +117,11 @@ async def get_prefix(client, message):
 
 
 intents = discord.Intents.default()
+Dactivity = discord.Activity(name="!help for commands .",
+                                type=discord.ActivityType.watching)
 client = commands.Bot(command_prefix=get_prefix,
                       case_insensitive=True,
-                      intents=intents)
+                      intents=intents,activity=Dactivity)
 slash = SlashCommand(client, sync_commands=True)
 API_KEY = 'AIzaSyB7O6SC44ARFgK8HjdOYbsXnZ6wY9QiSsQ'
 service = discovery.build('commentanalyzer', 'v1alpha1', developerKey=API_KEY)
@@ -3921,15 +3923,23 @@ class Support(commands.Cog):
             with contextlib.redirect_stdout(str_obj):
                 exec(code)
                 output = str_obj.getvalue()
-                embedone = discord.Embed(
-                    title="",
-                    description=(
-                        f"{client.user.name} executed your command --> {code}"
-                    ),
-                    color=Color.green())
-                embedone.add_field(name="Output :",
-                                   value=str(output) + "\u200b",
-                                   inline=False)
+                length=len(str(output))
+                if length >= 1000:
+                    listofembed = wrap(str(output), 1000)
+                else:
+                    listofembed = [str(output)]
+                embedtwo = discord.Embed(title="",
+                                              description=(f"{client.user.name} executed your command --> {code}"),
+                                              color=Color.green())
+                for i in listofembed:
+                    #i = i.replace(".", ".\n\n")
+                    embedtwo = discord.Embed(title="",
+                                              description=("\u200b"),
+                                              color=Color.green())
+                    embedtwo.add_field(name="Output :",
+                                          value=i+ "\u200b",
+                                          inline=False)
+                    await (ctx.send(embed=embedtwo))
         except Exception as e:
             embedone = discord.Embed(
                 title=(f"```{e.__class__.__name__}: {e}```"),
@@ -3937,24 +3947,7 @@ class Support(commands.Cog):
                 (f'{client.user.name} could not execute an invalid command --> {code}'
                  ),
                 color=Color.red())
-        length=len(str(output))
-        if length >= 1200:
-            listofembed = wrap(str(output), 1200)
-        else:
-            listofembed = [str(output)]
-        embedtwo = discord.Embed(title="",
-                                      description=(f"{client.user.name} executed your command --> {code}"),
-                                      color=Color.green())
-        for i in listofembed:
-            #i = i.replace(".", ".\n\n")
-            embedtwo = discord.Embed(title="",
-                                      description=("\u200b"),
-                                      color=Color.green())
-            embedtwo.add_field(name="Output :",
-                                   value=i+ "\u200b",
-                                   inline=False)
-            await (ctx.send(embed=embedtwo))
-        await ctx.reply(embed=embedone)
+            await ctx.reply(embed=embedone)
 
     @commands.command(
         brief='This command can be used to evaluate a expression in python.',
@@ -4695,9 +4688,6 @@ async def on_ready():
     channelerrorlogging = client.get_channel(840193232885121094)
     print(f" The logging channel has been set to {channelerrorlogging} .")
     #channeljunk=client.get_channel(845546786000338954)
-    activity = discord.Activity(name="!help for commands .",
-                                type=discord.ActivityType.watching)
-    await client.change_presence(activity=activity)
     prefixlist = []
     exemptspam = []
     antilink = []
