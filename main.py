@@ -285,10 +285,12 @@ async def checkPerm(ctx,author=None,theGuild=None):
   myList=[]
   if theGuild==None:
     theGuild=ctx.guild
+  if isinstance(theGuild, int):
+    theGuild=client.get_guild(theGuild)
   if author==None:
     author=theGuild.me
   if isinstance(author, int):
-    author=theGuild.fetch_member(int(author))
+    author=await theGuild.fetch_member(int(author))
   myPermsValue=author.guild_permissions.value
   myPerms=discord.Permissions(myPermsValue)
   #if (myPerms.add_reactions ):
