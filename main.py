@@ -707,6 +707,7 @@ Please visit our support server to submit ideas or bugs.""")
           if not reaction.message==messagesent:
             return False
           client.loop.create_task(messagesent.remove_reaction(reaction,user))
+          length=0
           for title in titlelist:
             if str(reaction) in title:
               titlecommand=title
