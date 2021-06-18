@@ -653,7 +653,7 @@ class MyHelp(commands.HelpCommand):
             ]
 
             if command_signatures:
-                cog_name = getattr(cog, "qualified_name", ":white_small_square: No Category")
+                cog_name = getattr(cog, "qualified_name", "◽ No Category")
                 commandname=cog_name
                 copyemojis=['📜','🔨','👾','<:grass:825355420604039219>','🏆', '🎰', '🛠️','🎵','✍️']
                 
@@ -706,13 +706,17 @@ Please visit our support server to submit ideas or bugs.""")
             return False
           if not reaction.message==messagesent:
             return False
-          client.loop.create_task(messagesent.remove_reaction(reaction,user))
           length=0
+          isValidReaction=False
           for title in titlelist:
             if str(reaction) in title:
+              isValidReaction=True
               titlecommand=title
               strdes=str(commandlist[titlelist.index(title)])
               length=len(strdes)
+          if not isValidReaction:
+            return False
+          client.loop.create_task(messagesent.remove_reaction(reaction,user))
           if length>=1800:
             listofembed=wrap(strdes, 1800)
           else:
