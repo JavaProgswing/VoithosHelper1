@@ -15,13 +15,14 @@ import re
 import time
 import psutil
 import discord
-import datetime
+from datetime import datetime
 import contextlib
 import io
 import pytz
 import requests
 from discord import Color,Webhook, AsyncWebhookAdapter
 import aiohttp
+from discord import Color
 from discord.ext import commands,tasks
 from discord.ext.commands import bot
 from discord.ext.commands import Greedy
@@ -112,7 +113,9 @@ async def get_prefix(client, message):
 intents = discord.Intents.default()
 intents.presences=True
 intents.members=True
-client = commands.Bot(command_prefix=get_prefix,case_insensitive=True,intents=intents)
+Dactivity = discord.Activity(name="!help for commands .",
+                                type=discord.ActivityType.watching)
+client = commands.Bot(command_prefix=get_prefix,case_insensitive=True,intents=intents,activity=Dactivity)
 slash = SlashCommand(client, sync_commands=True)
 API_KEY = 'AIzaSyB7O6SC44ARFgK8HjdOYbsXnZ6wY9QiSsQ'
 service = discovery.build('commentanalyzer', 'v1alpha1', developerKey=API_KEY)
@@ -463,6 +466,53 @@ def validurl(theurl):
   except:
     pass
   return isvalid
+async def runBot(): # our coro function
+    await client.wait_until_ready() 
+    bot.launch_time = datetime.utcnow()
+async def runBot(): # our coro function
+    global prefixlist, channelerrorlogging, exemptspam, antilink, ticketpanels,antifilter
+    await client.wait_until_ready() 
+    bot.launch_time = datetime.utcnow()
+    #backupserver=client.get_guild(811864132470571038)
+    channelerrorlogging = client.get_channel(840193232885121094)
+    print(f" The logging channel has been set to {channelerrorlogging} .")
+    #channeljunk=client.get_channel(845546786000338954)
+    prefixlist = []
+    exemptspam = []
+    antilink = []
+    ticketpanels = []
+    antifilter=[]
+    count = 1
+    with open("ticketpanels.txt", "r") as f:
+        for line in f:
+            if not count % 3 == 0:
+                ticketpanels.append(int(line))
+            else:
+                ticketpanels.append(line.replace("\n", ""))
+            count = count + 1
+    with open("exemptspam.txt", "r") as f:
+        for line in f:
+            exemptspam.append(int(line))
+    with open("antilink.txt", "r") as f:
+        for link in f:
+            antilink.append(int(link))
+    with open("antifilter.txt", "r") as f:
+        for filters in f:
+            antilink.append(int(filters))
+    count = 1
+    with open("prefixes.txt", "r") as f:
+        for line in f:
+            if count % 2 == 0:
+                prefixlist.append(line.replace("\n", ""))
+            else:
+                prefixlist.append(int(line))
+            count += 1
+    saveprefix.start()
+    saveexemptspam.start()
+    saveantilink.start()
+    saveticketpanels.start()
+    saveprofanefilter.start()
+client.loop.create_task(runBot()) # using create_task and passing the coro to it
 async def mutetimer(ctx,timecount,mutedmember,reason=None):
   await asyncio.sleep(timecount)
   if ctx.me.top_role < mutedmember.top_role:
@@ -914,7 +964,7 @@ class Moderation(commands.Cog):
         if member == client.user:
             raise commands.CommandError("I could not blacklist myself .")
             return
-        if ctx.me.top_role < member.top_role:
+        if ctx.me.top_role <= member.top_role:
             raise commands.CommandError("My highest role is the same or lower than the highest role of the user(s) you're trying to blacklist, so I am unable to blacklist.")
             return    
         if not timenum==None:
@@ -1022,7 +1072,7 @@ class Moderation(commands.Cog):
                           ctx,
                           blacklistedmember: discord.Member,*,
                           reason=None):
-        if ctx.me.top_role < blacklistedmember.top_role:
+        if ctx.me.top_role <= blacklistedmember.top_role:
             raise commands.CommandError("My highest role is the same or lower than the highest role of the user(s) you're trying to unblacklist, so I am unable to unblacklist.")
             return    
         blacklistrole = discord.utils.get(ctx.guild.roles, name='blacklisted')
@@ -1120,7 +1170,7 @@ class Moderation(commands.Cog):
         if member == client.user:
             raise commands.CommandError("I could not mute myself .")
             return
-        if ctx.me.top_role < member.top_role:
+        if ctx.me.top_role <= member.top_role:
             raise commands.CommandError("My highest role is the same or lower than the highest role of the user(s) you're trying to mute, so I am unable to mute.")
             return          
         if not timenum==None:
@@ -1218,7 +1268,7 @@ class Moderation(commands.Cog):
     @commands.check_any(is_bot_staff(), 
                         commands.has_permissions(manage_roles=True))
     async def unmute(self, ctx, mutedmember: discord.Member,*, reason=None):
-        if ctx.me.top_role < mutedmember.top_role:
+        if ctx.me.top_role <= mutedmember.top_role:
             raise commands.CommandError("My highest role is the same or lower than the highest role of the user(s) you're trying to unmute, so I am unable to unmute.")
             return    
         muterole = discord.utils.get(ctx.guild.roles, name='muted')
@@ -3132,7 +3182,15 @@ class Support(commands.Cog):
 
         embedOne.add_field(name="https://discord.gg/TZDYSHSZgg",value="\u200b",inline=False)
         await ctx.reply(embed=embedOne)
- 
+
+    @commands.command(brief='This command can be used to get uptime of this bot', description='This command can be used to get uptime of this bot.',usage="")
+    @commands.check_any(is_bot_staff())
+    async def uptime(self,ctx):
+        delta_uptime = datetime.utcnow() - bot.launch_time
+        hours, remainder = divmod(int(delta_uptime.total_seconds()), 3600)
+        minutes, seconds = divmod(remainder, 60)
+        days, hours = divmod(hours, 24)
+        await ctx.send(f"{days}d, {hours}h, {minutes}m, {seconds}s")
     @commands.cooldown(1,30,BucketType.user)
     @commands.command(brief='This command can be used to invite this bot.', description='This command can be used to invite this bot.',usage="")
     async def invite(self, ctx):
@@ -3224,7 +3282,7 @@ class Support(commands.Cog):
     @commands.check_any(is_bot_staff())
     async def visible(self, ctx):
         activity = discord.Activity(
-            name=" Bot is ready for moderation ! , Do !help for commands .",
+            name="!help for commands .",
             type=discord.ActivityType.watching)
         await client.change_presence(activity=activity)
         #print(f" Status was changed to visible in {ctx.guild}")
@@ -3710,50 +3768,7 @@ async def on_guild_join(guild):
 
 @client.event
 async def on_ready():
-    global prefixlist,channelone,backupserver,exemptspam,antilink,ticketpanels,antifilter
     print(f'{client.user.name} is ready for moderation! ')
-    channelone= client.get_channel(840193232885121094)
-    activity = discord.Activity(
-        name="gn!help for commands .",
-        type=discord.ActivityType.watching)
-    await client.change_presence(activity=activity)
-    prefixlist=[]
-    exemptspam=[]
-    antilink=[]
-    antifilter=[]
-    ticketpanels=[]
-    count=1
-    with open("ticketpanels.txt", "r") as f:
-      for line in f:
-        if not count%3==0:
-          ticketpanels.append(int(line))
-        else:
-          ticketpanels.append(line.replace("\n", ""))
-        count=count+1
-    #print(ticketpanels)   
-    print(" The logging channel has been set to "+str(channelone))
-    with open("exemptspam.txt", "r") as f:
-      for line in f:
-        exemptspam.append(int(line))
-    with open("antilink.txt", "r") as f:
-      for link in f:
-        antilink.append(int(link))
-    with open("antifilter.txt", "r") as f:
-        for filters in f:
-            antilink.append(int(filters))
-    count=1
-    with open("prefixes.txt", "r") as f:
-      for line in f:
-        if count%2==0:
-          prefixlist.append(line.replace("\n", ""))
-        else:
-          prefixlist.append(int(line))
-        count+=1
-    saveprefix.start()
-    saveexemptspam.start()
-    saveantilink.start()
-    saveticketpanels.start()
-    saveprofanefilter.start()
 
 
 @client.event
