@@ -844,6 +844,7 @@ Please visit https://top.gg/bot/805030662183845919 to submit ideas or bugs.""")
                 return False
             client.loop.create_task(messagesent.remove_reaction(
                 reaction, user))
+            length=0
             for title in titlelist:
                 if str(reaction) in title:
                     titlecommand = title
