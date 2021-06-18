@@ -18,7 +18,7 @@ import os
 import re
 import psutil
 import time
-import datetime
+from datetime import datetime
 import discord
 import contextlib
 import io
@@ -387,6 +387,7 @@ def checkCaps(sentence):
     if element.isupper():
       count+=1
   return(((count/origLength)*100)>=90)
+
 def checkEmoji(value):
   if value:
     return ":white_check_mark: "
@@ -554,6 +555,55 @@ def validurl(theurl):
     return isvalid
 
 
+async def runBot(): # our coro function
+    await client.wait_until_ready() 
+    bot.launch_time = datetime.utcnow()
+    global prefixlist, channelerrorlogging, exemptspam, antilink, ticketpanels,antifilter,leaderBoard
+    #backupserver=client.get_guild(811864132470571038)
+    channelerrorlogging = client.get_channel(840193232885121094)
+    print(f" The logging channel has been set to {channelerrorlogging} .")
+    #channeljunk=client.get_channel(845546786000338954)
+    prefixlist = []
+    exemptspam = []
+    antilink = []
+    ticketpanels = []
+    antifilter=[]
+    leaderBoard=[]
+    count = 1
+    with open("ticketpanels.txt", "r") as f:
+        for line in f:
+            if not count % 3 == 0:
+                ticketpanels.append(int(line))
+            else:
+                ticketpanels.append(line.replace("\n", ""))
+            count = count + 1
+    with open("exemptspam.txt", "r") as f:
+        for line in f:
+            exemptspam.append(int(line))
+    with open("antilink.txt", "r") as f:
+        for link in f:
+            antilink.append(int(link))
+    with open("antifilter.txt", "r") as f:
+        for filters in f:
+            antilink.append(int(filters))
+    with open("leaderBoard.txt", "r") as f:
+        for line in f:
+                leaderBoard.append(line.replace("\n", ""))
+    count = 1
+    with open("prefixes.txt", "r") as f:
+        for line in f:
+            if count % 2 == 0:
+                prefixlist.append(line.replace("\n", ""))
+            else:
+                prefixlist.append(int(line))
+            count += 1
+    saveprefix.start()
+    saveexemptspam.start()
+    saveantilink.start()
+    saveticketpanels.start()
+    saveprofanefilter.start()
+    saveleaderBoard.start()
+client.loop.create_task(runBot()) # using create_task and passing the coro to it
 async def mutetimer(ctx, timecount, mutedmember, reason=None):
     await asyncio.sleep(timecount)
     if ctx.me.top_role < mutedmember.top_role:
@@ -1169,7 +1219,7 @@ class Moderation(commands.Cog):
         if member == client.user:
             raise commands.CommandError("I could not blacklist myself .")
             return
-        if ctx.me.top_role < member.top_role:
+        if ctx.me.top_role <= member.top_role:
             raise commands.CommandError(
                 "My highest role is the same or lower than the highest role of the user(s) you're trying to blacklist, so I am unable to blacklist."
             )
@@ -1282,7 +1332,7 @@ class Moderation(commands.Cog):
                           blacklistedmember: discord.Member,
                           *,
                           reason=None):
-        if ctx.me.top_role < blacklistedmember.top_role:
+        if ctx.me.top_role <= blacklistedmember.top_role:
             raise commands.CommandError(
                 "My highest role is the same or lower than the highest role of the user(s) you're trying to unblacklist, so I am unable to unblacklist."
             )
@@ -1417,7 +1467,7 @@ class Moderation(commands.Cog):
         if member == client.user:
             raise commands.CommandError("I could not mute myself .")
             return
-        if ctx.me.top_role < member.top_role:
+        if ctx.me.top_role <= member.top_role:
             raise commands.CommandError(
                 "My highest role is the same or lower than the highest role of the user(s) you're trying to mute, so I am unable to mute."
             )
@@ -1515,7 +1565,7 @@ class Moderation(commands.Cog):
     @commands.check_any(is_bot_staff(),
                         commands.has_permissions(manage_roles=True))
     async def unmute(self, ctx, mutedmember: discord.Member, *, reason=None):
-        if ctx.me.top_role < mutedmember.top_role:
+        if ctx.me.top_role <= mutedmember.top_role:
             raise commands.CommandError(
                 "My highest role is the same or lower than the highest role of the user(s) you're trying to unmute, so I am unable to unmute."
             )
@@ -3848,6 +3898,14 @@ class Support(commands.Cog):
                            inline=False)
         await ctx.reply(embed=embedOne)
 
+    @commands.command(brief='This command can be used to get uptime of this bot.', description='This command can be used to get uptime of this bot.',usage="")
+    @commands.check_any(is_bot_staff())
+    async def uptime(self,ctx):
+      delta_uptime = datetime.utcnow() - bot.launch_time
+      hours, remainder = divmod(int(delta_uptime.total_seconds()), 3600)
+      minutes, seconds = divmod(remainder, 60)
+      days, hours = divmod(hours, 24)
+      await ctx.send(f"{days}d, {hours}h, {minutes}m, {seconds}s")
     @commands.cooldown(1, 30, BucketType.user)
     @commands.command(
         brief='This command can be used to invite this bot.',
@@ -4017,7 +4075,7 @@ class Support(commands.Cog):
     @commands.check_any(is_bot_staff())
     async def visible(self, ctx):
         activity = discord.Activity(
-            name=" Bot is ready for moderation ! , Do !help for commands .",
+            name="!help for commands .",
             type=discord.ActivityType.watching)
         await client.change_presence(activity=activity)
         #print(f" Status was changed to visible in {ctx.guild}")
@@ -4682,52 +4740,8 @@ async def on_guild_join(guild):
 
 @client.event
 async def on_ready():
-    global prefixlist, channelerrorlogging, exemptspam, antilink, ticketpanels,antifilter,leaderBoard
     print(f'{client.user.name} is ready for moderation! ')
-    #backupserver=client.get_guild(811864132470571038)
-    channelerrorlogging = client.get_channel(840193232885121094)
-    print(f" The logging channel has been set to {channelerrorlogging} .")
-    #channeljunk=client.get_channel(845546786000338954)
-    prefixlist = []
-    exemptspam = []
-    antilink = []
-    ticketpanels = []
-    antifilter=[]
-    leaderBoard=[]
-    count = 1
-    with open("ticketpanels.txt", "r") as f:
-        for line in f:
-            if not count % 3 == 0:
-                ticketpanels.append(int(line))
-            else:
-                ticketpanels.append(line.replace("\n", ""))
-            count = count + 1
-    with open("exemptspam.txt", "r") as f:
-        for line in f:
-            exemptspam.append(int(line))
-    with open("antilink.txt", "r") as f:
-        for link in f:
-            antilink.append(int(link))
-    with open("antifilter.txt", "r") as f:
-        for filters in f:
-            antilink.append(int(filters))
-    with open("leaderBoard.txt", "r") as f:
-        for line in f:
-                leaderBoard.append(line.replace("\n", ""))
-    count = 1
-    with open("prefixes.txt", "r") as f:
-        for line in f:
-            if count % 2 == 0:
-                prefixlist.append(line.replace("\n", ""))
-            else:
-                prefixlist.append(int(line))
-            count += 1
-    saveprefix.start()
-    saveexemptspam.start()
-    saveantilink.start()
-    saveticketpanels.start()
-    saveprofanefilter.start()
-    saveleaderBoard.start()
+
 @client.event
 async def on_member_join(member):
     sendfailed = False
