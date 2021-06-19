@@ -99,7 +99,7 @@ prefixlist=[]
 antilink=[]
 antifilter=[]
 ticketpanels=[]
-
+welcomechannels=[]
 async def get_prefix(client, message):
   if message.guild:
     try:
@@ -208,7 +208,12 @@ async def saveticketpanels():
   with open("ticketpanels.txt", "w") as f:
     for links in ticketpanels:
         f.write(str(links) +"\n")
-
+@tasks.loop(seconds=30)
+async def savewelcomechannel():
+  global welcomechannels
+  with open("welcomechannels.txt", "w") as f:
+    for channel in welcomechannels:
+        f.write(str(channel) +"\n")
 @tasks.loop(seconds=30)
 async def saveantilink():
   global antilink
@@ -474,7 +479,7 @@ async def runBot(): # our coro function
     await client.wait_until_ready() 
     bot.launch_time = datetime.utcnow()
 async def runBot(): # our coro function
-    global prefixlist, channelerrorlogging, exemptspam, antilink, ticketpanels,antifilter
+    global prefixlist, channelerrorlogging, exemptspam, antilink, ticketpanels,antifilter,welcomechannels
     await client.wait_until_ready() 
     bot.launch_time = datetime.utcnow()
     #backupserver=client.get_guild(811864132470571038)
@@ -486,6 +491,7 @@ async def runBot(): # our coro function
     antilink = []
     ticketpanels = []
     antifilter=[]
+    welcomechannels=[]
     count = 1
     with open("ticketpanels.txt", "r") as f:
         for line in f:
@@ -497,6 +503,9 @@ async def runBot(): # our coro function
     with open("exemptspam.txt", "r") as f:
         for line in f:
             exemptspam.append(int(line))
+    with open("welcomechannels.txt", "r") as f:
+        for channel in f:
+            welcomechannels.append(int(channel))
     with open("antilink.txt", "r") as f:
         for link in f:
             antilink.append(int(link))
@@ -516,6 +525,7 @@ async def runBot(): # our coro function
     saveantilink.start()
     saveticketpanels.start()
     saveprofanefilter.start()
+    savewelcomechannel.start()
 client.loop.create_task(runBot()) # using create_task and passing the coro to it
 async def mutetimer(ctx,timecount,mutedmember,reason=None):
   await asyncio.sleep(timecount)
@@ -814,6 +824,44 @@ class Moderation(commands.Cog):
               )   
        
         await ctx.channel.delete()
+    @commands.command(
+        brief='This command assigns welcome channel in a guild.',
+        description=
+        'This command assigns welcome channel and can be used by members having manage_guild permission.',
+        usage="#channel")
+    @commands.guild_only()
+    @commands.check_any(is_bot_staff(),
+                        commands.has_permissions(manage_guild=True))
+    async def setwelcomechannel(self, ctx, channel: discord.TextChannel = None):
+      global welcomechannels
+      if channel==None:
+        channel=ctx.channel
+      if ctx.guild.id in welcomechannels:
+        try:
+          welcomechannels.remove(welcomechannels[welcomechannels.index(ctx.guild.id)+1])
+          welcomechannels.remove(ctx.guild.id)
+        except:
+          pass
+      welcomechannels.append(ctx.guild.id)
+      welcomechannels.append(channel.id)
+      await ctx.channel.send(f"Successfully set welcome channel to {channel.mention}.")
+    @commands.command(
+        brief='This command removes welcome channel destination in a guild.',
+        description=
+        'This command removes welcome channel and can be used by members having manage_guild permission.',
+        usage="#channel")
+    @commands.guild_only()
+    @commands.check_any(is_bot_staff(),
+                        commands.has_permissions(manage_guild=True))
+    async def removewelcomechannel(self, ctx):
+      global welcomechannels
+      try:
+        welcomechannels.remove(welcomechannels[welcomechannels.index(ctx.guild.id)+1])
+        welcomechannels.remove(ctx.guild.id)
+      except:
+        raise commands.CommandError(" This guild doesn't have a welcome channel.")
+        return
+      await ctx.channel.send(f"Successfully removed the assigned welcome channel .")
     @commands.command(
         brief='This command checks for profanity in certain channels.',
         description=
@@ -3359,7 +3407,7 @@ class Music(commands.Cog):
         embedVar.set_author(name="Youtube", icon_url="https://cdn.discordapp.com/avatars/812967359312297994/2c234518e4889657d01fe7001cd52422.webp?size=128")
         await ctx.send(embed=embedVar)
     @commands.cooldown(1,90,BucketType.guild)
-    @commands.command(brief='This command can be used to loop a song.', description='This command can be used to loop a song in a voice channel.',usage="songname")
+    @commands.command(brief='This command can be used to loop a song.', description='This command can be used to loop a song in a voice channel.',usage="")
     @commands.guild_only()
     async def loop(self, ctx ):
         channel=ctx.author.voice.channel
@@ -3782,20 +3830,7 @@ async def on_ready():
 
 @client.event
 async def on_member_join(member):
-    sendfailed = False
-        #print(f"Unsuccessfully DMed users, try again later.")
-    for channelone in member.guild.text_channels:
-        if channelone.permissions_for(
-                member.guild.me).send_messages:
-            await channelone.send(
-                f"""Welcome {member.mention}! to {member.guild} .""")
-            if sendfailed:
-                await channelone.send(
-                    f" Couldn't direct message {member.name} for a warm welcome to {member.guild} ."
-                )
-            break
-
-        #
+    global welcomechannels
     channelone=None
     for channel in member.guild.text_channels:
         if channel.permissions_for(
@@ -3849,6 +3884,9 @@ async def on_member_join(member):
         file=discord.File("backgroundone.jpg")
         embed = discord.Embed()
         embed.set_image(url="attachment://backgroundone.jpg")
+        if(member.guild.id in welcomechannels):
+          channelone=int(welcomechannels[welcomechannels.index(member.guild.id)+1])
+          channelone=member.guild.get_channel(channelone)
         await channelone.send(file=file, embed=embed)
 
 @client.event
