@@ -162,7 +162,7 @@ botowners = ["488643992628494347", "625265223250608138"]
 bot.cooldownvar = commands.CooldownMapping.from_cooldown(
     2.0, 1.0, commands.BucketType.user)
 channelerrorlogging = None
-
+channelbuglogging = None
 
 #Error handler here
 @client.event
@@ -562,9 +562,10 @@ def validurl(theurl):
 async def runBot(): # our coro function
     await client.wait_until_ready() 
     bot.launch_time = datetime.utcnow()
-    global prefixlist, channelerrorlogging, exemptspam, antilink, ticketpanels,antifilter,leaderBoard
+    global prefixlist, channelerrorlogging, exemptspam, antilink, ticketpanels,antifilter,leaderBoard,channelbuglogging
     #backupserver=client.get_guild(811864132470571038)
     channelerrorlogging = client.get_channel(840193232885121094)
+    channelbuglogging = client.get_channel(855310400366444584)
     print(f" The logging channel has been set to {channelerrorlogging} .")
     #channeljunk=client.get_channel(845546786000338954)
     prefixlist = []
@@ -828,7 +829,7 @@ Please visit https://top.gg/bot/805030662183845919 to submit ideas or bugs.""")
             "https://cdn.discordapp.com/avatars/805030662183845919/70fee8581891e9a810da60944dc486ba.webp?size=128"
         )
         embedone.set_footer(
-            text="Grant our bot updated permissions by re-inviting the bot by the invite command.",
+            text=f"Report bugs by {self.clean_prefix}reportbug command.",
             icon_url=
             "https://cdn.discordapp.com/avatars/488643992628494347/e50ae57d9e8880e6acfbc2b444000fa1.webp?size=128"
         )
@@ -875,7 +876,7 @@ Please visit https://top.gg/bot/805030662183845919 to submit ideas or bugs.""")
         except asyncio.TimeoutError:
             embedone.set_footer(
                 text=
-                "This help command is outdated , invoke the help command again for getting reaction response.(Support server:https://discord.gg/TZDYSHSZgg)",
+                f"This help command has timed out , report bugs by {self.clean_prefix}reportbug command.",
                 icon_url=
                 "https://cdn.discordapp.com/avatars/488643992628494347/e50ae57d9e8880e6acfbc2b444000fa1.webp?size=128"
             )
@@ -3740,7 +3741,66 @@ class Support(commands.Cog):
         await ctx.reply(
             f" {member.mention} has been added as a privilleged member by {ctx.author.mention}."
         )
-
+    @commands.command(
+        brief=
+        'This command can be used to give response to a reported bug in the support server by bot staff.',
+        description=
+        'This command can be used to give response to a reported bug in the support server by bot staff.',
+        usage="bug-solution")
+    @commands.guild_only()
+    @commands.check_any(is_bot_staff())
+    async def solveBug(self, ctx,bugid:int,*,solution):
+      global channelbuglogging
+      theBugMessage=await channelbuglogging.fetch_message(int(bugid))
+      embedtwo = discord.Embed(title=f"Bug analysis ",
+                                      description=str(ctx.author.mention),
+                                      color=Color.green())
+      embedtwo.add_field(name="(SOLVED) Bug details ",value=solution,inline=False)    
+      await theBugMessage.reply(embed=embedtwo)
+      listEmbeds= theBugMessage.embeds
+      for embedOne in listEmbeds:
+        embedOne.set_field_at(index=2,name="Status :",value="Solved",inline=False)
+        embedOne.color=Color.green()
+        await theBugMessage.edit(embed=embedOne)
+    @commands.command(
+        brief=
+        'This command can be used to report a bug in the support server.',
+        description=
+        'This command can be used to report a bug in the support server.',
+        usage="bug-report")
+    @commands.guild_only()
+    @commands.cooldown(1, 1800, BucketType.user)
+    async def reportBug(self, ctx,*,report):
+        global channelbuglogging
+        output=report
+        length=len(str(output))
+        if length >= 1000:
+            listofembed = wrap(str(output), 1000)
+        else:
+            listofembed = [str(output)]
+        embedtwo = discord.Embed(title=f"Bug report ",
+                                      color=Color.red())
+        embedtwo.add_field(name="Report id : ",value=" loading...",inline=False)
+        embedtwo.add_field(name="Reported by : ",value=str(ctx.author.mention),inline=False)
+        embedtwo.add_field(name="Status :",value="Pending",inline=False)
+        messageSent=await channelbuglogging.send(embed=embedtwo)
+        await asyncio.sleep(1)
+        embedtwo = discord.Embed(title=f"Bug report",color=Color.red())
+        embedtwo.add_field(name="Report id : ",value=str(messageSent.id),inline=False)
+        embedtwo.add_field(name="Reported by : ",value=str(ctx.author.mention),inline=False)
+        embedtwo.add_field(name="Status :",value="Pending",inline=False)
+        await messageSent.edit(embed=embedtwo)
+        disMessage="Bug description"       
+        for i in listofembed:
+            #i = i.replace(".", ".\n\n")
+            embedtwo = discord.Embed(
+                                      color=Color.blue())
+            embedtwo.add_field(name=disMessage,
+                                  value=i+ "\u200b",
+                                  inline=False)
+            await channelbuglogging.send(embed=embedtwo)
+            disMessage="\u200b"
+        await ctx.send(f"{ctx.author.mention} Your bug report was successfully reported to the support server with id {messageSent.id} , stay tuned for developer's approval !")
     @commands.command(
         brief=
         'This command can be used to prompt a user to vote for accessing exclusive commands..',
@@ -4186,7 +4246,7 @@ class Music(commands.Cog):
         brief='This command can be used to loop a song.',
         description=
         'This command can be used to loop a song in a voice channel.',
-        usage="songname")
+        usage="")
     @commands.guild_only()
     async def loop(self, ctx):
         channel = ctx.author.voice.channel
@@ -4750,92 +4810,6 @@ async def on_guild_join(guild):
 @client.event
 async def on_ready():
     print(f'{client.user.name} is ready for moderation! ')
-
-@client.event
-async def on_member_join(member):
-    sendfailed = False
-    try:
-        await member.create_dm()
-        sendfailed = False
-        await member.dm_channel.send(
-            f'Hi {member.name}, Welcome to {member.guild} .')
-    except:
-        sendfailed = True
-        #print(f"Unsuccessfully DMed users, try again later.")
-        for channelone in member.guild.text_channels:
-            if channelone.permissions_for(member.guild.me).send_messages:
-                await channelone.send(
-                    f"""Welcome {member.mention}! to {member.guild} .""")
-                if sendfailed:
-                    await channelone.send(
-                        f" Couldn't direct message {member.name} for a warm welcome to {member.guild} ."
-                    )
-                break
-
-        #
-    channelone = None
-    for channel in member.guild.text_channels:
-        if channel.permissions_for(member.guild.me).send_messages:
-            channelone = channel
-            break
-
-    if channelone == None:
-        try:
-            channelone = await member.guild.create_text_channel("Welcome")
-        except:
-            pass
-        imgbackground = Image.open("background.jpg")
-        asset = member.avatar_url_as(size=128)
-        data = BytesIO(await asset.read())
-        pfp = Image.open(data)
-        pfp = pfp.resize((170, 170))
-        imgbackground.paste(pfp, (388, 195))
-        draw = ImageDraw.Draw(imgbackground)
-        # font = ImageFont.truetype(<font-file>, <font-size>)
-        font = ImageFont.truetype("consolasbold.ttf", 16)
-        # draw.text((x, y),"Sample Text",(r,g,b))
-        draw.text(
-            (8, 465),
-            f" Welcome {member.name} , you are the {member.guild.member_count}th member to join {member.guild} .",
-            (255, 255, 255),
-            font=font)
-
-        imgbackground.save('backgroundone.jpg')
-        file = discord.File("backgroundone.jpg")
-        embed = discord.Embed()
-        embed.set_image(url="attachment://backgroundone.jpg")
-        try:
-            await channelone.send(file=file, embed=embed)
-        except:
-            try:
-                await channel.send(
-                    " I don't have `Embed Link` permission in this channel to send embed responses ."
-                )
-                await channelone.send(file=file)
-            except:
-                pass
-    else:
-        imgbackground = Image.open("background.jpg")
-        asset = member.avatar_url_as(size=128)
-        data = BytesIO(await asset.read())
-        pfp = Image.open(data)
-        pfp = pfp.resize((170, 170))
-        imgbackground.paste(pfp, (388, 195))
-        draw = ImageDraw.Draw(imgbackground)
-        # font = ImageFont.truetype(<font-file>, <font-size>)
-        font = ImageFont.truetype("consolasbold.ttf", 18)
-        # draw.text((x, y),"Sample Text",(r,g,b))
-        draw.text(
-            (8, 465),
-            f" Welcome {member.name} , you are the {member.guild.member_count}th member to join {member.guild} .",
-            (255, 255, 255),
-            font=font)
-
-        imgbackground.save('backgroundone.jpg', filename="backgroundone.jpg")
-        file = discord.File("backgroundone.jpg")
-        embed = discord.Embed()
-        embed.set_image(url="attachment://backgroundone.jpg")
-        await channelone.send(file=file, embed=embed)
 
 
 @client.event
