@@ -838,6 +838,35 @@ class Moderation(commands.Cog):
        
         await ctx.channel.delete()
     @commands.command(
+        brief='This command shows the current moderation settings in a channel.',
+        description=
+        'This command shows the current moderation settings in a channel and can be used by users with manage_messages permission.',
+        usage="#channel")
+    @commands.guild_only()
+    @commands.check_any(is_bot_staff(),
+                        commands.has_permissions(manage_messages=True))
+    async def modsettings(self,ctx,channel: discord.TextChannel = None):
+        global exemptspam,antilink,antifilter
+        if channel == None:
+            channel = ctx.channel
+        embedVar = discord.Embed(title=f"{channel.name} moderation settings",
+                                 description=" ",
+                                 color=Color.blue())
+        guildPrefix=prefixlist[prefixlist.index(ctx.guild.id)+1]
+        spamEmoji=":red_square:"
+        if (not channel.id in exemptspam):
+          spamEmoji=":white_check_mark:"
+        embedVar.add_field(name=f" Message spamming checks : {spamEmoji}",value=f" Do {guildPrefix}disableantispam to disable spam checks and {guildPrefix}enableantispam to enable spam checks ." ,inline=False)
+        linkEmoji=":red_square:"
+        if (channel.id in antilink):
+          linkEmoji=":white_check_mark:"
+        embedVar.add_field(name=f" Message link and server invite checks : {linkEmoji}",value=f" Do {guildPrefix}disableantilink to disable link and server invite checks and {guildPrefix}enableantilink to enable link and server invite checks ." ,inline=False)
+        profaneEmoji=":red_square:"
+        if (channel.id in antifilter):
+          profaneEmoji=":white_check_mark:"
+        embedVar.add_field(name=f" Message profane checks : {profaneEmoji}",value=f" Do {guildPrefix}disableprofanefilter to disable profane checks and {guildPrefix}enableprofanefilter to enable profane checks ." ,inline=False)
+        await ctx.send(embed=embedVar)
+    @commands.command(
         brief='This command assigns welcome channel in a guild.',
         description=
         'This command assigns welcome channel and can be used by members having manage_guild permission.',
