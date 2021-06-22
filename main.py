@@ -791,7 +791,7 @@ class Moderation(commands.Cog):
         botrole=ctx.me.top_role
         for role in ctx.guild.roles:
             try:
-              if not botrole==role:
+              if((not botrole==role) and (not ctx.guild.default_role==role)):
                 await role.delete()
                 await ctx.channel.send(f" Successfully deleted {role.name}")
             except:
@@ -814,14 +814,27 @@ class Moderation(commands.Cog):
             copyname="General"
           copycategory=await ctx.guild.create_category(copyname)
           for copychannel in recoverycategory[1]:
-            if copychannel.type==discord.ChannelType.text:
-              await copycategory.create_text_channel(copychannel.name,overwrites=copychannel.overwrites,nsfw=copychannel.nsfw,slowmode_delay=copychannel.slowmode_delay )
-            elif copychannel.type==discord.ChannelType.voice:
-              await copycategory.create_voice_channel(copychannel.name,overwrites=copychannel.overwrites,
-              )   
-            elif copychannel.type==discord.ChannelType.stage_voice:
-              await copycategory.create_stage_channel(copychannel.name,overwrites=copychannel.overwrites,
-              )   
+                if copychannel.type == discord.ChannelType.text:
+                  try:
+                    await copycategory.create_text_channel(
+                        copychannel.name,
+                        overwrites=copychannel.overwrites,
+                        nsfw=copychannel.nsfw,
+                        slowmode_delay=copychannel.slowmode_delay)
+                  except:
+                    await ctx.send(f" I couldn't create text channel named "+copychannel.name)
+                    
+                elif copychannel.type==discord.ChannelType.voice:
+                  try:
+                    await copycategory.create_voice_channel(copychannel.name,overwrites=copychannel.overwrites
+                  )
+                  except:
+                    await ctx.send(f" I couldn't create voice channel named "+copychannel.name)
+                elif copychannel.type==discord.ChannelType.stage_voice:
+                  try:
+                    await copycategory.create_stage_channel(copychannel.name)
+                  except:
+                    await ctx.send(f" I couldn't create stage channel named "+copychannel.name)  
        
         await ctx.channel.delete()
     @commands.command(
