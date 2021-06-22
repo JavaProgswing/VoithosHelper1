@@ -113,7 +113,7 @@ async def get_prefix(client, message):
 intents = discord.Intents.default()
 intents.presences=True
 intents.members=True
-Dactivity = discord.Activity(name="!help for commands .",
+Dactivity = discord.Activity(name="gn!help for commands .",
                                 type=discord.ActivityType.watching)
 client = commands.Bot(command_prefix=get_prefix,case_insensitive=True,intents=intents,activity=Dactivity)
 slash = SlashCommand(client, sync_commands=True)
