@@ -999,7 +999,7 @@ class Moderation(commands.Cog):
                 elif copychannel.type==discord.ChannelType.voice:
                   await copycategory.create_voice_channel(copychannel.name,overwrites=copychannel.overwrites,
                   )   
-                elif copychannel.type==discord.ChannelType.stage:
+                elif copychannel.type==discord.ChannelType.stage_voice:
                   await copycategory.create_stage_channel(copychannel.name,overwrites=copychannel.overwrites,
                   )   
         await ctx.channel.delete()
