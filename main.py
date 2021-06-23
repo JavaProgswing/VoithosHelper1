@@ -3632,8 +3632,12 @@ class Giveaways(commands.Cog):
                            value=f"Hosted By {ctx.author.mention}",
                            inline=False)
 
+        embedOne.add_field(name="\u200b", value="Giveaway id:",inline=False)
         my_msg = await channel.send(embed=embedOne)
-
+        listEmbeds= my_msg.embeds
+        for embedTwo in listEmbeds:
+          embedTwo.set_field_at(index=2,name="\u200b",value=f"Giveaway id: {my_msg.id}",inline=False)
+          await my_msg.edit(embed=embedTwo)
         await my_msg.add_reaction("🎉")
 
         await asyncio.sleep(timenum)
