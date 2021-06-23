@@ -3695,8 +3695,7 @@ class Giveaways(commands.Cog):
                         commands.has_permissions(manage_guild=True))
     async def reroll(self, ctx, channel: discord.TextChannel, id_: int,
                      prize: str):
-        if not uservoted(ctx.author) and not checkstaff(
-                ctx.author) and not checkprivilleged(ctx.author):
+        if not uservoted(ctx.author) and not checkprivilleged(ctx.author):
             cmd = client.get_command("vote")
             await cmd(ctx)
             raise commands.CommandError(
