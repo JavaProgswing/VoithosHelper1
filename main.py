@@ -3689,7 +3689,7 @@ class Giveaways(commands.Cog):
         brief='This command can be used to re-select a new giveaway winner.',
         description=
         'This command can be used to select a new giveaway winner and can be used by members having manage guild permission.',
-        usage="#channel messageid prize")
+        usage="#channel giveawayid prize")
     @commands.guild_only()
     @commands.check_any(is_bot_staff(),
                         commands.has_permissions(manage_guild=True))
