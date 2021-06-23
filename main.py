@@ -3155,17 +3155,12 @@ class Giveaways(commands.Cog):
           await channel.send(
               f"Congratulations! {winner.mention} won the giveaway of **{prize}** ({msgurl})")
 
-    @commands.command(brief='This command can be used to select a giveaway winner.', description='This command can be used to select a giveaway winner and can be used by members having manage guild permission.',usage="#channel")
+    @commands.command(brief='This command can be used to select a giveaway winner.', description='This command can be used to select a giveaway winner and can be used by members having manage guild permission.',usage="#channel winner giveawayid prize")
     @commands.guild_only()
     @commands.check_any(is_bot_staff(),
                         commands.has_permissions(manage_guild=True))
     async def selectroll(self, ctx, channel: discord.TextChannel,
                          winner: discord.Member,id_:int,prize:str):
-        if not uservoted(ctx.author) and not checkstaff(ctx.author) and not checkprivilleged(ctx.author):
-          cmd = client.get_command("vote")
-          await cmd(ctx)
-          raise commands.CommandError(" Vote for our bot on following websites for accessing this feature .")
-          return
         new_msg = await channel.fetch_message(id_)
         msgurl=new_msg.jump_url
         await channel.send(
