@@ -3129,8 +3129,12 @@ class Giveaways(commands.Cog):
 
         embedOne.add_field(name="\u200b", value=f"Hosted By {ctx.author.mention}",inline=False)
 
+        embedOne.add_field(name="\u200b", value="Giveaway id:",inline=False)
         my_msg = await channel.send(embed=embedOne)
-
+        listEmbeds= my_msg.embeds
+        for embedTwo in listEmbeds:
+          embedTwo.set_field_at(index=2,name="\u200b",value=f"Giveaway id: {my_msg.id}",inline=False)
+          await my_msg.edit(embed=embedTwo)
         await my_msg.add_reaction("🎉")
 
         await asyncio.sleep(timenum)
@@ -3167,7 +3171,7 @@ class Giveaways(commands.Cog):
         await channel.send(
             f"Congratulations {winner.mention} won the giveaway of **{prize}** ({msgurl})"
         )
-    @commands.command(brief='This command can be used to re-select a new giveaway winner.', description='This command can be used to select a new giveaway winner and can be used by members having manage guild permission.',usage="#channel messageid prize")
+    @commands.command(brief='This command can be used to re-select a new giveaway winner.', description='This command can be used to select a new giveaway winner and can be used by members having manage guild permission.',usage="#channel giveawayid prize")
     @commands.guild_only()
     @commands.check_any(is_bot_staff(),
                         commands.has_permissions(manage_guild=True))
