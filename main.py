@@ -2999,12 +2999,11 @@ class Giveaways(commands.Cog):
     @commands.guild_only()
     @commands.check_any(is_bot_staff(),
                         commands.has_permissions(manage_guild=True))
-    async def giveawaycommand(self, ctx, members: Greedy[discord.Member],
-                              reason: str):
+    async def instantgiveaway(self, ctx, members: Greedy[discord.Member]):
         length = len(members)
         randomnumber = random.randrange(0, (length - 1))
         await ctx.channel.send(
-            f"{members[randomnumber]} has won the giveaway of {reason} hosted by {ctx.author.mention} .")
+            f"{members[randomnumber].mention} has won the giveaway hosted by {ctx.author.mention} .")
 
     @commands.command(brief='This command can be used to do a giveaway with a prize for certain time interval.', description='This command can be used to do a giveaway with a prize for certain time interval and can be used by members having manage guild permission.',usage="")
     @commands.guild_only()
