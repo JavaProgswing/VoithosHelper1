@@ -733,6 +733,12 @@ async def blacklisttimer(ctx, timecount, blacklistedmember, reason=None):
 
 
 class MyHelp(commands.HelpCommand):
+    def __init__(self):
+        attrs = {
+            'cooldown': commands.Cooldown(1,10,BucketType.user) , 
+            'aliases': ['commands'],
+        }
+        super().__init__(command_attrs=attrs)
     def get_command_signature(self, command):
         defcommandusage = command.usage
         if defcommandusage == None:
@@ -784,30 +790,30 @@ class MyHelp(commands.HelpCommand):
 
                 if commandname == "Moderation":
                     emojis.append("🔨")
-                    commandname = "🔨 " + commandname
+                    commandname = "🔨 **" + commandname+f"** :\n{self.clean_prefix}help Moderation"
                 elif commandname == "MinecraftFun":
                     emojis.append("<:grass:825355420604039219>")
-                    commandname = "<:grass:825355420604039219> " + commandname
+                    commandname = "<:grass:825355420604039219> **" + commandname+f"** :\n {self.clean_prefix}help MinecraftFun"
                 elif commandname == "Fun":
                     emojis.append("🏆")
-                    commandname = "🏆 " + commandname
+                    commandname = "🏆 **" + commandname+f"** :\n {self.clean_prefix}help Fun"
                 elif commandname == "Giveaways":
                     emojis.append("🎰")
-                    commandname = "🎰 " + commandname
+                    commandname = "🎰 **" + commandname+f"** :\n {self.clean_prefix}help Giveaways"
                 elif commandname == "Support":
                     emojis.append("🛠️")
-                    commandname = "🛠️ " + commandname
+                    commandname = "🛠️ **" + commandname+f"** :\n {self.clean_prefix}help Support"
                 elif commandname == "Music":
                     emojis.append("🎵")
-                    commandname = "🎵 " + commandname
+                    commandname = "🎵 **" + commandname+f"** :\n {self.clean_prefix}help Music"
                 elif commandname == "CustomCommands":
                     emojis.append("✍️")
-                    commandname = "✍️ " + commandname
+                    commandname = "✍️ **" + commandname+f"** :\n {self.clean_prefix}help CustomCommands"
                 elif commandname == "Captcha":
                     emojis.append("👾")
-                    commandname = "👾 " + commandname
+                    commandname = "👾 **" + commandname+f"** :\n {self.clean_prefix}help Captcha"
                 elif commandname == "VoithosInfo":
-                    commandname = "📜 " + commandname
+                    commandname = "📜 **" + commandname+f"** :\n {self.clean_prefix}help VoithosInfo"
                 embedone.add_field(name=commandname,
                                    value="\u200b",
                                    inline=False)
@@ -924,9 +930,11 @@ class VoithosInfo(commands.Cog):
             name="JavaCoder",
             icon_url=
             "https://cdn.discordapp.com/avatars/488643992628494347/e50ae57d9e8880e6acfbc2b444000fa1.webp?size=128"
-        )
-        await ctx.reply(embed=embedVar)
-
+        try:
+            await ctx.reply(embed=embedVar)
+        except:
+            await ctx.send(embed=embedVar)
+            
 
 client.add_cog(VoithosInfo(client))
 
@@ -2161,7 +2169,7 @@ class MinecraftFun(commands.Cog):
             embedOne.add_field(name=item, value="\u200b", inline=False)
         await ctx.send(embed=embedOne)
 
-    @commands.cooldown(1, 30, BucketType.user)
+    @commands.cooldown(1, 5, BucketType.user)
     @commands.command(
         brief='This command is used to mine items.',
         description=
@@ -2232,20 +2240,25 @@ class MinecraftFun(commands.Cog):
         chance = [13, 8, 5, 8, 13, 10, 7, 7, 14, 15]
 
         results = random.choices(blocks, chance, k=1)
-        embedOne = discord.Embed(title=f"Current mining results.",
+        blocksNum=random.randint(1, 5)
+        embedOne = discord.Embed(title=f"Mining Results",
                                  description=f"\u200b",
                                  color=Color.green())
         embedOne.add_field(
             name=
-            f"You mined up 1 {(blockemojilist[blocks.index(results[0])])} {results[0]}",
+            f"You got {blocksNum} {results[0]} {(blockemojilist[blocks.index(results[0])])}",
             value="\u200b",
             inline=False)
+
+        
         await ctx.send(embed=embedOne)
+
         file1 = open(f"{ctx.author.id}_mine.txt", "w")
         file1.close()
-        file1 = open(f"{ctx.author.id}_mine.txt", "a")
-        file1.write(results[0] + ",")
-        file1.close()
+        for i in range(blocksNum+1):
+          file1 = open(f"{ctx.author.id}_mine.txt", "a")
+          file1.write(results[0] + ",")
+          file1.close()
 
     @commands.cooldown(1, 30, BucketType.user)
     @commands.command(
@@ -2345,9 +2358,15 @@ class MinecraftFun(commands.Cog):
               await ctx.channel.send(f'{member.mention} {random.choice(escapelist)}')
               return
           else:
-              await ctx.reply('Let the battle preparations take place !')
+              try:
+                await ctx.reply('Let the battle preparations take place !')
+              except:
+                await ctx.send('Let the battle preparations take place !')
         else:
-          await ctx.reply('Let the battle preparations take place !')
+          try:
+            await ctx.reply('Let the battle preparations take place !')
+          except:
+            await ctx.send('Let the battle preparations take place !')
         memberone_healthpoint = 30 + random.randint(-10, 10)
         memberone_armor = random.choice(orechoice)
         memberone_armor_resist = armorresist[orechoice.index(memberone_armor)]
@@ -2647,10 +2666,15 @@ class MinecraftFun(commands.Cog):
               await ctx.channel.send(f'{member.mention} {random.choice(escapelist)}')
               return
           else:
-              await ctx.reply('Let the battle preparations take place !')
+              try:
+                await ctx.reply('Let the battle preparations take place !')
+              except:
+                await ctx.send('Let the battle preparations take place !')
         else:
-          await ctx.reply('Let the battle preparations take place !')
-
+          try:
+            await ctx.reply('Let the battle preparations take place !')
+          except:
+            await ctx.send('Let the battle preparations take place !')
         memberone_healthpoint = 30 + random.randint(-10, 10)
         memberone_healthpoint+=1
         memberone_armor = random.choice(orechoice)
@@ -3088,8 +3112,10 @@ class Fun(commands.Cog):
             'Very doubtful.', 'Without a doubt.', 'Yes.', 'Yes – definitely.',
             'You may rely on it.'
         ]
-        await ctx.reply(f"{random.choice(responses)}")
-
+        try:
+            await ctx.reply(f"{random.choice(responses)}")
+        except:
+            await ctx.send(f"{random.choice(responses)}")
     @commands.cooldown(1, 30, BucketType.user)
     @commands.command(
         brief=
@@ -3144,14 +3170,16 @@ class Fun(commands.Cog):
         file = discord.File("backgroundone.jpg")
         embed = discord.Embed()
         embed.set_image(url="attachment://backgroundone.jpg")
-        await ctx.reply(file=file, embed=embed)
-
+        try:
+            await ctx.reply(file=file, embed=embed)
+        except:
+            await ctx.send(file=file, embed=embed)
     @commands.cooldown(1, 120, BucketType.user)
     @commands.command(
         brief='This command can be used to search on google.',
         description='This command can be used to search on google.',
         usage="search-term number")
-    async def searchquery(self, ctx, *, query: str, number: int = 1):
+    async def searchquery(self, ctx,query: str, number: int = 1):
         if not uservoted(ctx.author) and not checkstaff(
                 ctx.author) and not checkprivilleged(ctx.author):
             cmd = client.get_command("vote")
@@ -3172,9 +3200,11 @@ class Fun(commands.Cog):
         for j in searchresults:
             embedVar.add_field(name=count, value=j, inline=False)
             count = count + 1
-        await ctx.reply(embed=embedVar)
-
-    @commands.cooldown(1, 120, BucketType.user)
+        try:
+            await ctx.reply(embed=embedVar)
+        except:
+            await ctx.send(embed=embedVar)
+    @commands.cooldown(1, 15, BucketType.user)
     @commands.command(
         brief='This command can be used to get current weather of a city.',
         description=
@@ -3210,6 +3240,7 @@ class Fun(commands.Cog):
             main = data['main']
             # getting temperature
             temperature = main['temp']
+            temperature=temperature-273.15
             # getting the humidity
             humidity = main['humidity']
             # getting the pressure
@@ -3222,7 +3253,7 @@ class Fun(commands.Cog):
                                inline=False)
             ##print(f"Temperature: {temperature}")
             embedVar.add_field(name="Temperature: ",
-                               value=(f"{temperature}"),
+                               value=(f"{temperature}°​C"),
                                inline=False)
             ##print(f"Humidity: {humidity}")
             embedVar.add_field(name="Humidity: ",
@@ -3239,9 +3270,10 @@ class Fun(commands.Cog):
         else:
             raise commands.CommandError("The city provided was not found .")
             return
-
-        await ctx.reply(embed=embedVar)
-
+        try:
+            await ctx.reply(embed=embedVar)
+        except:
+            await ctx.send(embed=embedVar)
     @commands.cooldown(1, 60, BucketType.user)
     @commands.command(
         brief=
@@ -3259,28 +3291,30 @@ class Fun(commands.Cog):
             embed = discord.Embed(
                 title="PING",
                 description=
-                f":ping_pong: Ping! The ping is **{round(duration)} and websocket ping is {format(round(ctx.bot.latency*1000))}** milliseconds!",
+                f":ping_pong: Pong! The ping is **{round(duration)} and websocket ping is {format(round(ctx.bot.latency*1000))}** milliseconds!",
                 color=0x44ff44)
         elif round(duration) <= 100:
             embed = discord.Embed(
                 title="PING",
                 description=
-                f":ping_pong: Ping! The ping is **{round(duration)} and websocket ping is {format(round(ctx.bot.latency*1000))}** milliseconds!",
+                f":ping_pong: Pong! The ping is **{round(duration)} and websocket ping is {format(round(ctx.bot.latency*1000))}** milliseconds!",
                 color=0xffd000)
         elif round(duration) <= 200:
             embed = discord.Embed(
                 title="PING",
                 description=
-                f":ping_pong: Ping! The ping is **{round(duration)} and websocket ping is {format(round(ctx.bot.latency*1000))}** milliseconds!",
+                f":ping_pong: Pong! The ping is **{round(duration)} and websocket ping is {format(round(ctx.bot.latency*1000))}** milliseconds!",
                 color=0xff6600)
         else:
             embed = discord.Embed(
                 title="PING",
                 description=
-                f":ping_pong: Ping! The ping is **{round(duration)} and websocket ping is {format(round(ctx.bot.latency*1000))}** milliseconds!",
+                f":ping_pong: Pong! The ping is **{round(duration)} and websocket ping is {format(round(ctx.bot.latency*1000))}** milliseconds!",
                 color=0x990000)
-        await ctx.reply(embed=embed)
-
+        try:
+            await ctx.reply(embed=embed)
+        except:
+            await ctx.send(embed=embed)
     @commands.command(
         brief=
         'This command can be used to set bot prefix in a guild by members having manage guild permission.',
@@ -3294,13 +3328,18 @@ class Fun(commands.Cog):
         global prefixlist
         if not ctx.guild == None:
             prefixlist[prefixlist.index(ctx.guild.id) + 1] = prefix
-            await ctx.reply(
+            try:
+                await ctx.reply(
                 f'My prefix has changed to {prefix} in {ctx.guild} .')
+            except:
+                await ctx.send(f'My prefix has changed to {prefix} in {ctx.guild} .')
         else:
-            await ctx.reply(
+            try:
+                await ctx.reply(
                 "My prefix cannot be changed in a dm channel , my default prefix is ! "
             )
-
+            except:
+                await ctx.send("My prefix cannot be changed in a dm channel , my default prefix is ! ")
     @commands.cooldown(1, 30, BucketType.user)
     @commands.command(
         brief='This command can be used to get some java programming facts.',
@@ -3419,9 +3458,10 @@ class Fun(commands.Cog):
                         value=str(ctx.guild.created_at),
                         inline=False)
         embed.set_thumbnail(url=ctx.guild.icon_url)
-
-        await ctx.reply(embed=embed)
-
+        try:
+            await ctx.reply(embed=embed)
+        except:
+            await ctx.send(embed=embed)
     @commands.cooldown(1, 30, BucketType.user)
     @commands.command(
         aliases=['user', 'userinfo'],
@@ -3468,9 +3508,10 @@ class Fun(commands.Cog):
                                value=detailstring,
                                inline=False)
         embedOne.set_author(name=member.name, icon_url=member.avatar_url)
-
-        await ctx.reply(embed=embedOne)
-
+        try:
+            await ctx.reply(embed=embedOne)
+        except:
+            await ctx.send(embed=embedOne)
 
 client.add_cog(Fun(client))
 
@@ -3665,7 +3706,7 @@ class Giveaways(commands.Cog):
         brief='This command can be used to select a giveaway winner.',
         description=
         'This command can be used to select a giveaway winner and can be used by members having manage guild permission.',
-        usage="#channel")
+        usage="#channel winner giveawayid prize")
     @commands.guild_only()
     @commands.check_any(is_bot_staff(),
                         commands.has_permissions(manage_guild=True))
@@ -3776,9 +3817,12 @@ class Support(commands.Cog):
     @commands.check_any(is_bot_staff())
     async def addprivilleged(self, ctx, member: discord.Member):
         userprivilleged.append(str(member.id))
-        await ctx.reply(
+        try:
+            await ctx.reply(
             f" {member.mention} has been added as a privilleged member by {ctx.author.mention}."
         )
+        except:
+            await ctx.send(f" {member.mention} has been added as a privilleged member by {ctx.author.mention}.")
     @commands.command(
         brief=
         'This command can be used to give response to a reported bug in the support server by bot staff.',
@@ -3897,10 +3941,12 @@ class Support(commands.Cog):
           try:
               await ctx.channel.purge(limit=count)
           except:
-              await ctx.reply(
+              try:
+                await ctx.reply(
                   "I do not have `manage messages` permissions to delete messages ."
               ) + "\u200b"
-
+              except:
+                await ctx.send("I do not have `manage messages` permissions to delete messages .")
           embedone = discord.Embed(title=title.content,
                                   description=desc.content,
                                   color=Color.green())
@@ -3982,9 +4028,10 @@ class Support(commands.Cog):
                 title=f"{member.name}'s voting status on top.gg",
                 description="No Vote registered",
                 color=Color.red())
-
-        await ctx.reply(embed=embedOne)
-
+        try:
+            await ctx.reply(embed=embedOne)
+        except:
+            await ctx.send(embed=embedOne)
     @commands.cooldown(1, 30, BucketType.user)
     @commands.command(
         brief='This command can be used to get support-server invite.',
@@ -4003,8 +4050,10 @@ class Support(commands.Cog):
         embedOne.add_field(name="https://discord.gg/TZDYSHSZgg",
                            value="\u200b",
                            inline=False)
-        await ctx.reply(embed=embedOne)
-
+        try:
+            await ctx.reply(embed=embedOne)
+        except:
+            await ctx.send(embed=embedOne)
     @commands.command(brief='This command can be used to get uptime of this bot.', description='This command can be used to get uptime of this bot.',usage="")
     @commands.check_any(is_bot_staff())
     async def uptime(self,ctx):
@@ -4042,7 +4091,7 @@ class Support(commands.Cog):
                            value="\u200b",
                            inline=False)
         try:
-            await ctx.reply(embed=embedOne)
+            await ctx.send(embed=embedOne)
         except:
             await ctx.send(" **Voting websites :**")
             await ctx.send(
@@ -4067,8 +4116,10 @@ class Support(commands.Cog):
         embedOne.add_field(name=f" Total number of guilds : {count}.",
                            value="\u200b",
                            inline=False)
-        await ctx.reply(embed=embedOne)
-
+        try:
+            await ctx.reply(embed=embedOne)
+        except:
+            await ctx.send(embed=embedOne)
     @commands.command(
         brief='This command can be used to make bot status offline.',
         description='This command can be used to make bot status offline.',
@@ -4098,13 +4149,13 @@ class Support(commands.Cog):
                                               color=Color.green())
                 for i in listofembed:
                     #i = i.replace(".", ".\n\n")
-                    embedtwo = discord.Embed(title="",
-                                              description=("\u200b"),
-                                              color=Color.green())
                     embedtwo.add_field(name="Output :",
                                           value=i+ "\u200b",
                                           inline=False)
-                    await (ctx.send(embed=embedtwo))
+                    await (ctx.send(embed=embedtwo))                    
+                    embedtwo = discord.Embed(title="",
+                                              description=("\u200b"),
+                                              color=Color.green())
         except Exception as e:
             embedone = discord.Embed(
                 title=(f"```{e.__class__.__name__}: {e}```"),
@@ -4112,8 +4163,10 @@ class Support(commands.Cog):
                 (f'{client.user.name} could not execute an invalid command --> {code}'
                  ),
                 color=Color.red())
-            await ctx.reply(embed=embedone)
-
+            try:
+                await ctx.reply(embed=embedone)
+            except:
+                await ctx.send(embed=embedone)
     @commands.command(
         brief='This command can be used to evaluate a expression in python.',
         description=
@@ -4140,8 +4193,10 @@ class Support(commands.Cog):
                 (f'{client.user.name} could not execute an invalid command --> {cmd}'
                  ),
                 color=Color.red())
-        await ctx.reply(embed=embedone)
-
+        try:
+            await ctx.reply(embed=embedone)
+        except:
+            await ctx.send(embed=embedone)
     @commands.command(
         brief='This command can be used to create an embed with message.',
         description='This command can be used to create an embed with message.',
@@ -4166,10 +4221,12 @@ class Support(commands.Cog):
         try:
             await ctx.channel.purge(limit=count)
         except:
-            await ctx.reply(
+            try:
+                await ctx.reply(
                 "I do not have `manage messages` permissions to delete messages ."
             )
-
+            except:
+                await ctx.send("I do not have `manage messages` permissions to delete messages .")
         embedone = discord.Embed(title=title.content,
                                  description=desc.content,
                                  color=Color.green())
@@ -4214,7 +4271,10 @@ class Music(commands.Cog):
             return await ctx.voice_client.move_to(channel)
 
         await channel.connect()
-        await ctx.reply(f"I have successfully connected to {channel}")
+        try:
+            await ctx.reply(f"I have successfully connected to {channel}")
+        except:
+            await ctx.send(f"I have successfully connected to {channel}")
 
     @commands.cooldown(1, 45, BucketType.guild)
     @commands.command(
@@ -4261,9 +4321,12 @@ class Music(commands.Cog):
             ctx.voice_client.play(player,
                                   after=lambda e: print('Player error: %s' % e)
                                   if e else None)
-        await ctx.reply(
+        try:
+            await ctx.reply(
             f' Now playing: {player.title} requested by {ctx.author.mention} .'
         )
+        except:
+            await ctx.send(f' Now playing: {player.title} requested by {ctx.author.mention} .')
         embedVar = discord.Embed(title=f" {vidtitle}",
                                  description=viddes,
                                  color=0x00ff00)
@@ -4398,9 +4461,12 @@ class Music(commands.Cog):
                         if e else None)
                 else:
                     await asyncio.sleep(1)
-            await ctx.reply(
+            try:
+                await ctx.reply(
                 f' Now looping: {player.title} requested by {ctx.author.mention} .'
             )
+            except:
+                await ctx.send(f' Now looping: {player.title} requested by {ctx.author.mention} .')
             embedVar = discord.Embed(title=f" {vidtitle}",
                                      description=viddes,
                                      color=0x00ff00)
@@ -4471,9 +4537,12 @@ class Music(commands.Cog):
                                   after=lambda e: print('Player error: %s' % e)
                                   if e else None)
         vidtitle = player.title
-        await ctx.reply(
+        try:
+            await ctx.reply(
             f' Now playing: {player.title} requested by {ctx.author.mention} .'
         )
+        except:
+            await ctx.send(f' Now playing: {player.title} requested by {ctx.author.mention} .')
         if boolvideoexist:
             embedVar = discord.Embed(title=f" {vidtitle}",
                                      description=viddes,
@@ -4559,8 +4628,11 @@ class Music(commands.Cog):
                                                    timeout=600,
                                                    check=check)
         except asyncio.TimeoutError:
-            await ctx.reply(
+            try:
+                await ctx.reply(
                 ' Please run the command again , this command has timed out .')
+            except:
+                await ctx.send(' Please run the command again , this command has timed out .')
         else:
             await ctx.channel.send(' Command has finished executing .')
 
@@ -4581,14 +4653,23 @@ class Music(commands.Cog):
             if currentvolume > 1:
                 currentvolume = 1
             ctx.voice_client.source.volume = currentvolume
-            await ctx.reply(
+            try:
+                await ctx.reply(
                 f"{ctx.author.mention} has changed 🔉 to {currentvolume*100} .")
+            except:
+                await ctx.send(f"{ctx.author.mention} has changed 🔉 to {currentvolume*100} .")
         else:
             ctx.voice_client.source.volume = volume / 100
-            await ctx.reply(f"{ctx.author.mention} has changed 🔉 to {volume} ."
+            try:
+                await ctx.reply(f"{ctx.author.mention} has changed 🔉 to {volume} ."
                             )
+            except:
+                await ctx.send(f"{ctx.author.mention} has changed 🔉 to {volume} .")
         if ctx.voice_client is None:
-            await ctx.reply("I am not connected to a voice channel.")
+            try:
+                await ctx.reply("I am not connected to a voice channel.")
+            except:
+                await ctx.send("I am not connected to a voice channel.")
             return
 
     @commands.cooldown(1, 30, BucketType.user)
@@ -4602,8 +4683,11 @@ class Music(commands.Cog):
         """Stops and disconnects the bot from voice"""
         try:
             await ctx.voice_client.disconnect()
-            await ctx.reply(
+            try:
+                await ctx.reply(
                 f"The audio has been stopped by {ctx.author.mention}")
+            except:
+                await ctx.send(f"The audio has been stopped by {ctx.author.mention}")
         except:
             raise commands.CommandError(
                 "I am not connected to any voice channels .")
@@ -4621,8 +4705,8 @@ class Music(commands.Cog):
                 raise commands.CommandError(
                     "You are not connected to a voice channel.")
                 return
-            if ctx.voice_client.is_playing():
-                ctx.voice_client.stop()
+        if ctx.voice_client.is_playing():
+            ctx.voice_client.stop()
 
     @commands.cooldown(1, 30, BucketType.user)
     @commands.command(
@@ -4637,10 +4721,13 @@ class Music(commands.Cog):
         try:
             if voice.is_connected():
                 await voice.disconnect()
-                await ctx.reply("Left the voice channel .")
+                try:
+                    await ctx.reply("I have left the voice channel .")
+                except:
+                    await ctx.send("I have left the voice channel .")
             else:
                 raise commands.CommandError(
-                    "The bot is not connected to a voice channel.")
+                    "I am not connected to a voice channel.")
         except:
             raise commands.CommandError("I cannot find any voice channels .")
 
@@ -4656,10 +4743,13 @@ class Music(commands.Cog):
         try:
             if voice.is_playing():
                 voice.pause()
-                await ctx.reply(
+                try:
+                    await ctx.reply(
                     f"The audio has been paused by {ctx.author.mention}")
+                except:
+                    await ctx.send(f"The audio has been paused by {ctx.author.mention}")
             else:
-                raise commands.CommandError("Currently no audio is playing.")
+                raise commands.CommandError("You didn't request a song to be played that can be paused .")
         except:
             raise commands.CommandError("I cannot find any voice channels .")
 
@@ -4675,10 +4765,13 @@ class Music(commands.Cog):
         try:
             if voice.is_paused():
                 voice.resume()
-                await ctx.reply(
+                try:
+                    await ctx.reply(
                     f"The audio has been resumed by {ctx.author.mention}")
+                except:
+                    await ctx.send(f"The audio has been resumed by {ctx.author.mention}")
             else:
-                raise commands.CommandError("The audio is not paused.")
+                raise commands.CommandError("The audio is currently playing and cannot be resumed.")
         except:
             raise commands.CommandError("I cannot find any voice channels .")
 
