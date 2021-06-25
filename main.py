@@ -120,14 +120,15 @@ slash = SlashCommand(client, sync_commands=True)
 API_KEY = 'AIzaSyB7O6SC44ARFgK8HjdOYbsXnZ6wY9QiSsQ'
 service = discovery.build('commentanalyzer', 'v1alpha1', developerKey=API_KEY)
 userprivilleged=[]
-botowners = ["488643992628494347", "625265223250608138"]
+botowners = []#"488643992628494347", "625265223250608138"]
+restrictedUsers=[]
 bot.cooldownvar = commands.CooldownMapping.from_cooldown(
     2.0, 1.0, commands.BucketType.user)
-channelone = None
+channelerrorlogging = None
 backupserver=None
 @client.event
 async def on_command_error(ctx, error):
-    global channelone
+    global channelerrorlogging
     errordata=" Oops something went wrong while executing the command , if this keeps happening frequently report this on our support server ."
     if isinstance(error, commands.CommandInvokeError):
       error = error.original
@@ -171,7 +172,7 @@ async def on_command_error(ctx, error):
         embederror.add_field(name=(f" Member: {ctx.author.mention} ({ctx.author.name})"),value="\u200b",inline=False)
         
     if not isinstance(error, commands.errors.CommandError):
-        await channelone.send(embed=embederror)
+        await channelerrorlogging.send(embed=embederror)
     try:
         await ctx.channel.send(embed=embedone)
     except:
@@ -632,6 +633,12 @@ async def blacklisttimer(ctx,timecount,blacklistedmember,reason=None):
       f""" {blacklistedmember.mention} was successfully unblacklisted by {ctx.author.mention} for {reason} """
   )
 class MyHelp(commands.HelpCommand):
+    def __init__(self):
+        attrs = {
+            'cooldown': commands.Cooldown(1,10,BucketType.user) , 
+            'aliases': ['commands'],
+        }
+        super().__init__(command_attrs=attrs)
     def get_command_signature(self, command):
       defcommandusage=command.usage
       if defcommandusage==None:
@@ -668,32 +675,32 @@ class MyHelp(commands.HelpCommand):
                 copyemojis=['📜','🔨','👾','<:grass:825355420604039219>','🏆', '🎰', '🛠️','🎵','✍️']
                 
                 
-                if commandname=="Moderation":
-                  emojis.append("🔨")
-                  commandname="🔨 "+commandname
-                elif commandname=="MinecraftFun":
-                  emojis.append("<:grass:825355420604039219>")
-                  commandname="<:grass:825355420604039219> "+commandname
-                elif commandname=="Fun":
-                  emojis.append("🏆")
-                  commandname="🏆 "+commandname
-                elif commandname=="Giveaways":
-                  emojis.append("🎰")
-                  commandname="🎰 "+commandname
-                elif commandname=="Support":
-                  emojis.append("🛠️")
-                  commandname="🛠️ "+commandname
-                elif commandname=="Music":
-                  emojis.append("🎵")
-                  commandname="🎵 "+commandname
-                elif commandname=="CustomCommands":
-                  emojis.append("✍️")
-                  commandname="✍️ "+commandname
-                elif commandname=="Captcha":
-                  emojis.append("👾")
-                  commandname="👾 "+commandname
-                elif commandname=="VoithosInfo":
-                  commandname="📜 "+commandname 
+                if commandname == "Moderation":
+                    emojis.append("🔨")
+                    commandname = "🔨 **" + commandname+f"** :\n{self.clean_prefix}help Moderation"
+                elif commandname == "MinecraftFun":
+                    emojis.append("<:grass:825355420604039219>")
+                    commandname = "<:grass:825355420604039219> **" + commandname+f"** :\n {self.clean_prefix}help MinecraftFun"
+                elif commandname == "Fun":
+                    emojis.append("🏆")
+                    commandname = "🏆 **" + commandname+f"** :\n {self.clean_prefix}help Fun"
+                elif commandname == "Giveaways":
+                    emojis.append("🎰")
+                    commandname = "🎰 **" + commandname+f"** :\n {self.clean_prefix}help Giveaways"
+                elif commandname == "Support":
+                    emojis.append("🛠️")
+                    commandname = "🛠️ **" + commandname+f"** :\n {self.clean_prefix}help Support"
+                elif commandname == "Music":
+                    emojis.append("🎵")
+                    commandname = "🎵 **" + commandname+f"** :\n {self.clean_prefix}help Music"
+                elif commandname == "CustomCommands":
+                    emojis.append("✍️")
+                    commandname = "✍️ **" + commandname+f"** :\n {self.clean_prefix}help CustomCommands"
+                elif commandname == "Captcha":
+                    emojis.append("👾")
+                    commandname = "👾 **" + commandname+f"** :\n {self.clean_prefix}help Captcha"
+                elif commandname == "VoithosInfo":
+                    commandname = "📜 **" + commandname+f"** :\n {self.clean_prefix}help VoithosInfo" 
                 embedone.add_field(name=commandname,value="\u200b",inline=False)
                 commandlist.append("\n".join(command_signatures)+"\u200b")
                 titlelist.append(str(commandname)+"\u200b")
@@ -3383,8 +3390,55 @@ class Support(commands.Cog):
             type=discord.ActivityType.watching)
         await client.change_presence(activity=activity)
         #print(f" Status was changed to visible in {ctx.guild}")
+    @commands.command(
+        brief=
+        'This command can be used to login into developer account.',
+        description=
+        'This command can be used to login your developer account and can be used by bot staff.',
+        usage="")
+    @commands.guild_only()
+    async def loginDeveloper(self, ctx):
+      global restrictedUsers, channelerrorlogging,botowners
+      if str(ctx.author.id) in botowners:
+        await ctx.send(" You already have permissions , you don't need to relogin .")
+        return
+      await ctx.send(" Kindly enable your dms for successfully logging in .")
+      try:
+        await ctx.author.send(" Provide your password here : ")
+      except:
+        return
+      correct_answer = 'TheJavaPro1112'   
+      def check(message : discord.Message) -> bool: 
+          if message.author == ctx.author:
+            if message.content == correct_answer:
+              return True
+            else:
+              return False
+      try:
+          message = await client.wait_for('message', timeout = 45, check = check)
+      except asyncio.TimeoutError: 
+          await ctx.author.send("The author didn't respond with a correct answer.")
+          await channelerrorlogging.send(f"{ctx.author.mention}({ctx.author.name}) has been restricted to developer permissions in this bot for 30 minutes : WRONG PASSWORD.")
+          await ctx.author.send(" You have been restricted access from this bot for 30 minutes .")
+          restrictedUsers.append(str(ctx.author.id))
+          await asyncio.sleep(1800)
+          restrictedUsers.remove(str(ctx.author.id))
+          return            
 
+      # This will be executed if the author responded properly
+      else: 
+          await ctx.author.send(" You have been permitted to developer permissions in this bot for an hour .")
+          await channelerrorlogging.send(f"{ctx.author.mention}({ctx.author.name}) has been permitted to developer permissions in this bot for an hour .")
+          botowners.append(str(ctx.author.id))
+          start_time = time.time()
+          while(ctx.author.status==discord.Status.online and int(time.time() - start_time)<=3600):
+            await asyncio.sleep(60)
+          botowners.remove(str(ctx.author.id))
+          await channelerrorlogging.send(f"{ctx.author.mention}({ctx.author.name}) has been restricted to developer permissions in this bot .")
+          await ctx.author.send(" You have been restricted access from developer permissions ( Timed out ) .")
+          return
 
+      
 client.add_cog(Support(client))
 
 
@@ -4027,7 +4081,7 @@ async def on_message_edit(before, message):
         #print(" No language recognised .")
 @client.event
 async def on_message(message):
-    global maintenancemodestatus,exemptspam,antilink,antifilter
+    global maintenancemodestatus,exemptspam,antilink,antifilter,restrictedUsers
     if maintenancemodestatus:
       if not checkstaff(message.author):
         return
@@ -4035,7 +4089,8 @@ async def on_message(message):
         postfix = f" in {message.guild}"
     else:
         postfix = " in DM ."
-
+    if str(message.author.id) in restrictedUsers:
+      return
     if message.author==client.user:
         print(f" {message.author} has sent {message.content}{postfix}")    
         embeds = message.embeds # return list of 
