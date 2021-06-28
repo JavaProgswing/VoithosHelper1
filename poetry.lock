@@ -742,7 +742,7 @@ requests = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "56aaf8021a966c6616faacd26f2e605dcd7431a5f747672dd4ac6e3ebd841b29"
+content-hash = "85f996854d481d8c2f07948a9d8489b3c5f9b800c4e28fe018e72fb50eea863f"
 
 [metadata.files]
 aiohttp = [
