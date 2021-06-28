@@ -110,14 +110,14 @@ async def get_prefix(client, message):
             return prefixlist[prefixlist.index(message.guild.id) + 1]
         except:
             prefixlist.append(message.guild.id)
-            prefixlist.append("!")
+            prefixlist.append("vo!")
             return prefixlist[prefixlist.index(message.guild.id) + 1]
     else:
-        return "!"
+        return "vo!"
 
 
 intents = discord.Intents.default()
-Dactivity = discord.Activity(name="!help for commands .",
+Dactivity = discord.Activity(name="vo!help for commands .",
                                 type=discord.ActivityType.watching)
 client = commands.Bot(command_prefix=get_prefix,
                       case_insensitive=True,
@@ -159,6 +159,7 @@ randompython = [
 randomlist = randomjava + randompython
 userprivilleged = []
 botowners = ["488643992628494347", "625265223250608138"]
+restrictedUsers=[]
 bot.cooldownvar = commands.CooldownMapping.from_cooldown(
     2.0, 1.0, commands.BucketType.user)
 channelerrorlogging = None
@@ -179,7 +180,8 @@ async def on_command_error(ctx, error):
         except:
             pass
     if isinstance(error, discord.Forbidden):
-        errordata = f" Oops something went wrong while executing the command . Try granting me permissions and run the command again . "
+        errordata = f" Oops something went wrong while executing the command . Try granting me permissions by re-inviting me by this link : https://discord.com/api/oauth2/authorize?client_id=805030662183845919&permissions=2419453014&scope=bot. "
+
     if isinstance(error, commands.BotMissingPermissions):
         errordata = f" I do not have the{error.missing_perms[0]} permission ."
     if isinstance(error, commands.MissingPermissions):
@@ -201,10 +203,12 @@ async def on_command_error(ctx, error):
     lines = traceback.format_exception(etype, error, trace)
     # format_exception returns a list with line breaks embedded in the lines, so let's just stitch the elements together
     traceback_text = ''.join(lines)
+    
     embederror = discord.Embed(
         title=f"Error occured ({type(error)}) : **{error}**",
-        description=f"Command : {ctx.command} , Traceback : {traceback_text} .",
+        description=f"Command : {ctx.command} .",
         color=Color.dark_red())
+    embederror.add_field(name='Traceback: ',value=traceback_text)
     if ctx.guild:
         embederror.add_field(name=(f" Guild: {ctx.guild} ({ctx.guild.id})"),
                              value="\u200b",
@@ -767,7 +771,7 @@ class MyHelp(commands.HelpCommand):
         embedone = discord.Embed(
             title="\u200b",
             description=
-            f"Use {self.clean_prefix}help command-name to gain more information about that command :smiley: . Click on the reactions below to get help .",
+            f"Use-name to gain more information about that command :smiley: . Click on the reactions below to get help .",
             color=Color.blue())
         commandlist = []
         titlelist = []
@@ -780,7 +784,7 @@ class MyHelp(commands.HelpCommand):
 
             if command_signatures:
                 cog_name = getattr(cog, "qualified_name",
-                                   "◽ No Category")
+                                   "‏‏‎\u200b")
 
                 commandname = cog_name
                 copyemojis = [
@@ -790,33 +794,34 @@ class MyHelp(commands.HelpCommand):
 
                 if commandname == "Moderation":
                     emojis.append("🔨")
-                    commandname = "🔨 **" + commandname+f"** :\n{self.clean_prefix}help Moderation"
+                    commandname = "🔨 **" + commandname+f"** :\n"
                 elif commandname == "MinecraftFun":
                     emojis.append("<:grass:825355420604039219>")
-                    commandname = "<:grass:825355420604039219> **" + commandname+f"** :\n {self.clean_prefix}help MinecraftFun"
+                    commandname = "<:grass:825355420604039219> **" + commandname+f"** :\n"
                 elif commandname == "Fun":
                     emojis.append("🏆")
-                    commandname = "🏆 **" + commandname+f"** :\n {self.clean_prefix}help Fun"
+                    commandname = "🏆 **" + commandname+f"** :\n"
                 elif commandname == "Giveaways":
                     emojis.append("🎰")
-                    commandname = "🎰 **" + commandname+f"** :\n {self.clean_prefix}help Giveaways"
+                    commandname = "🎰 **" + commandname+f"** :\n"
                 elif commandname == "Support":
                     emojis.append("🛠️")
-                    commandname = "🛠️ **" + commandname+f"** :\n {self.clean_prefix}help Support"
+                    commandname = "🛠️ **" + commandname+f"** :\n"
                 elif commandname == "Music":
                     emojis.append("🎵")
-                    commandname = "🎵 **" + commandname+f"** :\n {self.clean_prefix}help Music"
+                    commandname = "🎵 **" + commandname+f"** :\n"
                 elif commandname == "CustomCommands":
                     emojis.append("✍️")
-                    commandname = "✍️ **" + commandname+f"** :\n {self.clean_prefix}help CustomCommands"
+                    commandname = "✍️ **" + commandname+f"** :\n"
                 elif commandname == "Captcha":
                     emojis.append("👾")
-                    commandname = "👾 **" + commandname+f"** :\n {self.clean_prefix}help Captcha"
+                    commandname = "👾 **" + commandname+f"** :\n"
                 elif commandname == "VoithosInfo":
-                    commandname = "📜 **" + commandname+f"** :\n {self.clean_prefix}help VoithosInfo"
+                    commandname = "📜 **" + commandname+f"** :\n"
+                
                 embedone.add_field(name=commandname,
-                                   value="\u200b",
-                                   inline=False)
+                                  value="\u200b",
+                                  inline=False)
                 commandlist.append("\n".join(command_signatures) + "\u200b")
                 titlelist.append(str(commandname) + "\u200b")
                 """embedone.add_field(name=commandname,
@@ -825,17 +830,16 @@ class MyHelp(commands.HelpCommand):
 
         channel = self.get_destination()
         embedone.add_field(
-            name=":link: About",
+            name="Command author",
             value=
-            """This bot is developed by <@488643992628494347>, based on discord.py\n
-Please visit https://top.gg/bot/805030662183845919 to submit ideas or bugs.""")
+            f"""This help command was requested by {self.context.author.mention}.""")
         embedone.set_author(
             name="Commands help",
             icon_url=
             "https://cdn.discordapp.com/avatars/805030662183845919/70fee8581891e9a810da60944dc486ba.webp?size=128"
         )
         embedone.set_footer(
-            text=f"Report bugs by {self.clean_prefix}reportbug command.",
+            text=f"Ready for moderation and beyond!",
             icon_url=
             "https://cdn.discordapp.com/avatars/488643992628494347/e50ae57d9e8880e6acfbc2b444000fa1.webp?size=128"
         )
@@ -847,6 +851,8 @@ Please visit https://top.gg/bot/805030662183845919 to submit ideas or bugs.""")
         def check(reaction, user):
             if user == client.user:
                 return False
+            if not user==self.context.author:
+              return False
             if not reaction.message == messagesent:
                 return False
 
@@ -882,7 +888,7 @@ Please visit https://top.gg/bot/805030662183845919 to submit ideas or bugs.""")
         except asyncio.TimeoutError:
             embedone.set_footer(
                 text=
-                f"This help command has timed out , report bugs by {self.clean_prefix}reportbug command.",
+                f"This help command will not respond , generate a new one .",
                 icon_url=
                 "https://cdn.discordapp.com/avatars/488643992628494347/e50ae57d9e8880e6acfbc2b444000fa1.webp?size=128"
             )
@@ -929,7 +935,7 @@ class VoithosInfo(commands.Cog):
         embedVar.set_author(
             name="JavaCoder",
             icon_url=
-            "https://cdn.discordapp.com/avatars/488643992628494347/e50ae57d9e8880e6acfbc2b444000fa1.webp?size=128"
+            "https://cdn.discordapp.com/avatars/488643992628494347/e50ae57d9e8880e6acfbc2b444000fa1.webp?size=128")
         try:
             await ctx.reply(embed=embedVar)
         except:
@@ -940,6 +946,19 @@ client.add_cog(VoithosInfo(client))
 
 
 class Moderation(commands.Cog):
+    @commands.command(
+        brief='This command makes the bot leave the guild without the need of a kick.',
+        description=
+        'This command makes the bot leave the guild without the need of a kick and can be used by users having kick members permission.',
+        usage="")
+    @commands.guild_only()
+    @commands.check_any(is_bot_staff(),
+                        commands.has_permissions(kick_members=True))
+    async def botleave(self, ctx, copytemplate=None):
+      await ctx.send(f"{ctx.author.mention} Sorry for inconvenience caused by inviting out bot into your server , join our support server for reporting bugs! ")
+      await ctx.send(" Support server invite : https://discord.com/invite/TZDYSHSZgg ")
+      await ctx.send(" I have successfully left the guild .")
+      await ctx.guild.leave()
     @commands.command(
         brief='This command resets all channels into a custom format/template.',
         description=
@@ -2087,7 +2106,11 @@ targeted attacks using automated user accounts.""")
                       usage="")
     @commands.guild_only()
     async def verify(self, ctx):
-        await ctx.message.delete()
+        
+        try:
+          await ctx.message.delete()
+        except:
+          pass
         verifyrole = discord.utils.get(ctx.guild.roles, name='Verified')
         if verifyrole == None:
             await ctx.send(
@@ -2134,7 +2157,10 @@ targeted attacks using automated user accounts.""")
                 " Want to invite this bot in your server? Checkout this link : https://discord.com/oauth2/authorize?client_id=805030662183845919&permissions=2416012310&scope=bot."
             )
             await ctx.author.send(embed=ea)
-            await ctx.author.add_roles(verifyrole)
+            try:
+              await ctx.author.add_roles(verifyrole)
+            except:
+              pass
         else:
             await ctx.author.send(
                 f" The captcha entered is invalid , try again .")
@@ -3287,6 +3313,7 @@ class Fun(commands.Cog):
         message = await ctx.send("Pinging...")
         end = time.perf_counter()
         duration = (end - start) * 1000
+        duration=duration/2
         if round(duration) <= 50:
             embed = discord.Embed(
                 title="PING",
@@ -4892,7 +4919,7 @@ async def on_guild_join(guild):
         guildindexexists = False
     if not guildindexexists:
         prefixlist.append(guild.id)
-        prefixlist.append("!")
+        prefixlist.append("vo!")
     embedOne = discord.Embed(
         title="Walkthrough Guide ",
         description=f"Prefix {prefixlist[prefixlist.index(guild.id)+1]}",
@@ -5040,7 +5067,7 @@ async def on_message_edit(before, message):
 
 @client.event
 async def on_message(message):
-    global maintenancemodestatus, exemptspam, antilink,antifilter
+    global maintenancemodestatus, exemptspam, antilink,antifilter,restrictedUsers
     if maintenancemodestatus:
         if ("<@!805030662183845919>"
                 in message.content) or ("<@805030662183845919>"
@@ -5056,6 +5083,8 @@ async def on_message(message):
         postfix = " in DM ."
     if message.author.bot:
         return
+    if str(message.author.id) in restrictedUsers:
+      return
     if message.author == client.user:
         print(f" {message.author} has sent {message.content}{postfix}")
         embeds = message.embeds  # return list of
@@ -5115,7 +5144,7 @@ async def on_message(message):
                     f" My {message.guild} prefix is {prefixlist[prefixlist.index(message.guild.id)+1]} , do {prefixlist[prefixlist.index(message.guild.id)+1]}setprefix to change prefixes ."
                 )
         else:
-            await message.reply(" My default dm prefix is ! .")
+            await message.reply(" My default dm prefix is vo! .")
     bucket = bot.cooldownvar.get_bucket(message)
     retry_after = bucket.update_rate_limit()
     if retry_after:
