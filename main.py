@@ -3122,7 +3122,7 @@ def listToString(s):
 
 
 class Fun(commands.Cog):
-    @commands.cooldown(1, 20, BucketType.user)
+    @commands.cooldown(1, 5, BucketType.user)
     @commands.command(
         brief='This command can be used to get random responses from the bot.',
         description=
