@@ -2,6 +2,7 @@ from __future__ import unicode_literals
 import traceback
 from collections import Counter
 import json
+import long_responses as long
 from keep_alive import keep_alive
 import aiohttp        
 import requests
@@ -3127,21 +3128,11 @@ class Fun(commands.Cog):
         description=
         'This command can be used to get random responses from the bot.',
         usage="")
-    async def communication(self, ctx):
-        responses = [
-            'It is certain.', 'As I see it, yes.', 'Ask again later.',
-            'Better not tell you now.', 'Cannot predict now.',
-            'Concentrate and ask again.', 'Don’t count on it.',
-            'It is certain.', 'It is decidedly so.', 'Most likely.',
-            'My reply is no.', 'My sources say no.', 'Outlook not so good.',
-            'Outlook good.', 'Reply hazy, try again.', 'Signs point to yes.',
-            'Very doubtful.', 'Without a doubt.', 'Yes.', 'Yes – definitely.',
-            'You may rely on it.'
-        ]
-        try:
-            await ctx.reply(f"{random.choice(responses)}")
-        except:
-            await ctx.send(f"{random.choice(responses)}")
+    async def communication(self, ctx,text):
+      try:
+        await ctx.reply(get_response(text))
+      except:
+        await ctx.send(get_response(text))
     @commands.cooldown(1, 30, BucketType.user)
     @commands.command(
         brief=
@@ -3541,7 +3532,62 @@ class Fun(commands.Cog):
             await ctx.send(embed=embedOne)
 
 client.add_cog(Fun(client))
+def message_probability(user_message, recognised_words, single_response=False, required_words=[]):
+    message_certainty = 0
+    has_required_words = True
 
+    # Counts how many words are present in each predefined message
+    for word in user_message:
+        if word in recognised_words:
+            message_certainty += 1
+
+    # Calculates the percent of recognised words in a user message
+    percentage = float(message_certainty) / float(len(recognised_words))
+
+    # Checks that the required words are in the string
+    for word in required_words:
+        if word not in user_message:
+            has_required_words = False
+            break
+
+    # Must either have the required words, or be a single response
+    if has_required_words or single_response:
+        return int(percentage * 100)
+    else:
+        return 0
+
+
+def check_all_messages(message):
+    highest_prob_list = {}
+
+    # Simplifies response creation / adds it to the dict
+    def response(bot_response, list_of_words, single_response=False, required_words=[]):
+        nonlocal highest_prob_list
+        highest_prob_list[bot_response] = message_probability(message, list_of_words, single_response, required_words)
+
+    # Responses -------------------------------------------------------------------------------------------------------
+    response('Hello!', ['hello', 'hi', 'hey', 'sup', 'heyo'], single_response=True)
+    response('See you!', ['bye', 'goodbye'], single_response=True)
+    response('I\'m doing fine, and you?', ['how', 'are', 'you', 'doing'], required_words=['how'])
+    response('You\'re welcome!', ['thank', 'thanks'], single_response=True)
+    response('Thank you!', ['i', 'love', 'code', 'palace'], required_words=['code', 'palace'])
+
+    # Longer responses
+    response(long.R_ADVICE, ['give', 'advice'], required_words=['advice'])
+    response(long.R_EATING, ['what', 'you', 'eat'], required_words=['you', 'eat'])
+
+    best_match = max(highest_prob_list, key=highest_prob_list.get)
+    # print(highest_prob_list)
+    # print(f'Best match = {best_match} | Score: {highest_prob_list[best_match]}')
+
+    return long.unknown() if highest_prob_list[best_match] < 1 else best_match
+
+
+# Used to get the response
+def get_response(user_input):
+    split_message = re.split(r'\s+|[,;?!.-]\s*', user_input.lower())
+    response = check_all_messages(split_message)
+    return response
 
 class Giveaways(commands.Cog):
     @commands.command(brief='This command can be used to do a instant giveaway for all the members provided.', description='This command can be used to do a instant giveaway for all the members provided and can be used by members having manage guild permission.',usage="@member,@othermember")
