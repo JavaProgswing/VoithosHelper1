@@ -39,9 +39,8 @@ from PIL import ImageFont
 from PIL import ImageDraw
 from io import BytesIO
 from youtubesearchpython import VideosSearch
-from googletrans import Translator
+from translate import Translator
 
-translator = Translator()
 
 # Suppress noise about console usage from errors
 maintenancemodestatus = False
@@ -2310,7 +2309,7 @@ class MinecraftFun(commands.Cog):
         ]
         surfaceblocks = ["water", "grass", "sand", "air"]
         surfacechance = [30, 40, 20, 10]
-        chance = [13, 15, 5, 13, 11, 0, 9, 0, 19, 15, 0, 0, 0]
+        chance = [4, 13, 2, 15, 11, 0, 12, 0, 19, 10, 0, 6, 9]
         belowblocks = "<:bedrock:825370647869259848>"
         belowlist = ""
         results = random.choices(blocks, chance, k=number * number)
@@ -3191,7 +3190,7 @@ class Fun(commands.Cog):
             await ctx.reply(file=file, embed=embed)
         except:
             await ctx.send(file=file, embed=embed)
-    @commands.cooldown(1, 120, BucketType.user)
+    @commands.cooldown(1, 60, BucketType.user)
     @commands.command(
         brief='This command can be used to search on google.',
         description='This command can be used to search on google.',
@@ -3385,35 +3384,8 @@ class Fun(commands.Cog):
         usage="language text")
     async def translatetext(self, ctx, language="en", *, text):
         origmessage = text
-        translatedmessage = (translator.translate(origmessage, dest="en").text)
-        analyze_request = {
-            'comment': {
-                'text': translatedmessage
-            },
-            'requestedAttributes': {
-                "PROFANITY": {}
-            }
-        }
-
-        attributes = ["PROFANITY"]
-        try:
-            response = service.comments().analyze(
-                body=analyze_request).execute()
-            for attribute in attributes:
-                attribute_dict = response['attributeScores'][attribute]
-                score_value = attribute_dict['spanScores'][0]['score']['value']
-                if score_value >= 0.6:
-                    if ctx.guild and not ctx.channel.is_nsfw(
-                    ) and "mod" in ctx.channel.name.lower():
-                        await ctx.send(
-                            " Your message contained harmful content , translation aborted ."
-                        )
-                        return
-        except:
-            pass
-        origmessage = text
-        translatedmessage = (translator.translate(origmessage,
-                                                  dest=language).text)
+        translator= Translator(to_lang=language)
+        translatedmessage = translator.translate(origmessage)
         embedOne = discord.Embed(title=" Language : " + language,
                                  description=translatedmessage)
         await ctx.send(embed=embedOne)
@@ -3568,6 +3540,7 @@ def check_all_messages(message):
     # Responses -------------------------------------------------------------------------------------------------------
     response('Hello!', ['hello', 'hi', 'hey', 'sup', 'heyo'], single_response=True)
     response('See you!', ['bye', 'goodbye'], single_response=True)
+    response("I'm good", ["what's", 'up'], single_response=True)
     response('I\'m doing fine, and you?', ['how', 'are', 'you', 'doing'], required_words=['how'])
     response('You\'re welcome!', ['thank', 'thanks'], single_response=True)
     response('Thank you!', ['i', 'love', 'code', 'palace'], required_words=['code', 'palace'])
@@ -5062,7 +5035,8 @@ async def on_message_edit(before, message):
                     await message.delete()
                     return
     try:
-        translatedmessage = (translator.translate(origmessage, dest="en").text)
+        translator= Translator(to_lang="en")
+        translatedmessage = translator.translate(origmessage)
     except:
         translatedmessage = origmessage
 
@@ -5171,7 +5145,8 @@ async def on_message(message):
                     return
 
     try:
-        translatedmessage = (translator.translate(origmessage, dest="en").text)
+        translator= Translator(to_lang="en")
+        translatedmessage = translator.translate(origmessage)
     except:
         translatedmessage = origmessage
     if ("<@!805030662183845919>"
